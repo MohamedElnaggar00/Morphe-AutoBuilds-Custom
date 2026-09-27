@@ -126,6 +126,27 @@ def load_app_config(app_name: str) -> Tuple[Optional[dict], Optional[str]]:
     return None, None
 
 
+def get_app_config_signature(app_name: str) -> str:
+    """Return a stable SHA-256 signature of the complete app configuration.
+
+    The signature intentionally includes every field in the app config, not
+    just the pinned version, so changing package/name/arch/dpi/type/etc.
+    invalidates the carried APK and triggers a rebuild.
+    """
+    config, platform = load_app_config(app_name)
+    payload = {
+        "platform": platform or "",
+        "config": config or {},
+    }
+    canonical = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return hashlib.sha256(canonical).hexdigest()
+
+
 _latest_app_version_cache: Dict[str, str] = {}
 
 
