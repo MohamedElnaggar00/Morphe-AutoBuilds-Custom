@@ -330,7 +330,7 @@ jobs:
 
   create-single-release:
     name: Create Single Release
-    needs: [check-updates, build-apps, update-readme]
+    needs: [check-updates, build-apps]
     runs-on: ubuntu-latest
     if: always() && needs.check-updates.outputs.has_updates == 'true'
     permissions:
