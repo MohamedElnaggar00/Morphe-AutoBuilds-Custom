@@ -157,12 +157,11 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         logging.error("All download sources failed. Skipping this app.")
         return None
 
-    # Try the downloaded version first, then (if available) older compatible
-    # versions from the patch set. This prevents a single bad/overstated
-    # compatibility entry from breaking the whole build.
+    # The downloader already handles version fallback when a release
+    # cannot be found/downloaded. Once a supported release has actually been
+    # downloaded, do NOT retry older patch-set versions after a patch failure.
+    # The highest supported version is authoritative for the build.
     versions_to_try: list[str] = [version]
-    if candidates and version in candidates:
-        versions_to_try += [v for v in candidates if v != version]
 
     exclude_patches = []
     include_patches = []
