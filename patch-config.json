@@ -19,6 +19,10 @@
     {
       "app_name": "vpnify",
       "source": "hxreborn"
+    },
+    {
+      "app_name": "facebook",
+      "source": "hushfacebook"
     }
   ]
 }
