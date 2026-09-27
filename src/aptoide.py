@@ -23,11 +23,13 @@ def get_latest_version(app_name: str, config: Dict) -> Optional[str]:
     package = config.get('package', '')
     if not package:
         return None
-    arch = config.get('arch', 'universal')
-    q = _get_q_param(arch)
+    # Enumerate versions without an ABI filter. Apply the architecture
+    # constraint later when resolving getAppMeta so older releases remain
+    # discoverable when a primary store is unavailable.
+    q = _get_q_param(config.get('arch', 'universal'))
 
     # 1. Try listAppVersions first (direct exact package lookup)
-    url_versions = f"{BASE_URL}listAppVersions?package_name={package}&limit=1{q}"
+    url_versions = f"{BASE_URL}listAppVersions?package_name={package}&limit=1"
     data = _safe_get_json(url_versions) or {}
     items = data.get("list") or (((data.get("datalist") or {}).get("list")) or [])
     for it in items:
@@ -35,7 +37,7 @@ def get_latest_version(app_name: str, config: Dict) -> Optional[str]:
             return it["file"]["vername"]
 
     # 2. Fallback to apps/search filtered by package
-    url = f"{BASE_URL}apps/search?query={package}&limit=10&trusted=true{q}"
+    url = f"{BASE_URL}apps/search?query={package}&limit=10&trusted=true"
     data = _safe_get_json(url) or {}
     items = (((data.get("datalist") or {}).get("list")) or data.get("list") or [])
     for app in items:
@@ -54,7 +56,8 @@ def get_download_link(version: str, app_name: str, config: Dict) -> Optional[str
     q = _get_q_param(arch)
 
     # Find vercode for specific version (search up to 100 versions)
-    url_versions = f"{BASE_URL}listAppVersions?package_name={package}&limit=100{q}"
+    # Keep version enumeration ABI-neutral; use q only for getAppMeta.
+    url_versions = f"{BASE_URL}listAppVersions?package_name={package}&limit=100"
     data = _safe_get_json(url_versions) or {}
     items = data.get("list") or (((data.get("datalist") or {}).get("list")) or [])
     items = [it for it in items if it.get("package") == package]
