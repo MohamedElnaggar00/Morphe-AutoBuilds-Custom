@@ -4,9 +4,15 @@ import logging
 import os
 from bs4 import BeautifulSoup
 from urllib.parse import quote, urljoin
+from curl_cffi import requests as curl_requests
 from src import session
 
 base_url = "https://www.apkmirror.com"
+
+# APKMirror gets a dedicated browser-impersonated session. Keeping one session
+# across release -> variant -> download pages preserves cookies and the browser
+# fingerprint throughout the complete APKMirror flow.
+_apkmirror_session = curl_requests.Session(impersonate="chrome")
 _blocked_by_cloudflare = False
 
 
@@ -74,13 +80,21 @@ def _jina_get(url: str, **kwargs):
         return None
 
 def _cf_get(url, **kwargs):
-    """Fetch APKMirror with direct, Jina, and Trawl HTML transports."""
+    """Fetch APKMirror while preserving a Chrome-like session and page context."""
     global _blocked_by_cloudflare
     if _blocked_by_cloudflare:
         raise ApkMirrorBlocked("APKMirror blocked this runner earlier in the build")
 
-    kwargs.setdefault("timeout", 20)
-    response = session.get(url, **kwargs)
+    kwargs.setdefault("timeout", 30)
+    referer = kwargs.pop("referer", None) or f"{base_url}/"
+    headers = dict(kwargs.pop("headers", {}) or {})
+    headers.setdefault("Referer", referer)
+    headers.setdefault("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+    headers.setdefault("Accept-Language", "en-US,en;q=0.9")
+    headers.setdefault("Cache-Control", "no-cache")
+    headers.setdefault("Pragma", "no-cache")
+
+    response = _apkmirror_session.get(url, headers=headers, **kwargs)
     if not _looks_like_cloudflare_challenge(response):
         return response
 
@@ -89,16 +103,20 @@ def _cf_get(url, **kwargs):
         response.status_code,
     )
 
-    jina_response = _jina_get(url, timeout=kwargs.get("timeout", 20))
+    jina_response = _jina_get(
+        url,
+        headers=headers,
+        timeout=kwargs.get("timeout", 30),
+    )
     if jina_response is not None:
         return jina_response
 
     try:
         from src import trawl
-        rendered = trawl.fetch(url)
+        rendered = trawl.fetch(url, referer=referer)
         if rendered:
             for name, value in rendered.cookies.items():
-                session.cookies.set(name, value, domain=".apkmirror.com")
+                _apkmirror_session.cookies.set(name, value, domain=".apkmirror.com")
             logging.info("APKMirror page obtained through the CI browser service")
             return rendered
     except Exception as exc:
@@ -107,6 +125,81 @@ def _cf_get(url, **kwargs):
     _blocked_by_cloudflare = True
     logging.warning("APKMirror served a Cloudflare challenge and all HTML fallbacks failed.")
     raise ApkMirrorBlocked("APKMirror Cloudflare challenge")
+
+
+def _direct_release_candidates(version: str, config: dict) -> list[str]:
+    """Build direct APKMirror release URLs without first visiting the app page."""
+    version_slug = version.replace(".", "-")
+    org = (config.get("org") or "").strip("/")
+    release_names = [
+        config.get("release_prefix"),
+        config.get("release_name"),
+        config.get("name"),
+        config.get("app_slug"),
+    ]
+    app_slugs = [
+        config.get("app_slug"),
+        config.get("name"),
+        config.get("org"),
+    ]
+
+    candidates = []
+    explicit = config.get("release_url")
+    if explicit:
+        candidates.append(explicit)
+
+    for app_slug in app_slugs:
+        if not app_slug or not org:
+            continue
+        for release_name in release_names:
+            if not release_name:
+                continue
+            candidates.append(
+                f"{base_url}/apk/{org}/{quote(str(app_slug), safe='')}/"
+                f"{quote(str(release_name), safe='')}-{version_slug}-release/"
+            )
+        # APKMirror sometimes uses the app slug itself as the release prefix.
+        candidates.append(
+            f"{base_url}/apk/{org}/{quote(str(app_slug), safe='')}/"
+            f"{quote(str(app_slug), safe='')}-{version_slug}-release/"
+        )
+
+    return list(dict.fromkeys(candidates))
+
+
+def _get_direct_release_page(
+    version: str,
+    config: dict,
+) -> tuple[BeautifulSoup | None, str | None]:
+    """Try to resolve an exact release page directly from the configured slugs."""
+    for url in _direct_release_candidates(version, config):
+        logging.info(f"Trying direct APKMirror release URL: {url}")
+        try:
+            response = _cf_get(url, referer=f"{base_url}/")
+        except ApkMirrorBlocked:
+            return None, None
+
+        if response.status_code != 200:
+            logging.info(f"Direct release URL returned {response.status_code}: {url}")
+            continue
+
+        soup = BeautifulSoup(response.content, "html.parser")
+        page_text = soup.get_text(" ", strip=True)
+        normalized_version = version.replace(".", "-")
+        if version in page_text or normalized_version in page_text:
+            logging.info(f"✓ Direct release page found: {response.url}")
+            return soup, response.url
+
+        title = soup.find("title")
+        title_text = title.get_text(" ", strip=True) if title else ""
+        if version in title_text or normalized_version in title_text:
+            logging.info(f"✓ Direct release page validated by title: {response.url}")
+            return soup, response.url
+
+        logging.warning(f"Direct URL returned a page without version {version}: {url}")
+
+    return None, None
+
 def get_build_number_for_version(version: str, config: dict) -> tuple[str | None, str]:
     """Fetch build number for a specific version from APKMirror.
     Returns (build_number, format_type) where format_type is 'parentheses' or 'build_suffix'.
@@ -340,29 +433,58 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
     
     version_parts = version.split('.')
     found_soup = None
+    found_release_url = None
     correct_version_page = False
-    
-    # --- PRIMARY APPROACH: Scrape the main app page for the correct release URL ---
+
+    # --- PRIMARY APPROACH: Direct release URL ---
+    # Do this BEFORE touching /apk/{org}/{name}/. For pinned versions this avoids
+    # the app landing page that is currently getting Cloudflare-blocked on CI.
+    direct_soup, direct_url = _get_direct_release_page(version, config)
+    if direct_soup is not None:
+        found_soup = direct_soup
+        found_release_url = direct_url
+        correct_version_page = True
+
+    # A few APKMirror releases encode a build number in their listing, while the
+    # configured patch version may omit it. Only query the app page for that
+    # additional build-number detail when direct resolution did not work.
+    if not correct_version_page and not _blocked_by_cloudflare:
+        build_number, build_format = get_build_number_for_version(version, config)
+        if build_number:
+            logging.info(
+                f"Found build number {build_number} for version {version} (format: {build_format})"
+            )
+            direct_soup, direct_url = _get_direct_release_page(version, config)
+            if direct_soup is not None:
+                found_soup = direct_soup
+                found_release_url = direct_url
+                correct_version_page = True
+
+    # --- SECONDARY APPROACH: Scrape the main app page for the correct release URL ---
     # This is more reliable than constructing URLs from config fields, because
     # APKMirror's actual URL slugs often differ from config values
     # (e.g., 'duolingo' slug vs 'duolingo-language-lessons' actual release name)
-    scraped_url = find_release_page_from_main(version, config, build_number, build_format)
-    if scraped_url:
-        logging.info(f"Trying scraped release URL: {scraped_url}")
-        try:
-            response = _cf_get(scraped_url)
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.content, "html.parser")
-                page_text = soup.get_text()
-                # Quick validation: check version appears on page
-                if version in page_text or version.replace('.', '-') in page_text:
-                    logging.info(f"✓ Scraped release page validated: {response.url}")
-                    found_soup = soup
-                    correct_version_page = True
-                else:
-                    logging.warning(f"Scraped URL returned page but version {version} not found in content")
-        except Exception as e:
-            logging.warning(f"Error fetching scraped URL: {e}")
+    if not correct_version_page and not _blocked_by_cloudflare:
+        scraped_url = find_release_page_from_main(version, config, build_number, build_format)
+        if scraped_url:
+            logging.info(f"Trying scraped release URL: {scraped_url}")
+            try:
+                response = _cf_get(scraped_url, referer=f"{base_url}/")
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.content, "html.parser")
+                    page_text = soup.get_text()
+                    # Quick validation: check version appears on page
+                    if version in page_text or version.replace('.', '-') in page_text:
+                        logging.info(f"✓ Scraped release page validated: {response.url}")
+                        found_soup = soup
+                        found_release_url = response.url
+                        correct_version_page = True
+                    else:
+                        logging.warning(
+                            f"Scraped URL returned page but version {version} not found in content"
+                        )
+            except Exception as e:
+                logging.warning(f"Error fetching scraped URL: {e}")
 
     # Once Cloudflare has challenged this runner, generated URL probes cannot
     # succeed. Stop here so one app does not emit misleading 404s for every
@@ -632,7 +754,10 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
     
     # --- STANDARD DOWNLOAD FLOW ---
     try:
-        response = _cf_get(download_page_url)
+        response = _cf_get(
+            download_page_url,
+            referer=found_release_url or f"{base_url}/",
+        )
         response.raise_for_status()
         content_size = len(response.content)
         logging.info(f"URL:{response.url} [{content_size}/{content_size}] -> Variant Page")
@@ -644,7 +769,10 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             # Keep APKMirror's native APKM/APKS bundle intact. Morphe can
             # patch the bundle directly, so do not request forcebaseapk or
             # convert a split bundle into a standalone base APK here.
-            response = _cf_get(final_download_page_url)
+            response = _cf_get(
+                final_download_page_url,
+                referer=download_page_url,
+            )
             response.raise_for_status()
             content_size = len(response.content)
             logging.info(f"URL:{response.url} [{content_size}/{content_size}] -> Download Page")
