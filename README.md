@@ -51,6 +51,7 @@ A sophisticated, automated pipeline that builds ready-to-install Morphe applicat
 | Application | arm64-v8a | armeabi-v7a | Universal |
 | :--- | :---: | :---: | :---: |
 | **YouTube** | ✅ | ✅ | ✅ |
+| **vpnify** | ✅ | ❌ | ❌ |
 | **YouTube Music** | ✅ | ✅ | ❌ |
 | **Reddit** | ❌ | ❌ | ✅ |
 | **Twitter (X)** | ✅ | ❌ | ❌ |
