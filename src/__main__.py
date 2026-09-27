@@ -116,17 +116,10 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         pass
 
     if is_bundle_app:
-        # APKMirror remains preferred, but bundle-compatible providers are valid
-        # fallbacks when APKMirror is blocked. downloader.py validates the
-        # returned bundle's declared versionCode before accepting it.
-        download_methods = [
-            downloader.download_apkmirror,
-            downloader.download_apkpure,
-            downloader.download_apkcombo,
-            downloader.download_aptoide,
-            downloader.download_uptodown,
-            downloader.download_github,
-        ]
+        # Facebook/Hushfacebook is validated against a specific APKMirror
+        # APKM build. Never substitute an XAPK/APKS/APK from another provider:
+        # the same version string can contain different version codes/builds.
+        download_methods = [downloader.download_apkmirror]
     else:
         download_methods = [
             downloader.download_apkmirror,
@@ -144,13 +137,12 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     for method in download_methods:
         input_apk, version, candidates = method(app_name, str(cli), str(patches), arch)
         if input_apk:
-            # Bundle patch sets require a split archive. Never substitute
-            # a standalone APK; APKM/XAPK/APKS are all bundle containers Morphe
-            # can consume.
-            if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".xapk", ".apks"}:
+            # Bundle patch sets here require the native APKMirror APKM.
+            # Do not accept an XAPK/APKS/APK from a different provider.
+            if is_bundle_app and input_apk.suffix.lower() != ".apkm":
                 logging.warning(
-                    f"Rejected non-bundle input {input_apk.name} for bundle-configured "
-                    f"app {app_name}; trying the next provider."
+                    f"Rejected non-APKM input {input_apk.name} for bundle-configured "
+                    f"app {app_name}."
                 )
                 input_apk.unlink(missing_ok=True)
                 input_apk = None
