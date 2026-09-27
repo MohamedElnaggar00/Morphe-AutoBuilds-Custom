@@ -596,15 +596,9 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
         sub_url = soup.find('a', class_='downloadButton')
         if sub_url:
             final_download_page_url = base_url + sub_url['href']
-            # APK-configured apps should prefer APKMirror's direct/base APK
-            # download. APKMirror may otherwise return an APKM bundle even
-            # when the release page has an APK download variant. The
-            # forcebaseapk flag is the same path used by APKMirror's direct
-            # APK download links and avoids unnecessary split extraction.
-            if (str(config.get('type', '')).upper() == 'APK':
-                separator = '&' if '?' in final_download_page_url else '?'
-                if 'forcebaseapk=' not in final_download_page_url:
-                    final_download_page_url += separator + 'forcebaseapk=true'
+            # Keep APKMirror's native APKM/APKS bundle intact. Morphe can
+            # patch the bundle directly, so do not request forcebaseapk or
+            # convert a split bundle into a standalone base APK here.
             response = _cf_get(final_download_page_url)
             response.raise_for_status()
             content_size = len(response.content)
