@@ -163,7 +163,7 @@ def _direct_release_candidates(version: str, config: dict) -> list[str]:
     package_release_aliases = {
         "com.facebook.orca": ["facebook-messenger"],
         "com.facebook.katana": ["facebook"],
-        "com.adobe.reader": ["adobe-acrobat-reader"],
+        "com.adobe.reader": ["adobe-acrobat-reader-edit-pdf"],
     }
 
     release_names = [
