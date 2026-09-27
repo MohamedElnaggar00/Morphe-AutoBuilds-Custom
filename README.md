@@ -52,6 +52,7 @@ A sophisticated, automated pipeline that builds ready-to-install Morphe applicat
 | :--- | :---: | :---: | :---: |
 | **YouTube** | ✅ | ✅ | ✅ |
 | **vpnify** | ✅ | ❌ | ❌ |
+| **Facebook (Hushfacebook)** | ✅ | ❌ | ❌ |
 | **YouTube Music** | ✅ | ✅ | ❌ |
 | **Reddit** | ❌ | ❌ | ✅ |
 | **Twitter (X)** | ✅ | ❌ | ❌ |
