@@ -1024,16 +1024,54 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
-def emit_full_rebuild(reason: str) -> None:
-    """Emergency fallback: build everything (preserves the previous behavior)."""
+def emit_full_rebuild(
+    reason: str,
+    old_manifest: Optional[dict] = None,
+    existing_apks: Optional[List[str]] = None,
+) -> None:
+    """Emergency full rebuild without discarding known-good release records."""
     logging.warning(f"Falling back to FULL rebuild: {reason}")
     full = build_full_matrix()
+    existing_apks = existing_apks or []
+    existing_apk_set = set(existing_apks)
+    old_entries = (
+        old_manifest.get("entries", {})
+        if isinstance(old_manifest, dict)
+        else {}
+    )
+
+    entries: dict = {}
+    for item in full:
+        app = item["app_name"]
+        src = item["source"]
+        arch = item["arch"]
+        key = make_manifest_key(app, src, arch)
+        old = old_entries.get(key, {})
+        apk = old.get("apk", "") or ""
+        if not apk or apk not in existing_apk_set:
+            recovered = _recover_apk_from_release(app, arch, existing_apks)
+            if recovered:
+                apk = recovered
+        built_version = (old.get("built_version", "") or "").strip()
+        if apk and not built_version:
+            built_version = extract_version_from_filename(apk)
+
+        entries[key] = {
+            "app_name": app,
+            "source": src,
+            "arch": arch,
+            "config_version": load_app_config_version(app),
+            "config_sig": old.get("config_sig", ""),
+            "source_sig": old.get("source_sig", ""),
+            "apk": apk,
+            "built_version": built_version,
+        }
+
     Path("build_matrix.json").write_text(json.dumps(full), encoding="utf-8")
     Path("carry_over.json").write_text(json.dumps([]), encoding="utf-8")
-    # Empty manifest -> next run will treat everything as 'new-entry' until a
-    # successful build writes a fresh manifest.
     Path("new_manifest.json").write_text(
-        json.dumps({"entries": {}}, indent=2), encoding="utf-8")
+        json.dumps({"entries": entries}, indent=2), encoding="utf-8"
+    )
     write_gh_output("build_matrix", json.dumps(full))
     write_gh_output("has_updates", "true" if full else "false")
     write_gh_output("update_count", str(len(full)))
@@ -1043,6 +1081,8 @@ def emit_full_rebuild(reason: str) -> None:
 
 
 def main() -> int:
+    old_manifest = None
+    existing_apks: List[str] = []
     try:
         full = build_full_matrix()
         logging.info(f"Full matrix: {len(full)} (app, source, arch) entries")
@@ -1059,7 +1099,11 @@ def main() -> int:
         if old_manifest is None and not FORCE_FULL:
             # No manifest yet -> first incremental run; rebuild everything once
             # to populate it. (Future runs will be incremental.)
-            emit_full_rebuild("no manifest in existing release (first incremental run)")
+            emit_full_rebuild(
+                "no manifest in existing release (first incremental run)",
+                old_manifest,
+                existing_apks,
+            )
             return 0
 
         build_mx, carry_over, new_entries = plan_incremental(
@@ -1088,7 +1132,11 @@ def main() -> int:
     except Exception as e:
         logging.error(f"check_app_updates failed: {e}")
         traceback.print_exc()
-        emit_full_rebuild(f"unexpected error: {e}")
+        emit_full_rebuild(
+            f"unexpected error: {e}",
+            old_manifest,
+            existing_apks,
+        )
         return 0  # Never fail the workflow over a planning error.
 
 
