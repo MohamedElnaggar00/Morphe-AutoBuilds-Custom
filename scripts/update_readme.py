@@ -29,6 +29,7 @@ APP_NAMES = {
     "vpnify": "vpnify",
     "facebook": "Facebook",
     "tiktok": "TikTok",
+    "tiktok-metra": "TikTok (Metra)",
 }
 
 WORK = ROOT / ".readme-cache"
