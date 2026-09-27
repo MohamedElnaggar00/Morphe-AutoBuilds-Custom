@@ -355,9 +355,9 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             logging.info("Trying alternative signing method...")
 
             utils.run_process([
-                *signing_common_args[:4],
+                str(apksigner), "sign", "--verbose",
                 "--min-sdk-version", "21",
-                *signing_common_args[4:]
+                *signing_common_args[3:]
             ], capture=True, stream=True)
 
         output_apk.unlink(missing_ok=True)
