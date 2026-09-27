@@ -317,27 +317,47 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         if not apksigner:
             raise RuntimeError("apksigner not found")
 
+        # --- SIGN APK ---
+        # Signing material is supplied by the environment in CI so the private
+        # keystore never needs to be committed to the repository.
+        signing_keystore = getenv("SIGNING_KEYSTORE_PATH")
+        signing_keystore_type = getenv("SIGNING_KEYSTORE_TYPE", "BKS")
+        signing_alias = getenv("SIGNING_KEY_ALIAS", "Morphe")
+        signing_keystore_password = getenv("SIGNING_KEYSTORE_PASSWORD", "")
+        signing_key_password = getenv("SIGNING_KEY_PASSWORD", signing_keystore_password)
+
+        if not signing_keystore:
+            raise RuntimeError(
+                "SIGNING_KEYSTORE_PATH is not set. Configure the signing keystore "
+                "through the CI secret and environment variables."
+            )
+
+        if not Path(signing_keystore).is_file():
+            raise RuntimeError(f"Signing keystore not found: {signing_keystore}")
+
+        signing_common_args = [
+            str(apksigner), "sign", "--verbose",
+            "--ks", signing_keystore,
+            "--ks-type", signing_keystore_type,
+            "--ks-pass", "env:SIGNING_KEYSTORE_PASSWORD",
+            "--key-pass", "env:SIGNING_KEY_PASSWORD",
+            "--ks-key-alias", signing_alias,
+            "--in", str(output_apk), "--out", str(signed_apk)
+        ]
+
         try:
-            utils.run_process([
-                str(apksigner), "sign", "--verbose",
-                "--ks", "keystore/public.jks",
-                "--ks-pass", "pass:public",
-                "--key-pass", "pass:public",
-                "--ks-key-alias", "public",
-                "--in", str(output_apk), "--out", str(signed_apk)
-            ], capture=True, stream=True)
+            utils.run_process(
+                signing_common_args,
+                capture=True, stream=True
+            )
         except Exception as e:
             logging.warning(f"Standard signing failed: {e}")
             logging.info("Trying alternative signing method...")
 
             utils.run_process([
-                str(apksigner), "sign", "--verbose",
+                *signing_common_args[:4],
                 "--min-sdk-version", "21",
-                "--ks", "keystore/public.jks",
-                "--ks-pass", "pass:public",
-                "--key-pass", "pass:public",
-                "--ks-key-alias", "public",
-                "--in", str(output_apk), "--out", str(signed_apk)
+                *signing_common_args[4:]
             ], capture=True, stream=True)
 
         output_apk.unlink(missing_ok=True)
