@@ -184,6 +184,17 @@ def download_platform(
             candidates = [override_version]
         elif pinned:
             candidates = [pinned]
+            # A pinned version can remain supported by the patch source while
+            # disappearing from a particular mirror. Keep the pinned version
+            # first, but allow the platform's current stable version as a
+            # download fallback. Patching still decides whether that newer
+            # version is actually compatible.
+            try:
+                latest = platform_module.get_latest_version(app_name, config)
+                if latest and latest not in candidates:
+                    candidates.append(latest)
+            except Exception as e:
+                logging.debug(f"Could not get latest version for {app_name} on {platform}: {e}")
         else:
             candidates = utils.get_supported_versions(config["package"], cli, patches)
             try:
