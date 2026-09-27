@@ -116,12 +116,13 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         pass
 
     if is_bundle_app:
-        # Bundle patch sets are tied to the exact split artifact they were
-        # authored for. Do not substitute an XAPK/APKS from another store:
-        # the same version string can have a different versionCode/variant.
-        # Facebook/Hushfacebook specifically expects APKMirror's native APKM.
+        # APKMirror remains authoritative when available. APKCombo is the
+        # no-proxy fallback for split bundles when APKMirror is blocked by
+        # Cloudflare. download_platform still validates the exact Morphe-
+        # supported versionCode before the file reaches the patcher.
         download_methods = [
             downloader.download_apkmirror,
+            downloader.download_apkcombo,
         ]
     else:
         download_methods = [
@@ -143,9 +144,9 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             # Bundle apps can be APKM/APKS/XAPK depending on the source.
             # download_platform has already enforced any available Morphe
             # build-code validation before returning the file.
-            if is_bundle_app and input_apk.suffix.lower() != ".apkm":
+            if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"}:
                 logging.warning(
-                    f"Rejected non-bundle input {input_apk.name} for bundle-configured "
+                    f"Rejected non-native bundle input {input_apk.name} for bundle-configured "
                     f"app {app_name}."
                 )
                 input_apk.unlink(missing_ok=True)
