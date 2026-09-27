@@ -337,9 +337,52 @@ def _get_api_variant_urls(
         return []
 
 
+def _variant_matches_extra_criteria(text: str, config: dict, version: str | None = None) -> bool:
+    """Validate package-specific variant properties before accepting an APKMirror build."""
+    package = str(config.get("package") or "").strip()
+    if package != "com.facebook.katana":
+        return True
+
+    raw = " ".join(str(text or "").split()).lower()
+
+    expected_code = str(config.get("expected_version_code") or "").strip()
+    if expected_code and not re.search(rf"(?<!\\d){re.escape(expected_code)}(?!\\d)", raw):
+        logging.info("Rejected Facebook variant: versionCode %s not found", expected_code)
+        return False
+
+    expected_arch = str(config.get("arch") or "arm64-v8a").lower()
+    if expected_arch and expected_arch not in raw:
+        logging.info("Rejected Facebook variant: architecture %s not found", expected_arch)
+        return False
+
+    android_min = int(config.get("android_min") or 11)
+    android_ok = bool(re.search(rf"android\\s*{android_min}\\s*\\+", raw))
+    if not android_ok:
+        android_ok = bool(re.search(rf"android\\s*{android_min}\\s*(?:and\\s*above|or\\s*later)", raw))
+    if not android_ok:
+        logging.info("Rejected Facebook variant: Android %s+ requirement not found", android_min)
+        return False
+
+    expected_dpi = str(config.get("dpi") or "240-640dpi").lower()
+    dpi_match = re.fullmatch(r"(\\d+)\\s*-\\s*(\\d+)dpi", expected_dpi)
+    if dpi_match:
+        low, high = map(int, dpi_match.groups())
+        if not re.search(rf"(?<!\\d){low}\\s*-\\s*{high}\\s*dpi", raw):
+            logging.info("Rejected Facebook variant: DPI range %s not found", expected_dpi)
+            return False
+
+    expected_features = str(config.get("features") or "17feat").lower()
+    if expected_features and not re.search(rf"(?<![a-z0-9]){re.escape(expected_features)}(?![a-z0-9])", raw):
+        logging.info("Rejected Facebook variant: feature set %s not found", expected_features)
+        return False
+
+    return True
+
+
 def _download_from_variant_page(
     variant_url: str,
     config: dict,
+    version: str | None = None,
 ) -> tuple[str | None, bool]:
     """Follow APKMirror's variant -> download page -> file link chain."""
     try:
@@ -352,6 +395,8 @@ def _download_from_variant_page(
             return None, False
 
         variant_soup = BeautifulSoup(variant_response.content, "html.parser")
+        if not _variant_matches_extra_criteria(variant_soup.get_text(" ", strip=True), config, version):
+            return None, True
 
         wanted_type = str(config.get("type") or "APK").lower()
         download_button = variant_soup.find("a", class_="downloadButton")
@@ -683,6 +728,7 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
         direct_file_url, readable = _download_from_variant_page(
             api_variant_url,
             config,
+            version,
         )
         if direct_file_url:
             return direct_file_url
@@ -906,6 +952,8 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
     
     def _row_matches(row_text: str, allow_bundle: bool = True) -> bool:
         r = row_text.lower()
+        if not _variant_matches_extra_criteria(row_text, config, version):
+            return False
         if 'variant' in r and 'arch' in r and 'version' in r:
             return False  # Skip header row
             
