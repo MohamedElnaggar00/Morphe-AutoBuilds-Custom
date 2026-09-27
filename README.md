@@ -298,3 +298,162 @@ Patch source: hushfacebook — v0.2.0
 - ❌ Use the system font
 
 </details>
+
+## TikTok — 47.1.3
+Patch source: hushfeed — v0.61.0
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 39/97 applied</summary>
+
+- ❌ AMOLED dark theme
+- ❌ Advanced downloads
+- ❌ Allow Duet and Stitch
+- ❌ Allow screenshots and Circle to Search
+- ✅ Always show publish date
+- ❌ Automatic video advance
+- ❌ Block P2P video relay
+- ❌ Block author button
+- ❌ Block contact list access
+- ❌ Block installed app scanning
+- ❌ Camera and microphone indicator
+- ✅ Comment publish diagnostics
+- ✅ Comment send fix
+- ❌ Comment sort controls
+- ❌ Comment tools
+- ❌ Confirm feed interactions
+- ✅ Copy comments without username
+- ✅ Custom offline videos limit
+- ❌ Device privacy guard
+- ❌ Diagnostic tools
+- ✅ Disable login requirement
+- ✅ Disable screen capture detection
+- ❌ Disable telemetry
+- ✅ Disable the long press quick share
+- ✅ Disable the long press repost
+- ❌ Double-tap controls
+- ✅ Downloads
+- ❌ Drop the animated image cache
+- ❌ Enable voice comments
+- ❌ Expand activity list
+- ✅ Feature Gate Lab
+- ❌ Feature Gate Recorder
+- ✅ Feed filter
+- ✅ Feed tab navigation
+- ❌ Fit the video to the screen
+- ✅ Fix Google login
+- ❌ Foldable split comment view
+- ✅ Follow diagnostics
+- ❌ Ghost mode
+- ✅ Hide CAPTCHA popups
+- ❌ Hide Play Store update offer
+- ❌ Hide already seen videos
+- ❌ Hide comment popup ads
+- ✅ Hide comment typing suggestions
+- ✅ Hide feed LIVE button
+- ✅ Hide feed follow button
+- ✅ Hide feed save button
+- ✅ Hide feed search button
+- ✅ Hide floating promotions
+- ❌ Hide inbox items
+- ❌ Hide inbox stories
+- ❌ Hide search suggestions
+- ❌ Hide suggested accounts
+- ❌ Hide the launcher shortcuts
+- ❌ Hide the risk control CAPTCHA
+- ❌ Hide video overlays
+- ✅ Hold-and-slide 2x lock
+- ❌ In-app browser privacy guard
+- ✅ Keep the Favorites tab
+- ❌ Keep the screen's refresh rate
+- ❌ Limit background traffic
+- ❌ Location access governor
+- ❌ Long-press controls
+- ❌ Network request report
+- ❌ Not interested button
+- ❌ Notification controls
+- ✅ Open external links directly
+- ❌ Playback quality
+- ✅ Playback speed
+- ❌ Region spoof
+- ✅ Remember clear display
+- ❌ Remove LIVE extras
+- ❌ Remove content credential and card scanner assets
+- ❌ Remove creation tools
+- ❌ Remove unused language packs
+- ✅ Repost diagnostics
+- ❌ Resource and battery governor
+- ✅ Resume videos after scrolling
+- ✅ SIM spoof
+- ✅ Sanitize sharing links
+- ✅ Settings
+- ❌ Share sheet tools
+- ✅ Show LIVE search
+- ❌ Show author region
+- ✅ Show the progress bar
+- ✅ Show the progress bar thumbnail
+- ❌ Skip content warnings
+- ❌ Skip the splash ad
+- ❌ Skip update checks
+- ✅ Stay on the video in full screen
+- ❌ Stop on-device AI profiling
+- ✅ Stop video looping
+- ❌ Subtitle tools
+- ❌ Swipe-left controls
+- ✅ Translate comments
+- ✅ Use non-personalized search
+- ❌ Use system font
+
+</details>
+
+## TikTok (Metra) — 46.2.3
+Patch source: metra — v0.8.0
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 41/42 applied</summary>
+
+- ✅ Always show publish date
+- ✅ Comment sort controls
+- ✅ Copy comments without username
+- ✅ Custom offline videos limit
+- ❌ Diagnostic tools
+- ✅ Disable login requirement
+- ✅ Disable long-press quick share
+- ✅ Disable long-press repost
+- ✅ Disable screen capture detection
+- ✅ Downloads
+- ✅ Enable Live search
+- ✅ Enable non-personalized search
+- ✅ Enable voice comments
+- ✅ Feature Gate Lab
+- ✅ Feed filter
+- ✅ Feed tab navigation
+- ✅ Fix Google login
+- ✅ Foldable split comment view
+- ✅ Force show Auto scroll
+- ✅ Hide AI content
+- ✅ Hide CAPTCHA popups
+- ✅ Hide FYP unpersonalized slop videos
+- ✅ Hide feed LIVE button
+- ✅ Hide feed follow button
+- ✅ Hide feed save button
+- ✅ Hide feed search button
+- ✅ Hide floating promotions
+- ✅ Hide quick comment reactions
+- ✅ Hide suggested accounts
+- ✅ Hold-and-slide 2x lock
+- ✅ Open external links directly
+- ✅ Playback speed
+- ✅ Region spoof
+- ✅ Remember clear display
+- ✅ Resume videos after scrolling
+- ✅ Sanitize sharing links
+- ✅ Settings
+- ✅ Share sheet modification
+- ✅ Show seekbar
+- ✅ Show seekbar thumbnail
+- ✅ Stop video looping
+- ✅ Translate comments
+
+</details>
