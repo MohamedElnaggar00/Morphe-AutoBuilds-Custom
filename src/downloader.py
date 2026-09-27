@@ -174,35 +174,25 @@ def download_platform(
 
         platform_module = globals()[platform]
 
-        # Candidate versions (highest -> lowest) for universal robustness:
-        # - If config pins a version: only try that.
-        # - Else if override provided (retry path): try only that.
-        # - Else ask the patching CLI for compatible versions and try those.
-        # - If none returned: fall back to latest available from the store.
+        # The patch source is authoritative for compatibility. Always try the
+        # HIGHEST version supported by the current patch set first, regardless
+        # of a stale version pin in apps/*.json. Lower supported versions remain
+        # as fallback only when the highest one is unavailable from the provider.
         pinned = (config.get("version") or "").strip()
         if override_version:
             candidates = [override_version]
-        elif pinned:
-            candidates = [pinned]
-            # A pinned version can remain supported by the patch source while
-            # disappearing from a particular mirror. Keep the pinned version
-            # first, but allow the platform's current stable version as a
-            # download fallback. Patching still decides whether that newer
-            # version is actually compatible.
-            try:
-                latest = platform_module.get_latest_version(app_name, config)
-                if latest and latest not in candidates:
-                    candidates.append(latest)
-            except Exception as e:
-                logging.debug(f"Could not get latest version for {app_name} on {platform}: {e}")
         else:
             candidates = utils.get_supported_versions(config["package"], cli, patches)
-            try:
-                latest = platform_module.get_latest_version(app_name, config)
-                if latest and latest not in candidates:
-                    candidates.append(latest)
-            except Exception as e:
-                logging.debug(f"Could not get latest version for {app_name} on {platform}: {e}")
+            if candidates:
+                logging.info(f"Supported versions (highest first) for {app_name}: {candidates}")
+            else:
+                candidates = [pinned] if pinned else []
+                try:
+                    latest = platform_module.get_latest_version(app_name, config)
+                    if latest and latest not in candidates:
+                        candidates.append(latest)
+                except Exception as e:
+                    logging.debug(f"Could not get latest version for {app_name} on {platform}: {e}")
 
         last_error: Exception | None = None
         for version in candidates:
