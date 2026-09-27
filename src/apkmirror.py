@@ -1,8 +1,9 @@
 import re
 import json
 import logging
+import os
 from bs4 import BeautifulSoup
-from urllib.parse import quote
+from urllib.parse import quote, urljoin
 from src import session
 
 base_url = "https://www.apkmirror.com"
@@ -29,39 +30,83 @@ def _app_slug_candidates(config: dict) -> list[str]:
     return list(dict.fromkeys(slug for slug in candidates if slug))
 
 
+def _looks_like_cloudflare_challenge(response) -> bool:
+    """Detect Cloudflare challenge pages even when they return HTTP 200."""
+    try:
+        body = response.text[:5000].lower()
+    except Exception:
+        body = ""
+    return (
+        response.headers.get("cf-mitigated") == "challenge"
+        or "just a moment" in body
+        or "attention required" in body
+        or "verify you are human" in body
+        or "cf-chl-" in body
+        or "challenges.cloudflare.com" in body
+    )
+
+def _jina_get(url: str, **kwargs):
+    """Best-effort remote HTML retrieval for APKMirror challenged pages."""
+    try:
+        headers = dict(kwargs.pop("headers", {}) or {})
+        headers.update({
+            "X-Respond-With": "html",
+            "X-Engine": "browser",
+            "X-No-Cache": "true",
+            "X-Retain-Links": "all",
+        })
+        api_key = os.getenv("JINA_API_KEY")
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+            headers.setdefault("X-Proxy", "auto")
+        timeout = max(int(kwargs.pop("timeout", 20)), 75)
+        jina_url = f"https://r.jina.ai/{url}"
+        response = session.get(jina_url, headers=headers, timeout=timeout, **kwargs)
+        if response.status_code != 200 or not response.content:
+            return None
+        if _looks_like_cloudflare_challenge(response):
+            logging.warning("Jina Reader also returned a Cloudflare challenge for %s", url)
+            return None
+        logging.info("APKMirror HTML obtained through Jina Reader: %s", url)
+        return response
+    except Exception as exc:
+        logging.debug("Jina Reader fallback failed for %s: %s", url, exc)
+        return None
+
 def _cf_get(url, **kwargs):
-    """Fetch without trying to defeat Cloudflare on a GitHub-hosted runner."""
+    """Fetch APKMirror with direct, Jina, and Trawl HTML transports."""
     global _blocked_by_cloudflare
     if _blocked_by_cloudflare:
         raise ApkMirrorBlocked("APKMirror blocked this runner earlier in the build")
 
     kwargs.setdefault("timeout", 20)
     response = session.get(url, **kwargs)
-    if response.status_code == 403:
-        body = response.text[:2000].lower()
-        if response.headers.get("cf-mitigated") == "challenge" or "cloudflare" in body:
-            # CI jobs provide Trawl, the same browser-rendering service used by
-            # rvb.  It supplies ordinary page HTML/cookies; if it is absent or
-            # cannot obtain a page, preserve the existing provider fallback.
-            try:
-                from src import trawl
+    if not _looks_like_cloudflare_challenge(response):
+        return response
 
-                rendered = trawl.fetch(url)
-                if rendered:
-                    for name, value in rendered.cookies.items():
-                        session.cookies.set(name, value, domain=".apkmirror.com")
-                    logging.info("APKMirror page obtained through the CI browser service")
-                    return rendered
-            except Exception as exc:
-                logging.debug("APKMirror browser-service fallback failed: %s", exc)
-            _blocked_by_cloudflare = True
-            logging.warning(
-                "APKMirror served a Cloudflare challenge; skipping APKMirror "
-                "for this build instead of launching a browser."
-            )
-            raise ApkMirrorBlocked("APKMirror Cloudflare challenge")
-    return response
+    logging.info(
+        "APKMirror returned a Cloudflare challenge (HTTP %s); trying alternate HTML transports...",
+        response.status_code,
+    )
 
+    jina_response = _jina_get(url, timeout=kwargs.get("timeout", 20))
+    if jina_response is not None:
+        return jina_response
+
+    try:
+        from src import trawl
+        rendered = trawl.fetch(url)
+        if rendered:
+            for name, value in rendered.cookies.items():
+                session.cookies.set(name, value, domain=".apkmirror.com")
+            logging.info("APKMirror page obtained through the CI browser service")
+            return rendered
+    except Exception as exc:
+        logging.debug("APKMirror browser-service fallback failed: %s", exc)
+
+    _blocked_by_cloudflare = True
+    logging.warning("APKMirror served a Cloudflare challenge and all HTML fallbacks failed.")
+    raise ApkMirrorBlocked("APKMirror Cloudflare challenge")
 def get_build_number_for_version(version: str, config: dict) -> tuple[str | None, str]:
     """Fetch build number for a specific version from APKMirror.
     Returns (build_number, format_type) where format_type is 'parentheses' or 'build_suffix'.
@@ -157,7 +202,7 @@ def discover_app_main_url(config: dict) -> str | None:
                 candidates.sort(key=lambda x: len(x))
                 
                 if candidates:
-                    discovered = base_url + candidates[0]
+                    discovered = urljoin(base_url + "/", candidates[0])
                     logging.info(f"✓ Discovered main app page via search: {discovered}")
                     return discovered
             except Exception as e:
@@ -207,7 +252,7 @@ def _scrape_release_url_from_soup(soup, version: str, config: dict, build_number
             if candidates:
                 candidates.sort(key=lambda x: (x[0], len(x[1])))
                 chosen = candidates[0][1]
-                full_url = base_url + chosen
+                full_url = urljoin(base_url + "/", chosen)
                 logging.info(f"✓ Found release page on main listing for {current_ver}: {full_url}")
                 return full_url
     
@@ -541,7 +586,7 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             href = a['href']
             if '-android-apk-download' in href or href.rstrip('/').endswith('-download'):
                 if not href.endswith('#disqus_thread'):
-                    return base_url + href
+                    return urljoin(base_url + "/", href)
         link = row.find('a', class_='accent_color')
         if link and 'href' in link.attrs and not link['href'].endswith('#disqus_thread'):
             return base_url + link['href']
@@ -595,7 +640,7 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
 
         sub_url = soup.find('a', class_='downloadButton')
         if sub_url:
-            final_download_page_url = base_url + sub_url['href']
+            final_download_page_url = urljoin(base_url + "/", sub_url['href'])
             # Keep APKMirror's native APKM/APKS bundle intact. Morphe can
             # patch the bundle directly, so do not request forcebaseapk or
             # convert a split bundle into a standalone base APK here.
@@ -607,7 +652,7 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
 
             button = soup.find('a', id='download-link')
             if button:
-                return base_url + button['href']
+                return urljoin(base_url + "/", button['href'])
     except Exception as e:
         logging.error(f"Error in download flow: {e}")
 
