@@ -405,6 +405,10 @@ jobs:
           # The new_manifest.json (post-plan baseline) lives in the build-plan artifact
           if [ -f ./build-plan/new_manifest.json ]; then
             cp ./build-plan/new_manifest.json ./new_manifest.json
+          elif [ -f manifest.json ]; then
+            # Last-resort baseline: keep the previous manifest instead of
+            # replacing it with an empty/incomplete one.
+            cp manifest.json ./new_manifest.json
           fi
           # Flatten all per-build records into one directory
           mkdir -p build_records
@@ -412,8 +416,10 @@ jobs:
             find ./all-records -name "*.json" -exec cp {} build_records/ \; 2>/dev/null || true
           fi
           python scripts/merge_manifest.py || {
-            echo "⚠️ merge_manifest.py failed; continuing without manifest update."
-            rm -f manifest.json
+            echo "⚠️ merge_manifest.py failed; preserving the planning baseline."
+            if [ -f ./new_manifest.json ]; then
+              cp ./new_manifest.json ./manifest.json
+            fi
           }
           if [ -f manifest.json ]; then
             echo "✅ manifest.json built:"
@@ -444,6 +450,40 @@ jobs:
             echo "📭 Release 'latest' does not exist; it will be created."
           fi
       
+      - name: Prune Superseded APK Assets
+        if: steps.check-apks.outputs.skip_release == 'false' && steps.check-release.outputs.release_exists == 'true'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+
+          : > new_apks.txt
+          find ./all-apks -type f -name "*.apk" -exec basename {} \; | sort -u > new_apks.txt
+
+          gh release view latest --json assets --jq \
+            '.assets[] | select(.name | endswith(".apk")) | .name' \
+            > existing_apks.txt
+
+          # Protect every existing APK whose app/arch identity was NOT rebuilt.
+          # Older versions are deleted only when this run produced a replacement
+          # with the same identity prefix.
+          python - <<'PY'
+          from pathlib import Path
+          from scripts.cleanup_old_apks import identity_prefix
+
+          new_names = {x.strip() for x in Path("new_apks.txt").read_text().splitlines() if x.strip()}
+          existing_names = {x.strip() for x in Path("existing_apks.txt").read_text().splitlines() if x.strip()}
+          new_prefixes = {identity_prefix(x) for x in new_names}
+          keep = set(new_names)
+          keep.update(x for x in existing_names if identity_prefix(x) not in new_prefixes)
+          Path("keep_apks.txt").write_text("\n".join(sorted(keep)) + ("\n" if keep else ""), encoding="utf-8")
+          print(f"new/rebuilt: {len(new_names)}")
+          print(f"protected non-rebuilt existing APKs: {len(keep - new_names)}")
+          print(f"cleanup keep-set: {len(keep)}")
+          PY
+
+          python scripts/cleanup_old_apks.py --release latest --keep-file keep_apks.txt
       - name: Generate Release Notes
         if: steps.check-apks.outputs.skip_release == 'false'
         env:
@@ -532,21 +572,8 @@ jobs:
           if [ "${{ steps.check-release.outputs.release_exists }}" = "true" ]; then
             echo "⬆️ Uploading rebuilt assets in place and refreshing release metadata..."
 
-            # Delete superseded older-version APKs. The previous loop only deleted
-            # assets whose filename EXACTLY matched a new APK; since APK names
-            # embed the version, old versions (e.g. v2.4.0) never matched the new
-            # v2.5.0 and accumulated forever. cleanup_old_apks.py deletes any
-            # release APK sharing a {app}-{arch}- identity prefix with a new APK
-            # but with a different version.
-            : > keep_apks.txt
-            for apk in ./release-apks/*.apk; do
-              [ -f "$apk" ] || continue
-              basename "$apk" >> keep_apks.txt
-            done
-            python scripts/cleanup_old_apks.py --release latest --keep-file keep_apks.txt || \
-              echo "⚠️  cleanup_old_apks.py failed; continuing with exact-name cleanup"
-
-            # Upload new APKs and manifest
+            # Superseded APKs were pruned in the dedicated cleanup step.
+            # Existing APKs for apps that failed this run remain attached.
             gh release upload latest "${ASSETS[@]}" --clobber
             gh release edit latest \
               --title "Morphe APKs - $(date +'%Y-%m-%d %H:%M')" \
