@@ -844,6 +844,7 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
         cur_config_sig = get_app_config_signature(app)
         cur_src_sig = get_source_signature(src)
         old = old_entries.get(mkey)
+        old_config_sig = (old or {}).get("config_sig", "")
         old_src_sig = (old or {}).get("source_sig", "")
         if old and old_src_sig and _is_unreliable_source_sig(cur_src_sig):
             cur_src_sig = old_src_sig
@@ -852,6 +853,21 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
         # (populated post-build by record_build.py -> merge_manifest.py). Carry
         # it forward so we can compare it against the store's newest version.
         old_built_ver = (old or {}).get("built_version", "")
+
+        # A failed release can leave a valid APK asset attached to the
+        # release even when its manifest entry was lost. Recover it by
+        # (app, architecture) so a later failed rebuild still preserves the
+        # last known-good artifact in the next manifest.
+        if not old:
+            recovered = _recover_apk_from_release(app, arch, existing_apks)
+            if recovered:
+                carried_apk = recovered
+                old_built_ver = extract_version_from_filename(recovered)
+                logging.info(
+                    f"  {app}/{src}/{arch}: recovered existing release APK "
+                    f"without a manifest entry: {recovered}"
+                )
+
         if old:
             if not carried_apk or carried_apk not in existing_apk_set:
                 recovered = _recover_apk_from_release(app, arch, existing_apks)
@@ -884,6 +900,8 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
             reasons.append("force-rebuild")
         if not old:
             reasons.append("new-entry")
+            if carried_apk:
+                reasons.append("recovered-existing-apk")
         else:
             if old.get("config_version", "") != cur_app_ver:
                 reasons.append(f"app-version: {old.get('config_version','')!r}->{cur_app_ver!r}")
