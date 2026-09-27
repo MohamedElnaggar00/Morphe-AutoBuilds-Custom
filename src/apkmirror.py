@@ -220,7 +220,7 @@ def _get_api_variant_urls(
     headers = {
         "User-Agent": os.getenv(
             "APKMIRROR_API_USER_AGENT",
-            "Morphe-AutoBuilds-Custom/1.0",
+            "APKUpdater-v0",
         ),
         "Authorization": auth,
         "Content-Type": "application/json",
