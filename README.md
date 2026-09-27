@@ -70,7 +70,7 @@ This repository utilizes a robust Python-based pipeline to ensure high reliabili
 * **Multi-Source Strategy:** Intelligent fetching from APKMirror, APKPure, and Uptodown ensures high success rates even if one source is down.
 * **Granular Patch Control:** Simple text-based configuration allows for precise inclusion or exclusion of specific patches.
 * **Smart Failover:** The system automatically switches download sources if a fetch attempt fails.
-* **Auto-Signing:** All APKs are signed with a consistent public keystore, making them ready to install immediately.
+* **Auto-Signing:** APKs are signed during CI with the private signing keystore supplied through GitHub Actions Secrets; the keystore is decoded only on the runner and removed after the build.
 * **Clean Release Cycle:** Previous releases are replaced rather than archived, preventing clutter and making it easy for external managers (like Orion) to track updates.
 
 ---
@@ -227,6 +227,32 @@ python -m src
 
 
 ---
+
+## 🔐 APK Signing
+
+The repository does **not** store the private signing keystore in Git.
+
+The CI workflow expects one GitHub Actions secret:
+
+- `MORPHE_KEYSTORE_BASE64` — base64-encoded contents of the private BKS keystore.
+
+The current signing configuration is:
+
+- **Keystore type:** BKS (Bouncy Castle Keystore v2)
+- **Alias:** `Morphe`
+- **Keystore password:** empty
+- **Key password:** empty
+
+### Add the signing secret
+
+On GitHub:
+
+1. Open **Settings → Secrets and variables → Actions**.
+2. Create a **New repository secret** named `MORPHE_KEYSTORE_BASE64`.
+3. On your own computer, base64-encode the keystore and paste the result as the secret value. Do not commit the keystore itself.
+4. Run the workflow manually once and verify that the produced APK is signed with the expected certificate.
+
+The workflow deletes the temporary decoded keystore at the end of each build job.
 
 ## 🔄 GitHub Actions Workflows
 
