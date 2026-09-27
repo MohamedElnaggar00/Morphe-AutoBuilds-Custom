@@ -1,11 +1,12 @@
 #!/usr/bin/env python3
-"""Generate the repository README from patch-config.json and live patch-source metadata."""
+"""Generate README from the exact Morphe patch bundles used by the builder."""
 
 from __future__ import annotations
 
 import json
 import os
 import re
+import subprocess
 from pathlib import Path
 
 import requests
@@ -29,45 +30,32 @@ APP_NAMES = {
     "facebook": "Facebook",
 }
 
+WORK = ROOT / ".readme-cache"
+WORK.mkdir(exist_ok=True)
+
 def api_json(url: str):
     r = requests.get(url, headers=HEADERS, timeout=30)
     r.raise_for_status()
     return r.json()
 
-def release_data(owner: str, repo: str) -> dict:
+def latest_release(owner: str, repo: str) -> dict:
     return api_json(f"{API}/repos/{owner}/{repo}/releases/latest")
 
-def download_release_asset(release: dict, asset_name: str):
-    for asset in release.get("assets", []):
-        if asset.get("name") == asset_name:
-            headers = dict(HEADERS)
-            headers["Accept"] = "application/octet-stream"
-            r = requests.get(asset["url"], headers=headers, timeout=60)
-            r.raise_for_status()
-            return r.json() if "json" in asset.get("content_type", "").lower() else json.loads(r.content)
-    return None
-
-def patch_metadata(owner: str, repo: str):
-    try:
-        release = release_data(owner, repo)
-        data = download_release_asset(release, "patches-list.json")
-        if data is not None:
-            return data
-    except Exception:
-        pass
-
-    url = f"{API}/repos/{owner}/{repo}/contents/patches-list.json"
-    try:
-        r = requests.get(url, headers=HEADERS, timeout=30)
-        r.raise_for_status()
-        obj = r.json()
-        raw_headers = dict(HEADERS)
-        raw_headers["Accept"] = "application/vnd.github.raw+json"
-        rr = requests.get(obj["download_url"], headers=raw_headers, timeout=60)
-        rr.raise_for_status()
-        return rr.json()
-    except Exception:
-        return None
+def download_asset(release: dict, suffix: str, output: Path) -> str:
+    candidates = [
+        a for a in release.get("assets", [])
+        if a.get("name", "").lower().endswith(suffix.lower())
+        and not a.get("name", "").lower().endswith(".asc")
+    ]
+    if not candidates:
+        raise RuntimeError(f"No {suffix} asset in {release.get('tag_name', 'latest')}")
+    asset = candidates[0]
+    headers = dict(HEADERS)
+    headers["Accept"] = "application/octet-stream"
+    r = requests.get(asset["url"], headers=headers, timeout=120)
+    r.raise_for_status()
+    output.write_bytes(r.content)
+    return asset["name"]
 
 def source_repo(source: str) -> tuple[str, str]:
     data = json.loads((ROOT / "sources" / f"{source}.json").read_text(encoding="utf-8"))
@@ -77,16 +65,17 @@ def source_repo(source: str) -> tuple[str, str]:
     ]
     if not repos:
         raise RuntimeError(f"No patch repository found for source {source}")
-    return repos[-1]["user"], repos[-1]["repo"]
+    x = repos[-1]
+    return x["user"], x["repo"]
 
-def app_config(app_name: str) -> dict:
+def app_package(app_name: str) -> str:
     for platform in ("apkmirror", "apkpure", "uptodown", "aptoide", "apkcombo"):
         p = ROOT / "apps" / platform / f"{app_name}.json"
         if p.exists():
-            return json.loads(p.read_text(encoding="utf-8"))
-    return {}
+            return json.loads(p.read_text(encoding="utf-8")).get("package", "")
+    raise RuntimeError(f"No package config found for {app_name}")
 
-def selected_rules(app_name: str, source: str) -> tuple[set[str], set[str]]:
+def local_rules(app_name: str, source: str) -> tuple[set[str], set[str]]:
     p = ROOT / "patches" / f"{app_name}-{source}.txt"
     enabled, disabled = set(), set()
     if not p.exists():
@@ -101,134 +90,162 @@ def selected_rules(app_name: str, source: str) -> tuple[set[str], set[str]]:
             disabled.add(line[1:].strip())
     return enabled, disabled
 
-def compatible_with(patch: dict, package: str) -> bool:
-    cps = patch.get("compatiblePackages")
-    if cps is None:
-        return True
-    if isinstance(cps, dict):
-        return package in cps
-    if isinstance(cps, list):
-        return any(isinstance(x, dict) and x.get("packageName") == package for x in cps)
-    return False
+def run_cli(cli: Path, patches: Path, args: list[str]) -> str:
+    cmd = ["java", "-jar", str(cli), *args, "--patches", str(patches)]
+    result = subprocess.run(cmd, cwd=WORK, text=True, capture_output=True)
+    if result.returncode != 0:
+        raise RuntimeError(result.stdout + "\n" + result.stderr)
+    return result.stdout
 
-def patch_targets(patch: dict, package: str) -> list[str]:
-    versions = []
-    cps = patch.get("compatiblePackages")
-    if isinstance(cps, dict):
-        targets = cps.get(package, [])
-        for item in targets:
-            if isinstance(item, str):
-                versions.append(item)
-            elif isinstance(item, dict) and item.get("version"):
-                versions.append(str(item["version"]))
-        return versions
-    if not isinstance(cps, list):
-        return versions
-    for cp in cps:
-        if not isinstance(cp, dict) or cp.get("packageName") != package:
-            continue
-        for target in cp.get("targets") or []:
-            if isinstance(target, dict) and target.get("version"):
-                versions.append(str(target["version"]))
-    return versions
+def parse_patch_list(output: str) -> list[tuple[str, bool]]:
+    rows = []
+    current_name = None
+    current_enabled = None
+    for raw in output.splitlines():
+        line = raw.strip()
+        if line.startswith("Name: "):
+            if current_name is not None:
+                rows.append((current_name, bool(current_enabled)))
+            current_name = line[6:].strip()
+            current_enabled = None
+        elif line.startswith("Enabled: "):
+            current_enabled = line[9:].strip().lower() == "true"
+    if current_name is not None:
+        rows.append((current_name, bool(current_enabled)))
+    unique = []
+    seen = set()
+    for name, enabled in rows:
+        if name not in seen:
+            unique.append((name, enabled))
+            seen.add(name)
+    return unique
 
-def version_key(value: str):
-    return tuple(int(x) if x.isdigit() else x.lower()
-                 for x in re.findall(r"\d+|[A-Za-z]+", value))
-
-def highest_version(values: list[str]) -> str:
+def parse_versions(output: str) -> str:
+    values = []
+    for raw in output.splitlines():
+        line = raw.strip()
+        if re.fullmatch(r"\d+(?:\.\d+)+(?:[-._A-Za-z0-9]+)?(?:\(\d+\))?", line):
+            values.append(line)
+    if not values:
+        for raw in output.splitlines():
+            line = raw.strip()
+            if re.fullmatch(r"\d+(?:\.\d+)+\s+build\s+\d+", line, re.I):
+                values.append(line)
     if not values:
         return "—"
-    try:
-        return max(values, key=version_key)
-    except Exception:
-        return values[0]
 
-def md_escape(text: str) -> str:
-    return text.replace("\\", "\\\\").replace("|", "\\|")
+    def key(value):
+        parts = re.findall(r"\d+|[A-Za-z]+", value)
+        return tuple(int(x) if x.isdigit() else x.lower() for x in parts)
 
-def generate():
+    return max(values, key=key)
+
+def md_escape(value: str) -> str:
+    return value.replace("\\", "\\\\").replace("|", "\\|")
+
+def main():
     config = json.loads((ROOT / "patch-config.json").read_text(encoding="utf-8"))
-    arch_config = json.loads((ROOT / "arch-config.json").read_text(encoding="utf-8"))
-    arch_map = {(x["app_name"], x["source"]): ", ".join(x.get("arches", [])) for x in arch_config}
+    arch = {
+        (x["app_name"], x["source"]): ", ".join(x.get("arches", []))
+        for x in json.loads((ROOT / "arch-config.json").read_text(encoding="utf-8"))
+    }
+
+    cli_release = latest_release("MorpheApp", "morphe-cli")
+    cli_name = next(
+        a["name"] for a in cli_release.get("assets", [])
+        if a["name"].lower().endswith(".jar") and "dev" not in a["name"].lower()
+    )
+    cli = WORK / cli_name
+    if not cli.exists():
+        download_asset(cli_release, ".jar", cli)
 
     sections = ["# Morphe AutoBuilds", ""]
-    errors = []
+    failures = []
 
     for item in config.get("patch_list", []):
         app = item["app_name"]
         source = item["source"]
-        package = app_config(app).get("package", "")
         display = APP_NAMES.get(app, app.title())
         try:
-            owner, source_repo_name = source_repo(source)
-            meta = patch_metadata(owner, source_repo_name)
-            if not meta:
-                raise RuntimeError("patches-list.json unavailable")
-            patches = [p for p in meta.get("patches", []) if compatible_with(p, package)]
-            enabled, disabled = selected_rules(app, source)
+            owner, repo = source_repo(source)
+            release = latest_release(owner, repo)
+            mpp = WORK / f"{source}-{release['tag_name'].lstrip('v')}.mpp"
+            if not mpp.exists():
+                download_asset(release, ".mpp", mpp)
 
-            rows = []
-            versions = []
-            for p in patches:
-                name = p.get("name", "").strip()
-                if not name:
-                    continue
-                versions.extend(patch_targets(p, package))
-                if name in disabled:
+            package = app_package(app)
+            patch_output = run_cli(
+                cli,
+                mpp,
+                [
+                    "list-patches",
+                    "--with-descriptions=false",
+                    "--filter-package-name",
+                    package,
+                ],
+            )
+            rows = parse_patch_list(patch_output)
+            if not rows:
+                raise RuntimeError("Morphe CLI returned no patches")
+
+            enabled_rules, disabled_rules = local_rules(app, source)
+            final_rows = []
+            for name, default_enabled in rows:
+                if name in disabled_rules:
                     applied = False
-                elif name in enabled:
+                elif name in enabled_rules:
                     applied = True
                 else:
-                    applied = bool(p.get("default", p.get("use", False)))
-                rows.append((name, applied))
+                    applied = default_enabled
+                final_rows.append((name, applied))
 
-            unique = []
-            seen = set()
-            for name, applied in rows:
-                if name not in seen:
-                    unique.append((name, applied))
-                    seen.add(name)
-
-            app_version = highest_version(versions)
-            source_version = str(meta.get("version", "latest")).lstrip("v")
-            arch = arch_map.get((app, source), "—")
-            applied_count = sum(1 for _, applied in unique if applied)
+            version_output = run_cli(
+                cli,
+                mpp,
+                ["list-versions", "--filter-package-names", package],
+            )
+            app_version = parse_versions(version_output)
+            source_version = str(release.get("tag_name", "latest")).lstrip("v")
+            applied_count = sum(1 for _, value in final_rows if value)
 
             sections += [
                 f"## {display} — {md_escape(app_version)}",
-                f"**Patch source:** source={md_escape(source)} — v{md_escape(source_version)}",
-                f"**Architecture:** {md_escape(arch)}",
+                f"Patch source: {md_escape(source)} — v{md_escape(source_version)}",
+                f"Architecture: {md_escape(arch.get((app, source), '—'))}",
                 "",
                 "<details>",
-                f"<summary>🩹 Patches — {applied_count}/{len(unique)} applied</summary>",
+                f"<summary>🩹 Patches — {applied_count}/{len(final_rows)} applied</summary>",
                 "",
             ]
-            for name, applied in unique:
+            for name, applied in final_rows:
                 sections.append(f"- {'✅' if applied else '❌'} {md_escape(name)}")
             sections += ["", "</details>", ""]
 
         except Exception as exc:
-            errors.append(f"{app}/{source}: {exc}")
+            failures.append(f"{app}/{source}: {exc}")
             sections += [
                 f"## {display} — —",
-                f"**Patch source:** source={source}",
+                f"Patch source: {source}",
                 "",
                 "<details>",
                 "<summary>🩹 Patches — unavailable</summary>",
                 "",
-                f"> Could not refresh patch metadata: {exc}",
+                f"> README refresh failed for this app: {exc}",
                 "",
                 "</details>",
                 "",
             ]
 
-    if errors:
-        print("README refresh completed with warnings:")
-        for error in errors:
-            print(" -", error)
+    if failures:
+        print("README refresh failed:")
+        for failure in failures:
+            print(" -", failure)
+        raise SystemExit(1)
 
-    (ROOT / "README.md").write_text("\n".join(sections).rstrip() + "\n", encoding="utf-8")
+    (ROOT / "README.md").write_text(
+        "\n".join(sections).rstrip() + "\n",
+        encoding="utf-8",
+    )
 
 if __name__ == "__main__":
-    generate()
+    main()
