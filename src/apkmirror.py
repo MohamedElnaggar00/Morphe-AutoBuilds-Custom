@@ -279,8 +279,28 @@ def _get_api_variant_urls(
         def dpi_match(item):
             if wanted_dpi in ("", "nodpi", "all", "120-640dpi"):
                 return True
-            dpis = " ".join(str(x).lower() for x in (item.get("dpis") or []))
-            return wanted_dpi in dpis
+
+            raw_dpis = [str(x).lower() for x in (item.get("dpis") or [])]
+            if not raw_dpis:
+                return False
+
+            # Config can use a range such as 240-640dpi while the API may expose
+            # individual densities (e.g. 360, 480, 640) or a range per variant.
+            range_match = re.fullmatch(r"(\\d+)\\s*-\\s*(\\d+)dpi", wanted_dpi)
+            if range_match:
+                low, high = map(int, range_match.groups())
+                for value in raw_dpis:
+                    m = re.fullmatch(r"(\\d+)", value)
+                    if m and low <= int(m.group(1)) <= high:
+                        return True
+                    m = re.fullmatch(r"(\\d+)\\s*-\\s*(\\d+)dpi", value)
+                    if m:
+                        item_low, item_high = map(int, m.groups())
+                        if item_low >= low and item_high <= high:
+                            return True
+                return False
+
+            return wanted_dpi in raw_dpis
 
         candidates = [
             item for item in (entry.get("apks") or [])
@@ -321,20 +341,8 @@ def _download_from_variant_page(
             return None, False
 
         variant_soup = BeautifulSoup(variant_response.content, "html.parser")
-        variant_text = variant_soup.get_text(" ", strip=True).lower()
 
         wanted_type = str(config.get("type") or "APK").lower()
-        is_bundle = "bundle" in variant_text or bool(
-            variant_soup.find(class_=lambda value: value and "apkm-badge" in str(value).lower())
-        )
-
-        # Type is checked here because the API's compact response does not
-        # expose a dedicated APK/BUNDLE field for every release.
-        if wanted_type == "bundle" and not is_bundle:
-            return None, False
-        if wanted_type == "apk" and is_bundle:
-            return None, False
-
         download_button = variant_soup.find("a", class_="downloadButton")
         if not download_button or not download_button.get("href"):
             logging.info("No downloadButton on APKMirror variant page: %s", variant_url)
@@ -365,6 +373,18 @@ def _download_from_variant_page(
             return None, True
 
         file_url = urljoin(base_url + "/", direct["href"])
+        file_path = file_url.split("?", 1)[0].lower()
+
+        # Validate the artifact type at the final file URL, where APKMirror's
+        # native extension is unambiguous. This avoids false positives from
+        # unrelated "bundle" text elsewhere on the HTML page.
+        if wanted_type == "bundle" and not file_path.endswith(".apkm"):
+            logging.info("API variant resolved a non-APKM artifact; trying next variant")
+            return None, True
+        if wanted_type == "apk" and file_path.endswith(".apkm"):
+            logging.info("API variant resolved an APKM artifact; trying next variant")
+            return None, True
+
         logging.info("✓ APKMirror direct file link resolved: %s", file_url)
         return file_url, True
     except Exception as exc:
