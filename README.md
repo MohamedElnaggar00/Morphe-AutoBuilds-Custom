@@ -319,13 +319,20 @@ Architecture: arm64-v8a
 </details>
 
 ## Adobe-Acrobat — —
-Patch source: hoomans — v1.53.0
-Architecture: arm64-v8a
+Patch source: rushiranpise — v1.22.0
+Architecture: —
 
 <details>
-<summary>🩹 Patches — 1/1 applied</summary>
+<summary>🩹 Patches — 1/8 applied</summary>
 
 - ✅ Unlock Pro
+- ❌ Disable PairIP license check
+- ❌ Provide Original app certificate
+- ❌ Spoof Widevine / DRM level
+- ❌ Fix Firebase after re-signing
+- ❌ GmsCore support (MicroG)
+- ❌ Spoof install source
+- ❌ Spoof app signature
 
 </details>
 
@@ -400,15 +407,15 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
+- ❌ Limit background traffic
 - ❌ Drop the animated image cache
 - ❌ Skip update checks
-- ❌ Limit background traffic
 - ❌ Skip the splash ad
-- ❌ Remove content credential and card scanner assets
-- ❌ Remove unused language packs
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
 - ❌ Block P2P video relay
+- ❌ Remove content credential and card scanner assets
+- ❌ Remove unused language packs
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
