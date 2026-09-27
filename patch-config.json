@@ -31,6 +31,10 @@
     {
       "app_name": "adobe-acrobat",
       "source": "hoomans"
+    },
+    {
+      "app_name": "tiktok",
+      "source": "hushfeed"
     }
   ]
 }
