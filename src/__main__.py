@@ -116,16 +116,12 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         pass
 
     if is_bundle_app:
-        # Bundle apps may fall back to other public stores, but
-        # download_platform strictly validates any declared Morphe
-        # versionCode before returning the bundle.
+        # Bundle patch sets are tied to the exact split artifact they were
+        # authored for. Do not substitute an XAPK/APKS from another store:
+        # the same version string can have a different versionCode/variant.
+        # Facebook/Hushfacebook specifically expects APKMirror's native APKM.
         download_methods = [
             downloader.download_apkmirror,
-            downloader.download_aptoide,
-            downloader.download_github,
-            downloader.download_uptodown,
-            downloader.download_apkpure,
-            downloader.download_apkcombo,
         ]
     else:
         download_methods = [
@@ -147,7 +143,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             # Bundle apps can be APKM/APKS/XAPK depending on the source.
             # download_platform has already enforced any available Morphe
             # build-code validation before returning the file.
-            if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk", ".zip"}:
+            if is_bundle_app and input_apk.suffix.lower() != ".apkm":
                 logging.warning(
                     f"Rejected non-bundle input {input_apk.name} for bundle-configured "
                     f"app {app_name}."
