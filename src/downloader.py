@@ -65,13 +65,11 @@ def download_required(source: str) -> tuple[list[Path], str]:
             if asset_name.endswith(".asc"):
                 continue
 
-            # Keep the existing Morphe-specific asset filtering.
-            if "morphe-patches" in entry_name or "morphe-cli" in entry_name:
-                if asset_name.endswith(".mpp") or (
-                    asset_name.lower().endswith(".jar")
-                ):
-                    downloaded_files.append(download_resource(asset_url))
-            else:
+            # Patch sources publish a .mpp bundle alongside optional checksums/SBOMs.
+            # Only download the patch bundle; the Morphe CLI is the separate .jar.
+            if asset_name.lower().endswith(".mpp"):
+                downloaded_files.append(download_resource(asset_url))
+            elif "morphe-cli" in entry_name and asset_name.lower().endswith(".jar"):
                 downloaded_files.append(download_resource(asset_url))
 
     return downloaded_files, name
