@@ -285,15 +285,15 @@ Patch source: hushfacebook — v0.2.0
 - ✅ Install beside Meta's apps
 - ❌ Marketplace only
 - ❌ Material You theme
-- ❌ Open links in external browser
-- ❌ Open on a chosen tab
-- ❌ Restore screens on re-signed builds
-- ❌ Resume long videos
-- ❌ Sanitize sharing links
-- ❌ Stop Story auto-advance
-- ❌ Stop update prompts
-- ❌ Tag suggestions only after @
-- ❌ Tap to play
+- ✅ Open links in external browser
+- ✅ Open on a chosen tab
+- ✅ Restore screens on re-signed builds
+- ✅ Resume long videos
+- ✅ Sanitize sharing links
+- ✅ Stop Story auto-advance
+- ✅ Stop update prompts
+- ✅ Tag suggestions only after @
+- ✅ Tap to play
 - ❌ Use the phone's emoji
 - ❌ Use the system font
 
