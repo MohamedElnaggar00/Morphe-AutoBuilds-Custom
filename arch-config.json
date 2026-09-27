@@ -68,5 +68,12 @@
     "arches": [
       "arm64-v8a"
     ]
+  },
+  {
+    "app_name": "camscanner",
+    "source": "hoodles",
+    "arches": [
+      "arm64-v8a"
+    ]
   }
 ]
