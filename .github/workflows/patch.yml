@@ -225,6 +225,7 @@ jobs:
       - name: Prepare Signing Keystore
         env:
           MORPHE_KEYSTORE_BASE64: ${{ secrets.MORPHE_KEYSTORE_BASE64 }}
+          MORPHE_KEY_PASSWORD: Morphe
         run: |
           set -euo pipefail
 
@@ -234,12 +235,43 @@ jobs:
             exit 1
           fi
 
-          SIGNING_KEYSTORE_PATH="${RUNNER_TEMP}/morphe-signing.bks"
-          printf "%s" "${MORPHE_KEYSTORE_BASE64}" | base64 --decode > "${SIGNING_KEYSTORE_PATH}"
+          # The supplied signing key is BKS. The original Morphe-AutoBuilds
+          # workflow signs with a JKS file, so convert the same key material
+          # to JKS at runtime instead of committing the private key.
+          sudo apt-get update
+          sudo apt-get install -y libbcprov-java
+
+          SOURCE_KEYSTORE="${RUNNER_TEMP}/morphe-signing.bks"
+          SIGNING_KEYSTORE_PATH="${RUNNER_TEMP}/morphe-signing.jks"
+
+          printf "%s" "${MORPHE_KEYSTORE_BASE64}" | base64 --decode > "${SOURCE_KEYSTORE}"
+          chmod 600 "${SOURCE_KEYSTORE}"
+
+          if [ ! -s "${SOURCE_KEYSTORE}" ]; then
+            echo "::error::Decoded signing keystore is empty."
+            exit 1
+          fi
+
+          keytool -importkeystore \
+            -providerclass org.bouncycastle.jce.provider.BouncyCastleProvider \
+            -providerpath /usr/share/java/bcprov.jar \
+            -srckeystore "${SOURCE_KEYSTORE}" \
+            -srcstoretype BKS \
+            -srcstorepass "" \
+            -srckeypass "${MORPHE_KEY_PASSWORD}" \
+            -srcalias Morphe \
+            -destkeystore "${SIGNING_KEYSTORE_PATH}" \
+            -deststoretype JKS \
+            -deststorepass public \
+            -destkeypass public \
+            -destalias public \
+            -noprompt
+
           chmod 600 "${SIGNING_KEYSTORE_PATH}"
+          rm -f "${SOURCE_KEYSTORE}"
 
           if [ ! -s "${SIGNING_KEYSTORE_PATH}" ]; then
-            echo "::error::Decoded signing keystore is empty."
+            echo "::error::JKS signing keystore conversion failed."
             exit 1
           fi
 
@@ -250,12 +282,11 @@ jobs:
           ARCH: ${{ matrix.arch }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TRAWL_URL: http://localhost:8191
-          SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/morphe-signing.bks
-          SIGNING_KEYSTORE_TYPE: BKS
-          SIGNING_KEY_ALIAS: Morphe
-          # The supplied BKS keystore has no password.
-          SIGNING_KEYSTORE_PASSWORD: ""
-          SIGNING_KEY_PASSWORD: ""
+          SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/morphe-signing.jks
+          SIGNING_KEYSTORE_TYPE: JKS
+          SIGNING_KEY_ALIAS: public
+          SIGNING_KEYSTORE_PASSWORD: public
+          SIGNING_KEY_PASSWORD: public
         run: |
           echo "Building ${{ matrix.app_name }} with ${{ matrix.source }}..."
           sleep $((RANDOM % 30)).$((RANDOM % 100))
@@ -265,7 +296,7 @@ jobs:
       - name: Cleanup Signing Keystore
         if: always()
         run: |
-          rm -f "${RUNNER_TEMP}/morphe-signing.bks"
+          rm -f "${RUNNER_TEMP}/morphe-signing.bks" "${RUNNER_TEMP}/morphe-signing.jks"
 
       - name: Record Build Outputs
         if: always()
