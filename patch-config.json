@@ -23,6 +23,10 @@
     {
       "app_name": "facebook",
       "source": "hushfacebook"
+    },
+    {
+      "app_name": "messenger",
+      "source": "rushiranpise"
     }
   ]
 }
