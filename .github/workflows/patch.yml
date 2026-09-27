@@ -177,6 +177,27 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
 
+      - name: Prepare Signing Keystore
+        env:
+          MORPHE_KEYSTORE_BASE64: ${{ secrets.MORPHE_KEYSTORE_BASE64 }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "${MORPHE_KEYSTORE_BASE64:-}" ]; then
+            echo "::error::Missing GitHub Actions secret MORPHE_KEYSTORE_BASE64"
+            echo "Add the base64-encoded BKS keystore in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          SIGNING_KEYSTORE_PATH="${RUNNER_TEMP}/morphe-signing.bks"
+          printf "%s" "${MORPHE_KEYSTORE_BASE64}" | base64 --decode > "${SIGNING_KEYSTORE_PATH}"
+          chmod 600 "${SIGNING_KEYSTORE_PATH}"
+
+          if [ ! -s "${SIGNING_KEYSTORE_PATH}" ]; then
+            echo "::error::Decoded signing keystore is empty."
+            exit 1
+          fi
+
       - name: Build APK
         env:
           APP_NAME: ${{ matrix.app_name }}
@@ -184,11 +205,22 @@ jobs:
           ARCH: ${{ matrix.arch }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TRAWL_URL: http://localhost:8191
+          SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/morphe-signing.bks
+          SIGNING_KEYSTORE_TYPE: BKS
+          SIGNING_KEY_ALIAS: Morphe
+          # The supplied BKS keystore has no password.
+          SIGNING_KEYSTORE_PASSWORD: ""
+          SIGNING_KEY_PASSWORD: ""
         run: |
           echo "Building ${{ matrix.app_name }} with ${{ matrix.source }}..."
           sleep $((RANDOM % 30)).$((RANDOM % 100))
-          
+
           python -m src
+
+      - name: Cleanup Signing Keystore
+        if: always()
+        run: |
+          rm -f "${RUNNER_TEMP}/morphe-signing.bks"
 
       - name: Record Build Outputs
         if: always()
