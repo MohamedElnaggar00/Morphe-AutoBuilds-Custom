@@ -1,505 +1,506 @@
-## YouTube — 21.38.123
+# Morphe AutoBuilds
+
+## YouTube — —
 Patch source: morphe — v1.44.0
+Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 83/88 applied</summary>
+<summary>🩹 Patches — 84/88 applied</summary>
 
-- ✅ Add to queue
-- ✅ Alternative thumbnails
-- ✅ Ambient mode
-- ✅ App refresh rate
-- ✅ Bypass image region restrictions
-- ✅ Bypass link redirects
-- ✅ Captions
-- ✅ Change form factor
-- ✅ Change header
-- ❌ Change installer source
-- ✅ Change start page
-- ✅ Channel search
-- ✅ Check watch history domain name resolution
 - ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ✅ Disable Play Store updates
+- ✅ Hide ads
+- ✅ Channel search
 - ✅ Copy video link
-- ✅ Custom branding
-- ✅ Custom player overlay opacity
-- ✅ Disable DRC audio
-- ❌ Disable Play Store updates
-- ✅ Disable QUIC protocol
-- ✅ Disable Shorts resuming on startup
+- ✅ Remove viewer discretion dialog
 - ✅ Disable double tap actions
-- ✅ Disable fullscreen gestures
-- ✅ Disable haptic feedback
-- ✅ Disable layout updates
-- ✅ Disable player popup panels
-- ✅ Disable playlist autoplay
-- ✅ Disable rolling number animations
-- ✅ Disable scrolling speed limit
-- ✅ Disable sign in to TV popup
-- ✅ Disable video codecs
 - ✅ Double tap to seek
 - ✅ Downloads
-- ✅ Enable debugging
-- ✅ Exit fullscreen mode
-- ✅ Force fullscreen landscape
-- ✅ Force original audio
-- ✅ Fullscreen video scale
-- ✅ GmsCore support
-- ✅ Hide Shorts components
-- ✅ Hide ads
+- ✅ Disable haptic feedback
+- ✅ Loop video
+- ✅ Play all
+- ✅ Reload video
+- ✅ Save to Watch later
+- ✅ Seekbar
+- ✅ Swipe controls
+- ✅ Custom branding
+- ✅ Change header
+- ✅ Hide video action buttons
+- ✅ Navigation bar
+- ✅ Hide player overlay buttons
+- ✅ Captions
+- ✅ Disable layout updates
+- ✅ Add to queue
+- ✅ Change form factor
+- ✅ Ambient mode
 - ✅ Hide autoplay preview
 - ✅ Hide end screen cards
 - ✅ Hide end screen suggested video
-- ✅ Hide info cards
 - ✅ Hide layout components
+- ✅ Hide info cards
 - ✅ Hide player flyout menu components
-- ✅ Hide player overlay buttons
+- ✅ Disable player popup panels
 - ✅ Hide related video overlay
 - ✅ Hide related videos
-- ✅ Hide timestamp
-- ✅ Hide video action buttons
-- ✅ Loop video
-- ✅ Media notification controls
-- ✅ Miniplayer
-- ✅ Mute button
-- ✅ Navigation bar
-- ❌ Network proxy
-- ✅ Open Shorts in regular player
-- ✅ Open channel of live avatar
-- ✅ Open links externally
-- ✅ Open system share sheet
-- ✅ Open videos fullscreen
-- ✅ Override YouTube Music buttons
-- ❌ Override certificate pinning
-- ✅ Play all
-- ✅ Playback in feeds
-- ✅ Playback speed
-- ✅ PoToken provider
-- ✅ Reload video
-- ✅ Remember live stream playback position
-- ✅ Remove background playback restrictions
-- ✅ Remove viewer discretion dialog
-- ✅ Return YouTube Dislike
-- ✅ Sanitize sharing links
-- ✅ Save to Watch later
-- ✅ Seekbar
+- ✅ Disable rolling number animations
 - ✅ Settings menu filter
+- ✅ Hide Shorts components
+- ✅ Disable sign in to TV popup
+- ✅ Hide timestamp
+- ✅ Open channel of live avatar
+- ✅ Miniplayer
+- ✅ Override YouTube Music buttons
+- ✅ Playback in feeds
+- ✅ Mute button
+- ✅ Disable fullscreen gestures
+- ✅ Exit fullscreen mode
+- ✅ Force fullscreen landscape
+- ✅ Fullscreen video scale
+- ✅ Open videos fullscreen
+- ✅ Custom player overlay opacity
+- ✅ Disable playlist autoplay
+- ✅ Return YouTube Dislike
+- ✅ Disable scrolling speed limit
+- ✅ Open system share sheet
 - ✅ Shorts autoplay
+- ✅ Disable Shorts resuming on startup
+- ✅ Open Shorts in regular player
 - ✅ SponsorBlock
+- ✅ Change start page
+- ✅ Theme
+- ✅ Alternative thumbnails
+- ✅ Bypass image region restrictions
+- ✅ Wide search bar
+- ✅ Remove background playback restrictions
+- ✅ Enable debugging
+- ✅ Check watch history domain name resolution
+- ✅ GmsCore support
+- ✅ Bypass link redirects
+- ✅ Open links externally
+- ✅ Media notification controls
+- ✅ PoToken provider
+- ✅ Sanitize sharing links
+- ❌ Network proxy
+- ✅ Disable QUIC protocol
+- ✅ App refresh rate
+- ✅ Spoof video streams
 - ✅ Spoof app version
 - ✅ Spoof device dimensions
-- ✅ Spoof video streams
-- ✅ Swipe controls
-- ✅ Theme
+- ✅ Disable DRC audio
+- ✅ Force original audio
+- ✅ Disable video codecs
+- ✅ Remember live stream playback position
 - ✅ Video quality
+- ✅ Playback speed
 - ✅ Voice over translation
-- ✅ Wide search bar
 
 </details>
 
-## Reddit — 2026.38.0
+## Reddit — —
 Patch source: morphe — v1.44.0
+Architecture: arm64-v8a
 
 <details>
 <summary>🩹 Patches — 18/24 applied</summary>
 
-- ✅ App icon
-- ❌ Change installer source
 - ❌ Clone app
-- ❌ Custom branding name for Reddit
-- ✅ Custom font
+- ❌ Change installer source
+- ❌ Override certificate pinning
 - ❌ Disable Play Store updates
-- ✅ Disable modern home
-- ✅ Disable screenshot popup
+- ✅ Hide ads
+- ✅ Custom font
 - ✅ Force system font
 - ✅ Hide Ask button
-- ❌ Hide Reddit search
-- ✅ Hide Trending shelves
-- ✅ Hide ads
+- ❌ Custom branding name for Reddit
 - ✅ Hide communities shelf
+- ✅ Disable modern home
 - ✅ Hide navigation buttons
+- ✅ Disable screenshot popup
+- ❌ Hide Reddit search
 - ✅ Hide sidebar components
-- ✅ Open links directly
-- ✅ Open links externally
-- ❌ Override certificate pinning
 - ✅ Remove subreddit dialog
-- ✅ Sanitize sharing links
+- ✅ Hide Trending shelves
 - ✅ Show view count
+- ✅ App icon
 - ✅ Spoof signature
 - ✅ Start as guest
+- ✅ Open links directly
+- ✅ Open links externally
+- ✅ Sanitize sharing links
 
 </details>
 
-## X — 12.29.1
+## X — —
 Patch source: piko-newx — v3.42.0
+Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 48/48 selected by current source configuration</summary>
+<summary>🩹 Patches — 40/44 applied</summary>
 
-- ✅ Theme
-- ✅ Classic inline action spacing
-- ✅ Gallery profile Photos tab
-- ✅ Crash logs
-- ✅ Customize navigation bar
-- ✅ Customize post menu items
-- ✅ Hide post dividers
-- ✅ Set default media tab
-- ✅ Set default profile post sorting
-- ✅ Set default reply sorting
-- ✅ Disable blur effects
-- ✅ Hide post reply bar
-- ✅ Show poll results
-- ✅ Hide timeline tabs bar
-- ✅ Customize timeline tabs
-- ✅ Server error logging
-- ✅ Unlock color customization
-- ✅ Hide posts by verified account type
-- ✅ Restore Twitter branding
-- ✅ Disable video player scrolling
-- ✅ Remove ads
-- ✅ Browse tweet object
-- ✅ Open canonical URLs
-- ✅ Custom font
-- ✅ Custom sharing domain
-- ✅ Customize drawer items
-- ✅ Feature switch overrides
-- ✅ Customize inline actions
-- ✅ Inline download button
-- ✅ Force highest video/audio quality
-- ✅ Customize default media tab
-- ✅ Customize navigation bar items
-- ✅ Customize default reply sorting
-- ✅ Share post as image
-- ✅ Hide premium upsell
-- ✅ Unlock downloads
-- ✅ Disable automatic timeline refresh
-- ✅ Filter For You by topic
-- ✅ Hide AI-generated posts
-- ✅ Hide Discover more
-- ✅ Hide compose button
-- ✅ Hide new posts pill
-- ✅ Hide Spaces bar
-- ✅ Hide who to follow
-- ✅ Restore timeline position
-- ✅ Show sensitive media
-- ✅ Filter posts by keyword
+- ✅ NewX: Remove ads
+- ✅ NewX: Disable blur effects
+- ❌ NewX: Restore Twitter branding
+- ❌ NewX: Browse tweet object
+- ✅ NewX: Open canonical URLs
+- ✅ NewX: Crash logs
+- ✅ NewX: Custom font
+- ✅ NewX: Custom sharing domain
+- ✅ NewX: Customize drawer items
+- ✅ NewX: Theme
+- ✅ NewX: Feature switch overrides
+- ✅ NewX: Classic inline action spacing
+- ✅ NewX: Customize inline actions
+- ✅ NewX: Inline download button
+- ✅ NewX: Force highest video/audio quality
+- ✅ NewX: Set default media tab
+- ✅ NewX: Gallery profile Photos tab
+- ✅ NewX: Customize navigation bar
+- ✅ NewX: Hide post reply bar
+- ✅ NewX: Customize post menu items
+- ✅ NewX: Set default profile post sorting
+- ✅ NewX: Set default reply sorting
+- ❌ NewX: Server error logging
+- ✅ NewX: Share post as image
+- ✅ NewX: Disable video player scrolling
+- ✅ NewX: Hide premium upsell
+- ✅ NewX: Unlock color customization
+- ✅ NewX: Unlock downloads
+- ✅ NewX: Customize timeline tabs
+- ✅ NewX: Disable automatic timeline refresh
+- ✅ NewX: Filter For You by topic
+- ✅ NewX: Hide AI-generated posts
+- ✅ NewX: Hide Discover more
+- ✅ NewX: Hide compose button
+- ✅ NewX: Hide new posts pill
+- ❌ NewX: Hide post dividers
+- ✅ NewX: Hide Spaces bar
+- ✅ NewX: Hide timeline tabs bar
+- ✅ NewX: Hide who to follow
+- ✅ NewX: Restore timeline position
+- ✅ NewX: Show poll results
+- ✅ NewX: Show sensitive media
+- ✅ NewX: Hide posts by verified account type
+- ✅ NewX: Filter posts by keyword
 
 </details>
 
-## Gboard — 18.0.3.954559732-release-arm64-v8a
+## Gboard — —
 Patch source: jasonwu1994 — v3.11.0
+Architecture: arm64-v8a
 
 <details>
 <summary>🩹 Patches — 42/42 applied</summary>
 
-- ✅ AI Writing Tools
-- ✅ Access Points menu style
-- ✅ Add Gboard Signature Bypass
-- ✅ Advanced Voice Typing
-- ✅ Backup & Restore
-- ✅ Change emoji size
-- ✅ Clipboard Custom Character Limit
-- ✅ Clipboard Enhancements
-- ✅ Close Proactive Suggestions
-- ✅ Custom Symbols
-- ✅ Custom Theme
-- ✅ Developer options
-- ✅ Emojis, stickers & GIFs Tab Order
-- ✅ Enable Inline Autofill Suggestions
-- ✅ Enable OCR / Scan Text
-- ✅ Enable accessibility layout
-- ✅ Enable cursor trackpad mode
-- ✅ Enable split keyboard
 - ✅ English QWERTY Up-Flick Uppercase
-- ✅ FTP Server
-- ✅ Floating Web Search
+- ✅ Long-Press Editing Shortcuts
 - ✅ G Logo on Spacebar
-- ✅ Grammar Checker
-- ✅ Hyperspeed Typing Animation
 - ✅ Incognito Mode Toggle
+- ✅ Toolbar Editing Buttons
+- ✅ Floating Web Search
+- ✅ Simple Calculator
+- ✅ Advanced Voice Typing
+- ✅ Use Bluetooth Microphone
+- ✅ Change emoji size
+- ✅ Enable cursor trackpad mode
+- ✅ Access Points menu style
+- ✅ Enable split keyboard
+- ✅ Enable accessibility layout
+- ✅ Rounded Keyboard Panel
+- ✅ Top Toolbar Item Count
+- ✅ Close Proactive Suggestions
+- ✅ Hyperspeed Typing Animation
+- ✅ Custom Theme
+- ✅ Quick Insert
+- ✅ Zhuyin Quick Traditional/Simplified Toggle
+- ✅ Custom Symbols
+- ✅ Swipeable Custom Top Row
+- ✅ Developer options
+- ✅ Backup & Restore
+- ✅ Emojis, stickers & GIFs Tab Order
+- ✅ Clipboard Enhancements
+- ✅ Clipboard Custom Character Limit
+- ✅ Web Clipboard
+- ✅ FTP Server
+- ✅ Enable Inline Autofill Suggestions
+- ✅ Grammar Checker
 - ✅ Inline Suggestions
 - ✅ Key Shape Selection
-- ✅ Latin Globe Key Ignore Interval
-- ✅ Long-Press Editing Shortcuts
-- ✅ Package Rename
-- ✅ Quick Insert
-- ✅ Rounded Keyboard Panel
+- ✅ AI Writing Tools
+- ✅ Enable OCR / Scan Text
 - ✅ Settings Homepage Override
-- ✅ Simple Calculator
-- ✅ Swipeable Custom Top Row
-- ✅ Toolbar Editing Buttons
-- ✅ Top Toolbar Item Count
-- ✅ Use Bluetooth Microphone
-- ✅ Web Clipboard
+- ✅ Latin Globe Key Ignore Interval
 - ✅ Zhuyin Bottom Row Key Sizes
-- ✅ Zhuyin Quick Traditional/Simplified Toggle
+- ✅ Package Rename
+- ✅ Add Gboard Signature Bypass
 - ✅ Zhuyin Slide Input
 
 </details>
 
-## vpnify — 2.3.0
+## vpnify — —
 Patch source: hxreborn — v1.32.0
+Architecture: arm64-v8a
 
 <details>
 <summary>🩹 Patches — 2/3 applied</summary>
 
-- ✅ Disable rating prompt
 - ❌ Override certificate pinning
 - ✅ Unlock premium
+- ✅ Disable rating prompt
 
 </details>
 
-## Facebook — 580.0.0.51.74
+## Facebook — —
 Patch source: hushfacebook — v0.2.0
+Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 39/43 applied</summary>
+<summary>🩹 Patches — 23/27 applied</summary>
 
-- ❌ AMOLED black theme
-- ✅ Block ad telemetry
-- ✅ Block background ad prefetch
-- ✅ Block background-return feed refresh
-- ✅ Block promotional notifications
-- ✅ Clean up Reels
-- ✅ Default comment order
 - ✅ Disable Audience Network
-- ✅ Don't send reel watch history
+- ✅ Block background ad prefetch
+- ✅ Hide sponsored posts
+- ✅ Hide sponsored reels
+- ✅ Hide sponsored stories
+- ✅ Block ad telemetry
+- ✅ Install beside Meta's apps
 - ✅ Download any reel
 - ✅ Download any story
 - ✅ Download any video
+- ❌ Use the phone's emoji
 - ✅ Hide AI-detected posts
-- ✅ Hide Menu promotions
-- ✅ Hide Meta AI in search
 - ✅ Hide Reels in the feed
+- ✅ Block background-return feed refresh
 - ✅ Hide Stories tray
-- ✅ Hide posts by words
-- ✅ Hide sponsored Marketplace listings
-- ✅ Hide sponsored posts
-- ✅ Hide sponsored profile posts
-- ✅ Hide sponsored reels
-- ✅ Hide sponsored search results
-- ✅ Hide sponsored stories
 - ✅ Hide suggested and promoted posts
-- ✅ Hide suggested stories
-- ✅ Hide the Get Messenger card
-- ✅ Hushfacebook in the Menu
-- ✅ Hushfacebook settings
-- ✅ Install beside Meta's apps
-- ❌ Marketplace only
+- ❌ Use the system font
+- ❌ AMOLED black theme
 - ❌ Material You theme
 - ✅ Open links in external browser
-- ✅ Open on a chosen tab
 - ✅ Restore screens on re-signed builds
-- ✅ Resume long videos
+- ✅ Hushfacebook settings
 - ✅ Sanitize sharing links
+- ✅ Clean up Reels
+- ✅ Don't send reel watch history
 - ✅ Stop Story auto-advance
 - ✅ Stop update prompts
-- ✅ Tag suggestions only after @
-- ✅ Tap to play
-- ❌ Use the phone's emoji
-- ❌ Use the system font
 
 </details>
 
-## TikTok — 47.1.3
-Patch source: hushfeed — v0.61.0
+## Messenger — —
+Patch source: rushiranpise — v1.22.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 39/97 applied</summary>
+<summary>🩹 Patches — 13/20 applied</summary>
 
-- ❌ AMOLED dark theme
-- ❌ Advanced downloads
-- ❌ Allow Duet and Stitch
-- ❌ Allow screenshots and Circle to Search
-- ✅ Always show publish date
-- ❌ Automatic video advance
-- ❌ Block P2P video relay
-- ❌ Block author button
-- ❌ Block contact list access
-- ❌ Block installed app scanning
-- ❌ Camera and microphone indicator
-- ✅ Comment publish diagnostics
-- ✅ Comment send fix
-- ❌ Comment sort controls
-- ❌ Comment tools
-- ❌ Confirm feed interactions
-- ✅ Copy comments without username
-- ✅ Custom offline videos limit
-- ❌ Device privacy guard
-- ❌ Diagnostic tools
-- ✅ Disable login requirement
-- ✅ Disable screen capture detection
-- ❌ Disable telemetry
-- ✅ Disable the long press quick share
-- ✅ Disable the long press repost
-- ❌ Double-tap controls
-- ✅ Downloads
-- ❌ Drop the animated image cache
-- ❌ Enable voice comments
-- ❌ Expand activity list
-- ✅ Feature Gate Lab
-- ❌ Feature Gate Recorder
-- ✅ Feed filter
-- ✅ Feed tab navigation
-- ❌ Fit the video to the screen
-- ✅ Fix Google login
-- ❌ Foldable split comment view
-- ✅ Follow diagnostics
-- ❌ Ghost mode
-- ✅ Hide CAPTCHA popups
-- ❌ Hide Play Store update offer
-- ❌ Hide already seen videos
-- ❌ Hide comment popup ads
-- ✅ Hide comment typing suggestions
-- ✅ Hide feed LIVE button
-- ✅ Hide feed follow button
-- ✅ Hide feed save button
-- ✅ Hide feed search button
-- ✅ Hide floating promotions
-- ❌ Hide inbox items
-- ❌ Hide inbox stories
-- ❌ Hide search suggestions
-- ❌ Hide suggested accounts
-- ❌ Hide the launcher shortcuts
-- ❌ Hide the risk control CAPTCHA
-- ❌ Hide video overlays
-- ✅ Hold-and-slide 2x lock
-- ❌ In-app browser privacy guard
-- ✅ Keep the Favorites tab
-- ❌ Keep the screen's refresh rate
-- ❌ Limit background traffic
-- ❌ Location access governor
-- ❌ Long-press controls
-- ❌ Network request report
-- ❌ Not interested button
-- ❌ Notification controls
-- ✅ Open external links directly
-- ❌ Playback quality
-- ✅ Playback speed
-- ❌ Region spoof
-- ✅ Remember clear display
-- ❌ Remove LIVE extras
-- ❌ Remove content credential and card scanner assets
-- ❌ Remove creation tools
-- ❌ Remove unused language packs
-- ✅ Repost diagnostics
-- ❌ Resource and battery governor
-- ✅ Resume videos after scrolling
-- ✅ SIM spoof
-- ✅ Sanitize sharing links
-- ✅ Settings
-- ❌ Share sheet tools
-- ✅ Show LIVE search
-- ❌ Show author region
-- ✅ Show the progress bar
-- ✅ Show the progress bar thumbnail
-- ❌ Skip content warnings
-- ❌ Skip the splash ad
-- ❌ Skip update checks
-- ✅ Stay on the video in full screen
-- ❌ Stop on-device AI profiling
-- ✅ Stop video looping
-- ❌ Subtitle tools
-- ❌ Swipe-left controls
-- ✅ Translate comments
-- ✅ Use non-personalized search
-- ❌ Use system font
-
-</details>
-
-## TikTok (Metra) — 46.2.3
-Patch source: metra — v0.8.0
-Architecture: arm64-v8a
-
-<details>
-<summary>🩹 Patches — 41/42 applied</summary>
-
-- ✅ Always show publish date
-- ✅ Comment sort controls
-- ✅ Copy comments without username
-- ✅ Custom offline videos limit
-- ❌ Diagnostic tools
-- ✅ Disable login requirement
-- ✅ Disable long-press quick share
-- ✅ Disable long-press repost
-- ✅ Disable screen capture detection
-- ✅ Downloads
-- ✅ Enable Live search
-- ✅ Enable non-personalized search
-- ✅ Enable voice comments
-- ✅ Feature Gate Lab
-- ✅ Feed filter
-- ✅ Feed tab navigation
-- ✅ Fix Google login
-- ✅ Foldable split comment view
-- ✅ Force show Auto scroll
-- ✅ Hide AI content
-- ✅ Hide CAPTCHA popups
-- ✅ Hide FYP unpersonalized slop videos
-- ✅ Hide feed LIVE button
-- ✅ Hide feed follow button
-- ✅ Hide feed save button
-- ✅ Hide feed search button
-- ✅ Hide floating promotions
-- ✅ Hide quick comment reactions
-- ✅ Hide suggested accounts
-- ✅ Hold-and-slide 2x lock
-- ✅ Open external links directly
-- ✅ Playback speed
-- ✅ Region spoof
-- ✅ Remember clear display
-- ✅ Resume videos after scrolling
-- ✅ Sanitize sharing links
-- ✅ Settings
-- ✅ Share sheet modification
-- ✅ Show seekbar
-- ✅ Show seekbar thumbnail
-- ✅ Stop video looping
-- ✅ Translate comments
-
-</details>
-
-## CamScanner — 7.20.0.2606230000
-Patch source: hoodles — v1.44.1
-Architecture: arm64-v8a
-
-<details>
-<summary>🩹 Patches — 2/2 applied</summary>
-
-- ✅ Disable telemetry
-- ✅ Enable Premium
-
-</details>
-
-## Messenger — 576.0.0.47.92
-Patch source: rushiranpise — v1.0.0
-Architecture: arm64-v8a
-
-<details>
-<summary>🩹 Patches — 13/13 applied</summary>
-
-- ✅ Allow screen capture
-- ✅ Block screenshot detection
-- ✅ Change package name
-- ✅ Disable media transcoding
-- ✅ Disable typing indicator
 - ✅ Enable chat heads
-- ✅ Hide Facebook buttons
 - ✅ Hide inbox ads
 - ✅ Hide inbox stories and notes tray
 - ✅ Hide inbox subtabs
+- ✅ Disable typing indicator
+- ✅ Hide Facebook buttons
 - ✅ Open links externally
+- ✅ Disable media transcoding
 - ✅ Remove Meta AI
+- ✅ Change package name
 - ✅ Spoof package version
+- ✅ Allow screen capture
+- ✅ Block screenshot detection
+- ❌ Disable PairIP license check
+- ❌ Provide Original app certificate
+- ❌ Spoof Widevine / DRM level
+- ❌ Fix Firebase after re-signing
+- ❌ GmsCore support (MicroG)
+- ❌ Spoof install source
+- ❌ Spoof app signature
 
 </details>
 
-## Adobe Acrobat — 26.7.1.47181
+## Adobe-Acrobat — —
 Patch source: hoomans — v1.53.0
 Architecture: arm64-v8a
 
 <details>
 <summary>🩹 Patches — 1/1 applied</summary>
 
-- ✅ Unlock Premium
+- ✅ Unlock Pro
+
+</details>
+
+## TikTok — —
+Patch source: hushfeed — v0.61.0
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 38/96 applied</summary>
+
+- ❌ Hide the risk control CAPTCHA
+- ✅ Hide CAPTCHA popups
+- ✅ Feed filter
+- ❌ Allow screenshots and Circle to Search
+- ✅ Disable screen capture detection
+- ❌ Show author region
+- ❌ Block author button
+- ❌ Subtitle tools
+- ✅ Remember clear display
+- ❌ Confirm feed interactions
+- ❌ Advanced downloads
+- ✅ Downloads
+- ❌ Allow Duet and Stitch
+- ✅ Keep the Favorites tab
+- ✅ Hide feed save button
+- ✅ Hide feed follow button
+- ✅ Hide feed LIVE button
+- ✅ Hide feed search button
+- ❌ Double-tap controls
+- ❌ Long-press controls
+- ❌ Swipe-left controls
+- ❌ Ghost mode
+- ❌ Automatic video advance
+- ✅ Stop video looping
+- ❌ Not interested button
+- ✅ Custom offline videos limit
+- ✅ Always show publish date
+- ❌ Playback quality
+- ✅ Disable the long press quick share
+- ✅ Disable the long press repost
+- ✅ Hide comment typing suggestions
+- ✅ Resume videos after scrolling
+- ✅ Use non-personalized search
+- ✅ Show LIVE search
+- ❌ Hide search suggestions
+- ✅ Show the progress bar
+- ✅ Show the progress bar thumbnail
+- ❌ Hide already seen videos
+- ❌ Skip content warnings
+- ❌ Share sheet tools
+- ✅ Hold-and-slide 2x lock
+- ✅ Playback speed
+- ❌ Use system font
+- ❌ Fit the video to the screen
+- ❌ Hide video overlays
+- ✅ Copy comments without username
+- ✅ Comment publish diagnostics
+- ✅ Comment send fix
+- ❌ Comment sort controls
+- ❌ Comment tools
+- ❌ Hide comment popup ads
+- ✅ Open external links directly
+- ✅ Feature Gate Lab
+- ❌ Feature Gate Recorder
+- ❌ Foldable split comment view
+- ✅ Follow diagnostics
+- ❌ Expand activity list
+- ❌ Hide inbox stories
+- ❌ Hide suggested accounts
+- ❌ Hide inbox items
+- ❌ Notification controls
+- ✅ Disable login requirement
+- ✅ Fix Google login
+- ✅ Feed tab navigation
+- ❌ Limit background traffic
+- ❌ Drop the animated image cache
+- ❌ Skip update checks
+- ❌ Skip the splash ad
+- ❌ Remove LIVE extras
+- ❌ Remove creation tools
+- ❌ Block P2P video relay
+- ❌ Remove content credential and card scanner assets
+- ❌ Remove unused language packs
+- ❌ Keep the screen's refresh rate
+- ✅ Repost diagnostics
+- ❌ Diagnostic tools
+- ✅ Settings
+- ✅ Sanitize sharing links
+- ❌ Hide the launcher shortcuts
+- ❌ Region spoof
+- ✅ SIM spoof
+- ❌ Disable telemetry
+- ❌ AMOLED dark theme
+- ✅ Translate comments
+- ❌ Hide Play Store update offer
+- ❌ Enable voice comments
+- ❌ Stop on-device AI profiling
+- ❌ In-app browser privacy guard
+- ❌ Camera and microphone indicator
+- ❌ Block contact list access
+- ❌ Device privacy guard
+- ❌ Block installed app scanning
+- ❌ Location access governor
+- ❌ Network request report
+- ❌ Resource and battery governor
+- ✅ Hide floating promotions
+
+</details>
+
+## TikTok (Metra) — —
+Patch source: metra — v0.8.0
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 41/42 applied</summary>
+
+- ✅ Hide CAPTCHA popups
+- ✅ Feed filter
+- ✅ Hide AI content
+- ✅ Hide FYP unpersonalized slop videos
+- ✅ Disable screen capture detection
+- ✅ Force show Auto scroll
+- ✅ Remember clear display
+- ✅ Downloads
+- ✅ Hide feed save button
+- ✅ Hide feed follow button
+- ✅ Hide feed LIVE button
+- ✅ Hide feed search button
+- ✅ Stop video looping
+- ✅ Custom offline videos limit
+- ✅ Always show publish date
+- ✅ Disable long-press quick share
+- ✅ Disable long-press repost
+- ✅ Hide quick comment reactions
+- ✅ Resume videos after scrolling
+- ✅ Enable non-personalized search
+- ✅ Enable Live search
+- ✅ Show seekbar
+- ✅ Show seekbar thumbnail
+- ✅ Hold-and-slide 2x lock
+- ✅ Playback speed
+- ✅ Copy comments without username
+- ✅ Comment sort controls
+- ✅ Open external links directly
+- ✅ Feature Gate Lab
+- ✅ Foldable split comment view
+- ✅ Disable login requirement
+- ✅ Fix Google login
+- ✅ Feed tab navigation
+- ❌ Diagnostic tools
+- ✅ Settings
+- ✅ Sanitize sharing links
+- ✅ Share sheet modification
+- ✅ Region spoof
+- ✅ Hide suggested accounts
+- ✅ Translate comments
+- ✅ Enable voice comments
+- ✅ Hide floating promotions
+
+</details>
+
+## CamScanner — —
+Patch source: hoodles — v1.44.1
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 2/8 applied</summary>
+
+- ❌ Hide app icon
+- ❌ Enable debug
+- ❌ Change package name
+- ❌ MicroG integration
+- ❌ Disable Pairip license check
+- ❌ Spoof signature
+- ✅ Disable telemetry
+- ✅ Enable Premium
 
 </details>
