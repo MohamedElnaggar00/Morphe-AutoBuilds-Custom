@@ -194,25 +194,31 @@ def download_platform(
 
         platform_module = globals()[platform]
 
-        # The patch source is authoritative for compatibility. Always try the
-        # HIGHEST version supported by the current patch set first, regardless
-        # of a stale version pin in apps/*.json. Lower supported versions remain
-        # as fallback only when the highest one is unavailable from the provider.
+        # Candidate versions (highest -> lowest) for universal robustness:
+        # - If config pins a version: only try that.
+        # - Else if override provided (retry path): try only that.
+        # - Else ask the patching CLI for compatible versions and try those.
+        # - If none returned: fall back to latest available from the store.
+        #
+        # IMPORTANT: The original Morphe-AutoBuilds downloader also appends the
+        # store's latest version even when the patch CLI recommends an older
+        # version. This is intentional: APKMirror/store availability can lag
+        # the patch recommendation, while newer builds may still be patchable.
+        # Keep this behavior so apps such as Gboard/Acrobat/Messenger can fall
+        # through from an unavailable recommended build to the latest APK.
         pinned = (config.get("version") or "").strip()
         if override_version:
             candidates = [override_version]
+        elif pinned:
+            candidates = [pinned]
         else:
             candidates = utils.get_supported_versions(config["package"], cli, patches)
-            if candidates:
-                logging.info(f"Supported versions (highest first) for {app_name}: {candidates}")
-            else:
-                candidates = [pinned] if pinned else []
-                try:
-                    latest = platform_module.get_latest_version(app_name, config)
-                    if latest and latest not in candidates:
-                        candidates.append(latest)
-                except Exception as e:
-                    logging.debug(f"Could not get latest version for {app_name} on {platform}: {e}")
+            try:
+                latest = platform_module.get_latest_version(app_name, config)
+                if latest and latest not in candidates:
+                    candidates.append(latest)
+            except Exception as e:
+                logging.debug(f"Could not get latest version for {app_name} on {platform}: {e}")
 
         expected_codes = get_supported_version_codes(config["package"], cli, patches) if str(config.get("type", "APK")).upper() == "BUNDLE" else {}
 
