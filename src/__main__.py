@@ -201,118 +201,27 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                 continue
             version = ver
 
-        # --- Normalize/merge input into .apk when needed ---
-        if input_apk.suffix != ".apk":
-            # Some fallback stores provide an XAPK/APKS even when the app is
-            # configured as a normal APK. Merging the splits with APKEditor
-            # produces an unsigned APK, which breaks patches that inspect the
-            # stock signing certificate. For APK-configured apps, preserve the
-            # signed base.apk instead; bundle-configured apps still use APKEditor.
-            configured_type = "APK"
-            config_path = Path("apps") / "apkmirror" / f"{app_name}.json"
-            try:
-                if config_path.exists():
-                    with config_path.open() as cfg_file:
-                        configured_type = str(json.load(cfg_file).get("type", "APK")).upper()
-            except Exception:
-                pass
-
-            # Check if it is a split bundle (contains multiple .apk files or is .apkm/.xapk/.apks)
-            is_bundle = False
-            try:
-                import zipfile
-                if zipfile.is_zipfile(input_apk):
-                    with zipfile.ZipFile(input_apk, "r") as z:
-                        namelist = z.namelist()
-                        has_split_apks = any(n.endswith(".apk") for n in namelist)
-                        is_bundle = has_split_apks or input_apk.suffix.lower() in [".apkm", ".xapk", ".apks", ".zip"]
-            except Exception as e:
-                logging.debug(f"Zip inspection failed for {input_apk}: {e}")
-
-            target_apk = input_apk.with_name(f"{input_apk.stem}.apk" if not input_apk.name.endswith(".apk") else input_apk.name)
-
-            if is_bundle and configured_type == "APK":
-                logging.info(f"Input file is a bundle ({input_apk.name}) for an APK-configured app; extracting signed base APK")
-                import zipfile
-                extracted = None
-                with zipfile.ZipFile(input_apk, "r") as z:
-                    names = z.namelist()
-                    preferred = [n for n in names if Path(n).name.lower() == "base.apk"]
-                    apk_names = preferred or [n for n in names if n.lower().endswith(".apk")]
-                    if apk_names:
-                        extracted = apk_names[0]
-                        with z.open(extracted) as src:
-                            with target_apk.open("wb") as dst:
-                                shutil.copyfileobj(src, dst)
-                if not extracted or not target_apk.exists() or target_apk.stat().st_size == 0:
-                    raise RuntimeError(f"No base APK found inside bundle {input_apk.name}")
-                input_apk.unlink(missing_ok=True)
+        # --- Normalize input only when the patcher cannot consume it ---
+        # Morphe accepts APKMirror's native APKM/APKS bundles directly.
+        # Do not extract base.apk or merge split bundles with APKEditor: doing
+        # so can change the package/signing/layout that the patch set expects.
+        # Keep the downloaded bundle untouched and only normalize standalone
+        # APK filenames.
+        if input_apk.suffix.lower() == ".apk":
+            target_apk = input_apk
+        elif input_apk.suffix.lower() in [".apkm", ".apks", ".xapk", ".zip"]:
+            logging.info(f"Keeping native bundle for Morphe: {input_apk.name}")
+        else:
+            target_apk = input_apk.with_name(f"{input_apk.stem}.apk")
+            logging.info(f"Normalizing standalone download to {target_apk.name}")
+            if input_apk != target_apk:
+                target_apk.unlink(missing_ok=True)
+                os.replace(input_apk, target_apk)
                 input_apk = target_apk
-                logging.info(f"Extracted signed base APK: {input_apk}")
-            elif is_bundle:
-                # BUNDLE-configured apps need the complete split set. If the
-                # provider gives us a container holding only base.apk, preserve
-                # that signed APK directly; otherwise merge genuine split sets.
-                import zipfile
-                apk_entries = []
-                try:
-                    with zipfile.ZipFile(input_apk, "r") as z:
-                        apk_entries = [n for n in z.namelist() if n.lower().endswith(".apk")]
-                except Exception as e:
-                    logging.debug(f"Could not inspect bundle before merge: {e}")
 
-                if len(apk_entries) == 1 and Path(apk_entries[0]).name.lower() == "base.apk":
-                    logging.info(f"Bundle contains only signed base APK; extracting it directly: {input_apk.name}")
-                    with zipfile.ZipFile(input_apk, "r") as z, z.open(apk_entries[0]) as src:
-                        with target_apk.open("wb") as dst:
-                            shutil.copyfileobj(src, dst)
-                    input_apk.unlink(missing_ok=True)
-                    input_apk = target_apk
-                    logging.info(f"Extracted signed base APK: {input_apk}")
-                else:
-                    logging.info(f"Input file is a bundle ({input_apk.name}), using APKEditor to merge")
-                    apk_editor = downloader.download_apkeditor()
-                    merged_apk = input_apk.with_suffix(".apk")
-                    merged_apk.unlink(missing_ok=True)
-
-                    try:
-                        utils.run_process([
-                            "java", "-jar", str(apk_editor), "m",
-                            "-f",
-                            "-i", str(input_apk),
-                            "-o", str(merged_apk)
-                        ], silent=True, check=True)
-                        input_apk.unlink(missing_ok=True)
-                        input_apk = merged_apk
-                    except Exception as e:
-                        logging.warning(f"APKEditor merge failed ({e}); checking if file can be used as standalone APK")
-                        if input_apk.exists():
-                            target_apk.unlink(missing_ok=True)
-                            os.replace(input_apk, target_apk)
-                            input_apk = target_apk
-            else:
-                logging.info(f"Normalizing standalone APK filename to {target_apk.name}")
-                if input_apk != target_apk:
-                    target_apk.unlink(missing_ok=True)
-                    os.replace(input_apk, target_apk)
-                    input_apk = target_apk
-
-            if not input_apk.exists():
-                logging.error("Processed APK file not found")
-                raise RuntimeError("Processed APK file not found")
-
-            # Clean up filename: remove build number like (1575420) and -1575420.
-            # Only strip 6+ digit build-number tokens so legitimate short version
-            # segments (e.g. "app-2_0") are not mangled.
-            clean_name = re.sub(r'\(\d+\)', '', input_apk.name)  # Remove (1575420)
-            clean_name = re.sub(r'-\d{6,}_', '_', clean_name)  # Remove -1575420_ -> _
-            if clean_name != input_apk.name:
-                clean_apk = input_apk.with_name(clean_name)
-                clean_apk.unlink(missing_ok=True)
-                os.replace(input_apk, clean_apk)
-                input_apk = clean_apk
-
-            logging.info(f"Normalized APK file: {input_apk}")
+        if not input_apk.exists():
+            logging.error("Processed input file not found")
+            raise RuntimeError("Processed input file not found")
 
         # --- ARCHITECTURE-SPECIFIC PROCESSING ---
         if arch != "universal":
