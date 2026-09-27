@@ -469,3 +469,37 @@ Architecture: arm64-v8a
 - ✅ Enable Premium
 
 </details>
+
+## Messenger — 576.0.0.47.92
+Patch source: rushiranpise — v1.0.0
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 13/13 applied</summary>
+
+- ✅ Allow screen capture
+- ✅ Block screenshot detection
+- ✅ Change package name
+- ✅ Disable media transcoding
+- ✅ Disable typing indicator
+- ✅ Enable chat heads
+- ✅ Hide Facebook buttons
+- ✅ Hide inbox ads
+- ✅ Hide inbox stories and notes tray
+- ✅ Hide inbox subtabs
+- ✅ Open links externally
+- ✅ Remove Meta AI
+- ✅ Spoof package version
+
+</details>
+
+## Adobe Acrobat — 26.7.1.47181
+Patch source: hoomans — v1.53.0
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 1/1 applied</summary>
+
+- ✅ Unlock Premium
+
+</details>
