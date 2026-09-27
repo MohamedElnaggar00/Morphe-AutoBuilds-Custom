@@ -138,7 +138,7 @@ def get_supported_version_codes(package_name: str, cli: str, patches: str) -> di
     output = utils.run_process(cmd, capture=True, silent=True, check=False) or ""
     result: dict[str, list[int]] = {}
     for line in output.splitlines():
-        m = re.search(r"^\\s*(\\d+(?:\\.\\d+)+).*?versionCodes:\\s*[^=]+=([0-9]+)", line)
+        m = re.search(r"^\s*(\d+(?:\.\d+)+).*?versionCodes:\s*[^=]+=([0-9]+)", line)
         if not m:
             continue
         result.setdefault(m.group(1), []).append(int(m.group(2)))
@@ -257,7 +257,12 @@ def download_platform(
                 required_codes = expected_codes.get(version, [])
                 if required_codes:
                     actual_code = bundle_version_code(filepath)
-                    if actual_code is not None and actual_code not in required_codes:
+                    if actual_code is None:
+                        logging.warning(f"Rejected {filepath.name}: could not verify versionCode; expected one of {required_codes}")
+                        filepath.unlink(missing_ok=True)
+                        last_error = ValueError(f"Could not verify build code for {app_name} {version}; expected {required_codes}")
+                        continue
+                    if actual_code not in required_codes:
                         logging.warning(f"Rejected {filepath.name}: versionCode {actual_code} is not declared for {version}; expected {required_codes}")
                         filepath.unlink(missing_ok=True)
                         last_error = ValueError(f"Wrong build code for {app_name} {version}: {actual_code} (expected {required_codes})")
