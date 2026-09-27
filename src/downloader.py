@@ -338,19 +338,63 @@ def download_platform(
                 continue
             try:
                 filepath = download_resource(download_link)
+
+                # Some APKMirror releases contain multiple builds with the same
+                # version name. Enforce an explicit artifact versionCode when the
+                # app config declares one, before allowing the file into patching.
+                expected_version_code = str(config.get("expected_version_code") or "").strip()
                 required_codes = expected_codes.get(version, [])
-                if required_codes:
+                if expected_version_code or required_codes:
                     actual_code = bundle_version_code(filepath)
                     if actual_code is None:
-                        logging.warning(f"Rejected {filepath.name}: could not verify versionCode; expected one of {required_codes}")
+                        expected_label = expected_version_code or str(required_codes)
+                        logging.warning(
+                            f"Rejected {filepath.name}: could not verify versionCode; expected {expected_label}"
+                        )
                         filepath.unlink(missing_ok=True)
-                        last_error = ValueError(f"Could not verify build code for {app_name} {version}; expected {required_codes}")
+                        last_error = ValueError(
+                            f"Could not verify build code for {app_name} {version}; expected {expected_label}"
+                        )
                         continue
-                    if actual_code not in required_codes:
-                        logging.warning(f"Rejected {filepath.name}: versionCode {actual_code} is not declared for {version}; expected {required_codes}")
+
+                    if expected_version_code and actual_code != int(expected_version_code):
+                        logging.warning(
+                            f"Rejected {filepath.name}: versionCode {actual_code} != required {expected_version_code}"
+                        )
                         filepath.unlink(missing_ok=True)
-                        last_error = ValueError(f"Wrong build code for {app_name} {version}: {actual_code} (expected {required_codes})")
+                        last_error = ValueError(
+                            f"Wrong build code for {app_name} {version}: {actual_code} "
+                            f"(required {expected_version_code})"
+                        )
                         continue
+
+                    if required_codes and actual_code not in required_codes:
+                        logging.warning(
+                            f"Rejected {filepath.name}: versionCode {actual_code} is not declared for {version}; "
+                            f"expected {required_codes}"
+                        )
+                        filepath.unlink(missing_ok=True)
+                        last_error = ValueError(
+                            f"Wrong build code for {app_name} {version}: {actual_code} "
+                            f"(expected {required_codes})"
+                        )
+                        continue
+
+                min_size_mb = config.get("min_size_mb")
+                if min_size_mb is not None:
+                    min_size_bytes = float(min_size_mb) * 1024 * 1024
+                    if filepath.stat().st_size <= min_size_bytes:
+                        logging.warning(
+                            f"Rejected {filepath.name}: file size {filepath.stat().st_size / (1024 * 1024):.2f} MB "
+                            f"is not greater than {float(min_size_mb):.2f} MB"
+                        )
+                        filepath.unlink(missing_ok=True)
+                        last_error = ValueError(
+                            f"Artifact for {app_name} is too small: "
+                            f"{filepath.stat().st_size / (1024 * 1024):.2f} MB"
+                        )
+                        continue
+
                 return filepath, version, candidates
             except Exception as e:
                 last_error = e
