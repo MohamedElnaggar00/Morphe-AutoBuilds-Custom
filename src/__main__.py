@@ -223,36 +223,28 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             logging.error("Processed input file not found")
             raise RuntimeError("Processed input file not found")
 
-        # --- ARCHITECTURE-SPECIFIC PROCESSING ---
-        if arch != "universal":
-            logging.info(f"Processing APK for {arch} architecture...")
-            if arch == "arm64-v8a":
-                utils.strip_zip_entries(input_apk, ["lib/x86/*", "lib/x86_64/*", "lib/armeabi-v7a/*"])
-            elif arch == "armeabi-v7a":
-                utils.strip_zip_entries(input_apk, ["lib/x86/*", "lib/x86_64/*", "lib/arm64-v8a/*"])
-        else:
-            utils.strip_zip_entries(input_apk, ["lib/x86/*", "lib/x86_64/*"])
-
-        # Validate APK integrity
-        logging.info("Checking APK integrity...")
-        if not utils.check_apk_integrity(input_apk):
-            logging.warning("APK integrity check failed; attempting repair with zip -FF if available")
-            if shutil.which("zip"):
-                fixed_apk = Path(f"{app_name}-fixed-v{version}.apk")
-                subprocess.run([
-                    "zip", "-FF", str(input_apk), "--out", str(fixed_apk)
-                ], check=False, capture_output=True)
-
-                if fixed_apk.exists() and fixed_apk.stat().st_size > 0:
-                    input_apk.unlink(missing_ok=True)
-                    fixed_apk.rename(input_apk)
-                    logging.info("APK fixed successfully")
-                else:
-                    logging.warning("Repair produced no usable file; keeping original APK")
+        # --- ARCHITECTURE / INTEGRITY PROCESSING ---
+        # APKM/APKS bundles must remain untouched. Morphe handles the selected
+        # architecture and bundle structure itself. Rewriting the ZIP or
+        # running zip -FF here can invalidate the bundle.
+        is_native_bundle = input_apk.suffix.lower() in [".apkm", ".apks", ".xapk"]
+        if not is_native_bundle:
+            if arch != "universal":
+                logging.info(f"Processing APK for {arch} architecture...")
+                if arch == "arm64-v8a":
+                    utils.strip_zip_entries(input_apk, ["lib/x86/*", "lib/x86_64/*", "lib/armeabi-v7a/*"])
+                elif arch == "armeabi-v7a":
+                    utils.strip_zip_entries(input_apk, ["lib/x86/*", "lib/x86_64/*", "lib/arm64-v8a/*"])
             else:
-                logging.warning("zip command not available for repair; proceeding with current APK")
+                utils.strip_zip_entries(input_apk, ["lib/x86/*", "lib/x86_64/*"])
+
+            logging.info("Checking APK integrity...")
+            if not utils.check_apk_integrity(input_apk):
+                logging.warning("APK integrity check failed; keeping original input for Morphe")
+            else:
+                logging.info("APK integrity OK; no repair needed")
         else:
-            logging.info("APK integrity OK; no repair needed")
+            logging.info(f"Preserving native Morphe bundle without modification: {input_apk.name}")
 
         # Include architecture in output filename
         output_apk = Path(f"{app_name}-{arch}-patch-v{version}.apk")
