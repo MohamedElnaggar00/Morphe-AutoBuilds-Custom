@@ -30,6 +30,7 @@ APP_NAMES = {
     "facebook": "Facebook",
     "tiktok": "TikTok",
     "tiktok-metra": "TikTok (Metra)",
+    "camscanner": "CamScanner",
 }
 
 WORK = ROOT / ".readme-cache"
