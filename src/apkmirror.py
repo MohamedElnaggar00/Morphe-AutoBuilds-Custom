@@ -203,20 +203,15 @@ def _direct_release_candidates(version: str, config: dict) -> list[str]:
 
     return list(dict.fromkeys(candidates))
 
-def _get_api_variant_url(
+def _get_api_variant_urls(
     version: str,
     config: dict,
     target_arch: str,
-) -> tuple[str | None, str | None]:
-    """Resolve a pinned/latest APKMirror variant through APKMirror's client API.
-
-    Returns (variant_url, release_version). The API is preferable to scraping
-    the app landing page because the latter is the URL currently challenged by
-    Cloudflare on GitHub-hosted runners.
-    """
+) -> list[tuple[str, str | None]]:
+    """Resolve APKMirror variant URLs through APKMirror's client API."""
     package = (config.get("package") or "").strip()
     if not package:
-        return None, None
+        return []
 
     auth = os.getenv(
         "APKMIRROR_API_AUTH",
@@ -242,29 +237,38 @@ def _get_api_variant_url(
         )
         if response.status_code != 200:
             logging.info("APKMirror client API returned HTTP %s", response.status_code)
-            return None, None
+            return []
 
         payload = response.json()
         data = payload.get("data") or []
-        if not data:
-            logging.info("APKMirror client API returned no data for %s", package)
-            return None, None
-
         entry = next(
             (item for item in data if item.get("pname") == package),
-            data[0],
+            None,
         )
+        if not entry:
+            logging.info("APKMirror client API returned no data for %s", package)
+            return []
+
         release = entry.get("release") or {}
         api_version = str(release.get("version") or "").strip()
-        apks = entry.get("apks") or []
-        if not apks:
-            logging.info("APKMirror client API returned no variants for %s", package)
-            return None, None
+        pinned_version = str(version or "").strip()
 
-        wanted_type = str(config.get("type") or "APK").lower()
+        # The API describes the current release. Never silently substitute a
+        # different release for a pinned build.
+        if pinned_version and api_version and api_version != pinned_version:
+            normalized_pinned = pinned_version.replace(".", "").replace("-", "")
+            normalized_api = api_version.replace(".", "").replace("-", "")
+            if normalized_pinned != normalized_api:
+                logging.info(
+                    "APKMirror API release mismatch for %s: requested=%s api=%s",
+                    package,
+                    pinned_version,
+                    api_version,
+                )
+                return []
+
         wanted_arch = (target_arch or "universal").lower()
         wanted_dpi = str(config.get("dpi") or "nodpi").lower()
-        pinned_version = str(version or "").strip()
 
         def arch_match(item):
             arches = {str(x).lower() for x in (item.get("arches") or [])}
@@ -278,51 +282,99 @@ def _get_api_variant_url(
             dpis = " ".join(str(x).lower() for x in (item.get("dpis") or []))
             return wanted_dpi in dpis
 
-        candidates = [item for item in apks if arch_match(item) and dpi_match(item)]
+        candidates = [
+            item for item in (entry.get("apks") or [])
+            if str(item.get("link") or "").strip()
+            and arch_match(item)
+            and dpi_match(item)
+        ]
 
-        # Prefer the requested release version when the API exposes it.
-        if pinned_version:
-            exact_release = [
-                item for item in candidates
-                if str(item.get("version") or "").strip() == pinned_version
-            ]
-            if exact_release:
-                candidates = exact_release
-            elif api_version and api_version != pinned_version:
-                logging.info(
-                    "APKMirror API current release is %s; requested %s",
-                    api_version,
-                    pinned_version,
-                )
-
-        # Bundle/APK is represented by the API's capabilities/metadata in some
-        # releases. Prefer an explicit bundle marker when the config requires it.
-        if wanted_type == "bundle":
-            bundle_candidates = [
-                item for item in candidates
-                if any(
-                    "bundle" in str(cap).lower()
-                    for cap in (item.get("capabilities") or [])
-                )
-                or "apkm" in str(item.get("link") or "").lower()
-            ]
-            if bundle_candidates:
-                candidates = bundle_candidates
-
+        out = []
         for item in candidates:
             link = str(item.get("link") or "").strip()
             if link:
-                return urljoin(base_url + "/", link), api_version or pinned_version
+                out.append((urljoin(base_url + "/", link), api_version or pinned_version))
 
         logging.info(
-            "APKMirror client API found %d compatible variants but no usable link for %s",
-            len(candidates),
+            "APKMirror client API resolved %d candidate variant(s) for %s",
+            len(out),
             package,
         )
-        return None, None
+        return out
     except Exception as exc:
         logging.warning("APKMirror client API lookup failed for %s: %s", package, exc)
-        return None, None
+        return []
+
+
+def _download_from_variant_page(
+    variant_url: str,
+    config: dict,
+) -> tuple[str | None, bool]:
+    """Follow APKMirror's variant -> download page -> file link chain."""
+    try:
+        variant_response = _cf_get(
+            variant_url,
+            referer=f"{base_url}/",
+        )
+        variant_response.raise_for_status()
+        if _looks_like_cloudflare_challenge(variant_response):
+            return None, False
+
+        variant_soup = BeautifulSoup(variant_response.content, "html.parser")
+        variant_text = variant_soup.get_text(" ", strip=True).lower()
+
+        wanted_type = str(config.get("type") or "APK").lower()
+        is_bundle = "bundle" in variant_text or bool(
+            variant_soup.find(class_=lambda value: value and "apkm-badge" in str(value).lower())
+        )
+
+        # Type is checked here because the API's compact response does not
+        # expose a dedicated APK/BUNDLE field for every release.
+        if wanted_type == "bundle" and not is_bundle:
+            return None, False
+        if wanted_type == "apk" and is_bundle:
+            return None, False
+
+        download_button = variant_soup.find("a", class_="downloadButton")
+        if not download_button or not download_button.get("href"):
+            logging.info("No downloadButton on APKMirror variant page: %s", variant_url)
+            return None, True
+
+        download_page_url = urljoin(
+            base_url + "/",
+            download_button["href"],
+        )
+        download_response = _cf_get(
+            download_page_url,
+            referer=variant_url,
+        )
+        download_response.raise_for_status()
+        if _looks_like_cloudflare_challenge(download_response):
+            return None, True
+
+        download_soup = BeautifulSoup(download_response.content, "html.parser")
+        direct = (
+            download_soup.find("a", id="download-link")
+            or download_soup.find("a", rel="nofollow")
+        )
+        if not direct or not direct.get("href"):
+            logging.info(
+                "No direct file link on APKMirror download page: %s",
+                download_page_url,
+            )
+            return None, True
+
+        file_url = urljoin(base_url + "/", direct["href"])
+        logging.info("✓ APKMirror direct file link resolved: %s", file_url)
+        return file_url, True
+    except Exception as exc:
+        logging.warning(
+            "APKMirror variant download chain failed for %s: %s",
+            variant_url,
+            exc,
+        )
+        return None, True
+
 
 
 def _get_direct_release_page(
@@ -591,31 +643,22 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
     correct_version_page = False
 
     # --- PRIMARY APPROACH: APKMirror client API ---
-    # Resolve the exact variant through APKMirror's official client endpoint
-    # before scraping HTML. This avoids the Cloudflare-blocked app landing page
-    # and returns the same variant links used by APKUpdater.
-    api_variant_url, api_version = _get_api_variant_url(
-        version, config, target_arch
-    )
-    if api_variant_url:
-        logging.info(f"✓ APKMirror API resolved variant: {api_variant_url}")
-        try:
-            response = _cf_get(api_variant_url, referer=f"{base_url}/")
-            if response.status_code == 200 and not _looks_like_cloudflare_challenge(response):
-                soup = BeautifulSoup(response.content, "html.parser")
-                found_soup = soup
-                found_release_url = response.url
-                correct_version_page = True
-                if api_version:
-                    version = api_version
-                    version_parts = version.split(".")
-            else:
-                logging.warning(
-                    "APKMirror API variant URL was not directly readable; "
-                    "falling back to release-page resolution."
-                )
-        except Exception as exc:
-            logging.warning("APKMirror API variant fetch failed: %s", exc)
+    # Resolve candidate variants through APKMirror's official client endpoint.
+    # This avoids the app landing/release pages that are being Cloudflare-blocked
+    # on GitHub-hosted runners.
+    api_variants = _get_api_variant_urls(version, config, target_arch)
+    for api_variant_url, api_version in api_variants:
+        logging.info(f"✓ APKMirror API variant candidate: {api_variant_url}")
+        direct_file_url, readable = _download_from_variant_page(
+            api_variant_url,
+            config,
+        )
+        if direct_file_url:
+            return direct_file_url
+        if not readable:
+            logging.warning(
+                "APKMirror API variant was blocked by Cloudflare; trying next candidate."
+            )
 
     # --- SECONDARY APPROACH: Direct release URL ---
     if not correct_version_page:
