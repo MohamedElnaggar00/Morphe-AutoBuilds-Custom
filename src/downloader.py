@@ -248,68 +248,26 @@ def download_platform(
         for version in candidates:
             if not version:
                 continue
-
-            # APKMirror can publish multiple builds for the same human-readable
-            # version. Try those builds newest-first before falling back to a
-            # lower supported version, while retaining exact Morphe compatibility.
-            candidate_indexes = range(20) if expected_codes and platform == "apkmirror" else range(1)
-
-            for candidate_index in candidate_indexes:
-                try:
-                    if platform == "apkmirror" and expected_codes:
-                        download_link = platform_module.get_download_link(
-                            version, app_name, config, candidate_index=candidate_index
-                        )
-                    else:
-                        download_link = platform_module.get_download_link(version, app_name, config)
-
-                    if not download_link:
-                        if candidate_index == 0:
-                            last_error = ValueError(
-                                f"No download link found for {app_name} version {version}"
-                            )
-                        break
-
-                    filepath = download_resource(download_link)
-                    required_codes = expected_codes.get(version, [])
-                    if required_codes:
-                        actual_code = bundle_version_code(filepath)
-                        if actual_code is None:
-                            logging.warning(
-                                f"Rejected {filepath.name}: could not verify versionCode; "
-                                f"expected one of {required_codes}"
-                            )
-                            filepath.unlink(missing_ok=True)
-                            last_error = ValueError(
-                                f"Could not verify build code for {app_name} {version}; "
-                                f"expected {required_codes}"
-                            )
-                            continue
-                        if actual_code not in required_codes:
-                            logging.warning(
-                                f"Rejected {filepath.name}: versionCode {actual_code} "
-                                f"is not declared for {version}; expected {required_codes}"
-                            )
-                            filepath.unlink(missing_ok=True)
-                            last_error = ValueError(
-                                f"Wrong build code for {app_name} {version}: {actual_code} "
-                                f"(expected {required_codes})"
-                            )
-                            continue
-
-                    return filepath, version, candidates
-                except Exception as e:
-                    last_error = e
-                    logging.warning(
-                        f"APKMirror candidate {candidate_index + 1} failed for "
-                        f"{app_name} {version}: {e}"
-                    )
-                    continue
-
-            logging.info(
-                f"No usable APKMirror build found for {app_name} {version}; "
-                f"moving to the next supported version"
-            )
+            download_link = platform_module.get_download_link(version, app_name, config)
+            if not download_link:
+                last_error = ValueError(f"No download link found for {app_name} version {version}")
+                continue
+            try:
+                filepath = download_resource(download_link)
+                required_codes = expected_codes.get(version, [])
+                if required_codes:
+                    actual_code = bundle_version_code(filepath)
+                    if actual_code is None:
+                        logging.warning(f"Rejected {filepath.name}: could not verify versionCode; expected one of {required_codes}")
+                        filepath.unlink(missing_ok=True)
+                        last_error = ValueError(f"Could not verify build code for {app_name} {version}; expected {required_codes}")
+                        continue
+                    if actual_code not in required_codes:
+                        logging.warning(f"Rejected {filepath.name}: versionCode {actual_code} is not declared for {version}; expected {required_codes}")
+                        filepath.unlink(missing_ok=True)
+                        last_error = ValueError(f"Wrong build code for {app_name} {version}: {actual_code} (expected {required_codes})")
+                        continue
+                return filepath, version, candidates
             except Exception as e:
                 last_error = e
                 continue
