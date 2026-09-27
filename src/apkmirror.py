@@ -303,7 +303,7 @@ def find_release_page_from_main(version: str, config: dict, build_number: str = 
         logging.debug(f"Error scraping main page for release URL: {e}")
         return None
 
-def get_download_link(version: str, app_name: str, config: dict, arch: str = None) -> str:
+def get_download_link(version: str, app_name: str, config: dict, arch: str = None, candidate_index: int = 0) -> str:
     global _blocked_by_cloudflare
     _blocked_by_cloudflare = False
     if not version:
@@ -592,36 +592,58 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             return base_url + link['href']
         return None
 
-    # Try to find exact version match first
+    # Collect ALL matching variants for this exact version, then try them in
+    # descending build/versionCode order. One human-readable version can have
+    # multiple APKM builds, so do not blindly take the first row.
+    matching_rows = []
     for row in rows:
-        row_text = row.get_text()
+        row_text = row.get_text(" ", strip=True)
         if 'variant' in row_text.lower() and 'arch' in row_text.lower():
             continue
-        
-        # Check if row contains our exact version
-        if version in row_text or version.replace('.', '-') in row_text:
-            if _row_matches(row_text, allow_bundle=False):
-                download_page_url = _extract_row_link(row)
-                if download_page_url:
-                    break
-    
-    # If exact version not found, try to find any variant matching criteria
-    if not download_page_url:
+        if (version in row_text or version.replace('.', '-') in row_text) and _row_matches(row_text, allow_bundle=True):
+            link = _extract_row_link(row)
+            if link:
+                numeric_codes = [int(x) for x in re.findall(r'(?<!\d)(\d{7,10})(?!\d)', row_text)]
+                build_code = max(numeric_codes) if numeric_codes else -1
+                matching_rows.append((build_code, row_text, link))
+
+    matching_rows.sort(key=lambda item: item[0], reverse=True)
+
+    if matching_rows:
+        if candidate_index >= len(matching_rows):
+            logging.info(
+                f"APKMirror candidate {candidate_index + 1} is unavailable for "
+                f"{app_name} {version}; found {len(matching_rows)} matching variants"
+            )
+            return None
+        _, selected_row_text, download_page_url = matching_rows[candidate_index]
+        logging.info(
+            f"Selected APKMirror variant {candidate_index + 1}/{len(matching_rows)} "
+            f"for {app_name} {version}: {selected_row_text}"
+        )
+    else:
+        fallback_rows = []
         for row in rows:
-            row_text = row.get_text()
+            row_text = row.get_text(" ", strip=True)
             if 'variant' in row_text.lower() and 'arch' in row_text.lower():
                 continue
-            if _row_matches(row_text, allow_bundle=True):
-                # Check if this looks like a variant row (has version numbers)
-                if re.search(r'\d+(\.\d+)+', row_text):
-                    download_page_url = _extract_row_link(row)
-                    if download_page_url:
-                        match = re.search(r'(\d+(\.\d+)+(\.\w+)*)', row_text)
-                        if match:
-                            actual_version = match.group(1)
-                            logging.warning(f"Using variant {actual_version} (criteria match)")
-                        break
-    
+            if _row_matches(row_text, allow_bundle=True) and re.search(r'\d+(\.\d+)+', row_text):
+                link = _extract_row_link(row)
+                if link:
+                    fallback_rows.append((row_text, link))
+
+        if candidate_index >= len(fallback_rows):
+            logging.error(f"No variant found for {app_name} {version} with criteria {criteria}")
+            logging.debug(f"Found {len(rows)} rows total")
+            for idx, row in enumerate(rows[:5]):
+                logging.debug(f"Row {idx}: {row.get_text()[:100]}...")
+            return None
+
+        selected_row_text, download_page_url = fallback_rows[candidate_index]
+        match = re.search(r'(\d+(\.\d+)+(\.\w+)*)', selected_row_text)
+        if match:
+            logging.warning(f"Using criteria-only variant {match.group(1)} for requested {version}")
+
     if not download_page_url:
         logging.error(f"No variant found for {app_name} {version} with criteria {criteria}")
         # Debug: log what rows we found
