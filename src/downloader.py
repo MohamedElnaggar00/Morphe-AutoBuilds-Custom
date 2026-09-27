@@ -144,6 +144,56 @@ def get_supported_version_codes(package_name: str, cli: str, patches: str) -> di
         result.setdefault(m.group(1), []).append(int(m.group(2)))
     return result
 
+_STORE_LATEST_VERSION_CACHE = {}
+
+
+def _get_store_latest_versions(app_name: str, config: dict, platform: str) -> list[str]:
+    """Discover latest store versions independently of the patch-compatible list.
+
+    APKMirror can be unavailable to GitHub-hosted runners because of Cloudflare.
+    Do not let that single provider decide the version candidates for every
+    other provider. Cache the cross-store result so one build job does not
+    repeatedly scrape the same catalogs while moving through the provider
+    fallback chain.
+    """
+    key = (
+        app_name,
+        str(config.get("package") or ""),
+        str(config.get("arch") or "universal"),
+    )
+    if key in _STORE_LATEST_VERSION_CACHE:
+        return list(_STORE_LATEST_VERSION_CACHE[key])
+
+    provider_modules = [
+        ("uptodown", uptodown),
+        ("aptoide", aptoide),
+        ("apkcombo", apkcombo),
+        ("apkpure", apkpure),
+    ]
+
+    ordered = []
+    current = next((item for item in provider_modules if item[0] == platform), None)
+    if current:
+        ordered.append(current)
+    ordered.extend(item for item in provider_modules if item[0] != platform)
+
+    versions = []
+    for provider_name, module in ordered:
+        try:
+            latest = module.get_latest_version(app_name, config)
+            if latest and latest not in versions:
+                versions.append(latest)
+                logging.info(
+                    f"Latest store version for {app_name}: {latest} (source: {provider_name})"
+                )
+        except Exception as exc:
+            logging.debug(
+                f"Could not get latest version for {app_name} from {provider_name}: {exc}"
+            )
+
+    _STORE_LATEST_VERSION_CACHE[key] = list(versions)
+    return versions
+
 def download_platform(
     app_name: str,
     platform: str,
@@ -194,18 +244,13 @@ def download_platform(
 
         platform_module = globals()[platform]
 
-        # Candidate versions (highest -> lowest) for universal robustness:
-        # - If config pins a version: only try that.
-        # - Else if override provided (retry path): try only that.
-        # - Else ask the patching CLI for compatible versions and try those.
-        # - If none returned: fall back to latest available from the store.
-        #
-        # IMPORTANT: The original Morphe-AutoBuilds downloader also appends the
-        # store's latest version even when the patch CLI recommends an older
-        # version. This is intentional: APKMirror/store availability can lag
-        # the patch recommendation, while newer builds may still be patchable.
-        # Keep this behavior so apps such as Gboard/Acrobat/Messenger can fall
-        # through from an unavailable recommended build to the latest APK.
+        # Candidate versions (highest -> lowest):
+        # - A pinned config version remains authoritative.
+        # - An explicit retry override remains authoritative for that retry.
+        # - Otherwise start with Morphe/patch-compatible versions.
+        # - Then append latest versions discovered independently from public
+        #   store fallbacks. This preserves the original multi-source behavior
+        #   when APKMirror itself is unavailable to the GitHub runner.
         pinned = (config.get("version") or "").strip()
         if override_version:
             candidates = [override_version]
@@ -213,42 +258,75 @@ def download_platform(
             candidates = [pinned]
         else:
             candidates = utils.get_supported_versions(config["package"], cli, patches)
-            try:
-                latest = platform_module.get_latest_version(app_name, config)
-                if latest and latest not in candidates:
+            for latest in _get_store_latest_versions(app_name, config, platform):
+                if latest not in candidates:
                     candidates.append(latest)
-            except Exception as e:
-                logging.debug(f"Could not get latest version for {app_name} on {platform}: {e}")
+            logging.info(f"Version candidates for {app_name} on {platform}: {candidates}")
 
         expected_codes = get_supported_version_codes(config["package"], cli, patches) if str(config.get("type", "APK")).upper() == "BUNDLE" else {}
 
         def bundle_version_code(filepath: Path) -> int | None:
             if filepath.suffix.lower() not in {".apkm", ".apks", ".xapk", ".zip"}:
                 return None
+            import shutil
             import zipfile
+            temp_base = filepath.with_name(f".{filepath.stem}-base.apk")
             try:
-                with zipfile.ZipFile(filepath) as archive:
-                    base_name = next((n for n in archive.namelist() if n.lower().endswith("/base.apk") or n.lower() == "base.apk"), None)
-                    if not base_name:
-                        return None
-                    temp_base = filepath.with_name(f".{filepath.stem}-base.apk")
-                    with archive.open(base_name) as src, temp_base.open("wb") as dst:
-                        import shutil
-                        shutil.copyfileobj(src, dst)
-                candidates_aapt = sorted(Path(os.environ.get("ANDROID_HOME", "")).glob("build-tools/*/aapt2"), reverse=True) if os.environ.get("ANDROID_HOME") else []
+                candidates_aapt = (
+                    sorted(
+                        Path(os.environ.get("ANDROID_HOME", "")).glob("build-tools/*/aapt2"),
+                        reverse=True,
+                    )
+                    if os.environ.get("ANDROID_HOME")
+                    else []
+                )
                 if not candidates_aapt:
                     return None
-                out = subprocess.run([str(candidates_aapt[0]), "dump", "badging", str(temp_base)], capture_output=True, text=True, check=False).stdout
-                m = re.search(r"versionCode='(\\d+)'", out)
-                return int(m.group(1)) if m else None
+                aapt2 = candidates_aapt[0]
+
+                with zipfile.ZipFile(filepath) as archive:
+                    apk_members = [
+                        name for name in archive.namelist()
+                        if name.lower().endswith(".apk") and not name.endswith("/")
+                    ]
+                    if not apk_members:
+                        return None
+
+                    # Prefer canonical base.apk. XAPK/APKS downloads from other
+                    # stores may use an app-specific filename, so inspect APK
+                    # members until the configured package is found.
+                    preferred = sorted(
+                        apk_members,
+                        key=lambda name: (
+                            0 if name.lower().split("/")[-1] == "base.apk" else 1,
+                            name,
+                        ),
+                    )
+                    expected_package = str(config.get("package") or "")
+                    for member in preferred:
+                        try:
+                            with archive.open(member) as src, temp_base.open("wb") as dst:
+                                shutil.copyfileobj(src, dst)
+                            out = subprocess.run(
+                                [str(aapt2), "dump", "badging", str(temp_base)],
+                                capture_output=True,
+                                text=True,
+                                check=False,
+                            ).stdout
+                            package_match = re.search(r"package: name='([^']+)'", out)
+                            code_match = re.search(r"versionCode='(\\d+)'", out)
+                            if not code_match:
+                                continue
+                            if expected_package and package_match and package_match.group(1) != expected_package:
+                                continue
+                            return int(code_match.group(1))
+                        finally:
+                            temp_base.unlink(missing_ok=True)
             except Exception as exc:
                 logging.debug("Could not inspect bundle versionCode for %s: %s", filepath, exc)
                 return None
             finally:
-                try:
-                    temp_base.unlink(missing_ok=True)
-                except Exception:
-                    pass
+                temp_base.unlink(missing_ok=True)
 
         last_error: Exception | None = None
         for version in candidates:
