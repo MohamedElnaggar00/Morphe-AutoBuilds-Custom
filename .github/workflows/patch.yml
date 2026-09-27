@@ -188,6 +188,8 @@ jobs:
         image: ghcr.io/germondai/trawl:latest
         ports:
           - 8191:8191
+        env:
+          RESIDENTIAL_PROXY_URL: ${{ secrets.RESIDENTIAL_PROXY_URL }}
         options: --shm-size=1gb
     permissions:
       contents: write
@@ -281,6 +283,7 @@ jobs:
           SOURCE: ${{ matrix.source }}
           ARCH: ${{ matrix.arch }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
           TRAWL_URL: http://localhost:8191
           SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/morphe-signing.jks
           SIGNING_KEYSTORE_TYPE: JKS
