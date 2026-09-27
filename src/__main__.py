@@ -102,8 +102,10 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     logging.info(f"✅ Using CLI: {cli.name}")
     logging.info(f"✅ Using patches: {patches.name}")
 
-    # Hushfacebook and other bundle patch sets need the complete split package.
-    # Prefer APKPure's XAPK fallback before providers that may return a standalone APK.
+    # Bundle patch sets are tied to the exact split bundle they were
+    # checked against. For these apps the authoritative source is APKMirror's
+    # native APKM bundle; do not silently substitute an XAPK/APK from another
+    # provider with a different build code.
     is_bundle_app = False
     try:
         cfg_path = Path("apps") / "apkmirror" / f"{app_name}.json"
@@ -114,14 +116,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         pass
 
     if is_bundle_app:
-        download_methods = [
-            downloader.download_apkmirror,
-            downloader.download_apkpure,
-            downloader.download_apkcombo,
-            downloader.download_aptoide,
-            downloader.download_uptodown,
-            downloader.download_github,
-        ]
+        download_methods = [downloader.download_apkmirror]
     else:
         download_methods = [
             downloader.download_apkmirror,
@@ -139,12 +134,12 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     for method in download_methods:
         input_apk, version, candidates = method(app_name, str(cli), str(patches), arch)
         if input_apk:
-            # Never feed a standalone APK into a BUNDLE patch set. It can have
-            # the right package/version but be missing split code/resources.
-            if is_bundle_app and input_apk.suffix.lower() == ".apk":
+            # BUNDLE patch sets here are checked against APKMirror's native
+            # APKM container. Never substitute an APK/XAPK from another source.
+            if is_bundle_app and input_apk.suffix.lower() != ".apkm":
                 logging.warning(
-                    f"Rejected standalone APK {input_apk.name} for bundle-configured "
-                    f"app {app_name}; trying the next provider."
+                    f"Rejected non-APKM input {input_apk.name} for bundle-configured "
+                    f"app {app_name}; the patch set requires the APKMirror APKM."
                 )
                 input_apk.unlink(missing_ok=True)
                 input_apk = None
