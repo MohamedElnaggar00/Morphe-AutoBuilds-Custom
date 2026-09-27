@@ -173,6 +173,20 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
         # --- Normalize/merge input into .apk when needed ---
         if input_apk.suffix != ".apk":
+            # Some fallback stores provide an XAPK/APKS even when the app is
+            # configured as a normal APK. Merging the splits with APKEditor
+            # produces an unsigned APK, which breaks patches that inspect the
+            # stock signing certificate. For APK-configured apps, preserve the
+            # signed base.apk instead; bundle-configured apps still use APKEditor.
+            configured_type = "APK"
+            config_path = Path("apps") / "apkmirror" / f"{app_name}.json"
+            try:
+                if config_path.exists():
+                    with config_path.open() as cfg_file:
+                        configured_type = str(json.load(cfg_file).get("type", "APK")).upper()
+            except Exception:
+                pass
+
             # Check if it is a split bundle (contains multiple .apk files or is .apkm/.xapk/.apks)
             is_bundle = False
             try:
@@ -187,7 +201,25 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
             target_apk = input_apk.with_name(f"{input_apk.stem}.apk" if not input_apk.name.endswith(".apk") else input_apk.name)
 
-            if is_bundle:
+            if is_bundle and configured_type == "APK":
+                logging.info(f"Input file is a bundle ({input_apk.name}) for an APK-configured app; extracting signed base APK")
+                import zipfile
+                extracted = None
+                with zipfile.ZipFile(input_apk, "r") as z:
+                    names = z.namelist()
+                    preferred = [n for n in names if Path(n).name.lower() == "base.apk"]
+                    apk_names = preferred or [n for n in names if n.lower().endswith(".apk")]
+                    if apk_names:
+                        extracted = apk_names[0]
+                        with z.open(extracted) as src:
+                            with target_apk.open("wb") as dst:
+                                shutil.copyfileobj(src, dst)
+                if not extracted or not target_apk.exists() or target_apk.stat().st_size == 0:
+                    raise RuntimeError(f"No base APK found inside bundle {input_apk.name}")
+                input_apk.unlink(missing_ok=True)
+                input_apk = target_apk
+                logging.info(f"Extracted signed base APK: {input_apk}")
+            elif is_bundle:
                 logging.info(f"Input file is a bundle ({input_apk.name}), using APKEditor to merge")
                 apk_editor = downloader.download_apkeditor()
                 merged_apk = input_apk.with_suffix(".apk")
