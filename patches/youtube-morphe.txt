@@ -12,9 +12,9 @@
 + Channel search
 + Check watch history domain name resolution
 + Copy video link
-+ Custom branding
 + Custom player overlay opacity
 + Disable DRC audio
++ Disable Play Store updates
 + Disable QUIC protocol
 + Disable Shorts resuming on startup
 + Disable double tap actions
