@@ -30,6 +30,7 @@ import logging
 import importlib
 import subprocess
 import traceback
+import hashlib
 from pathlib import Path
 from typing import Dict, List, Tuple, Optional
 
@@ -819,6 +820,7 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
         mkey = make_manifest_key(app, src, arch)
 
         cur_app_ver = load_app_config_version(app)            # '' if 'latest'
+        cur_config_sig = get_app_config_signature(app)
         cur_src_sig = get_source_signature(src)
         old = old_entries.get(mkey)
         old_src_sig = (old or {}).get("source_sig", "")
@@ -846,6 +848,7 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
             "source": src,
             "arch": arch,
             "config_version": cur_app_ver,
+            "config_sig": "",
             # source_sig is set below AFTER the rebuild decision.
             "source_sig": "",
             # apk filename is filled in *after* build by the workflow; for now
@@ -863,6 +866,11 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
         else:
             if old.get("config_version", "") != cur_app_ver:
                 reasons.append(f"app-version: {old.get('config_version','')!r}->{cur_app_ver!r}")
+            old_config_sig = old.get("config_sig", "")
+            if not old_config_sig:
+                reasons.append("legacy-manifest-missing-config-signature")
+            elif old_config_sig != cur_config_sig:
+                reasons.append("app-config-changed")
             if old.get("source_sig", "") != cur_src_sig:
                 reasons.append("patch-source-updated")
             if not old.get("built_version", ""):
@@ -917,10 +925,13 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
             # successful build writes a build record. This prevents a failed
             # build from "consuming" the signature change: if the build fails
             # the next planner run will still see old_sig != cur_sig and retry.
+            new_entries[mkey]["config_sig"] = old_config_sig
+            new_entries[mkey]["pending_config_sig"] = cur_config_sig
             new_entries[mkey]["source_sig"] = old_src_sig
             new_entries[mkey]["pending_source_sig"] = cur_src_sig
         else:
             # Carry-over: nothing changed, safe to write the current signature.
+            new_entries[mkey]["config_sig"] = cur_config_sig
             new_entries[mkey]["source_sig"] = cur_src_sig
             old_apk = carried_apk
             if old_apk and old_apk in existing_apk_set:
@@ -930,6 +941,8 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
                 # Defensive: if we can't carry it, we must rebuild.
                 logging.info(f"  REBUILD {app}/{src}/{arch}: no carry-over apk")
                 build_matrix.append(entry)
+                new_entries[mkey]["config_sig"] = old_config_sig
+                new_entries[mkey]["pending_config_sig"] = cur_config_sig
                 new_entries[mkey]["source_sig"] = old_src_sig
                 new_entries[mkey]["pending_source_sig"] = cur_src_sig
 
