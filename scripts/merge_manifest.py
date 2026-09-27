@@ -52,6 +52,7 @@ def main() -> int:
                     "source": rec.get("source", ""),
                     "arch": rec.get("arch", "universal"),
                     "config_version": "",
+                    "config_sig": "",
                     "source_sig": "",
                     "apk": "",
                     "built_version": "",
@@ -61,6 +62,14 @@ def main() -> int:
                 entry["apk"] = apk
             if resolved_version:
                 entry["built_version"] = resolved_version
+            # Promote pending_config_sig/config_sig and pending_source_sig
+            # only after the build succeeded. This prevents a failed build from
+            # consuming a configuration or patch-source change.
+            pending_config_sig = entry.get("pending_config_sig", "")
+            if pending_config_sig:
+                entry["config_sig"] = pending_config_sig
+                del entry["pending_config_sig"]
+
             # Promote pending_source_sig -> source_sig now that the build
             # succeeded.  The planner deliberately keeps the OLD source_sig
             # for rebuild entries so that a failed build doesn't "consume"
@@ -71,10 +80,12 @@ def main() -> int:
                 entry["source_sig"] = pending_sig
                 del entry["pending_source_sig"]
             print(f"  merged {key} -> apk={apk!r} built_version={resolved_version!r}")
-    # Clean up leftover pending_source_sig for entries whose build never
-    # completed (no build record).  The OLD source_sig stays in place so the
-    # next planner run will detect the difference and retry.
+    # Do not promote pending signatures for entries whose build did not
+    # produce a record. They remain in new_manifest only transiently; removing
+    # them keeps the release manifest clean while preserving the old signature
+    # so the next planner run will retry.
     for entry in entries.values():
+        entry.pop("pending_config_sig", None)
         entry.pop("pending_source_sig", None)
 
     with open("manifest.json", "w", encoding="utf-8") as f:
