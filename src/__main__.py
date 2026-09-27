@@ -135,16 +135,25 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
     exclude_patches = []
     include_patches = []
+    patch_options = []
 
     patches_path = Path("patches") / f"{app_name}-{source}.txt"
     if patches_path.exists():
         with patches_path.open('r') as patches_file:
             for line in patches_file:
                 line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
                 if line.startswith('-'):
                     exclude_patches.extend(["-d", line[1:].strip()])
                 elif line.startswith('+'):
                     include_patches.extend(["-e", line[1:].strip()])
+                elif line.startswith('@'):
+                    # Patch option syntax:
+                    # @optionName=value  ->  -OoptionName=value
+                    option = line[1:].strip()
+                    if option:
+                        patch_options.extend(["-O" + option])
 
     for attempt_idx, ver in enumerate(versions_to_try):
         if attempt_idx > 0:
@@ -264,8 +273,8 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                 morphe_cmd = [
                     "java", "-jar", str(cli),
                     "patch", "--patches", str(patches),
-                    "--out", str(output_apk), str(input_apk),
-                    *exclude_patches, *include_patches
+                    *exclude_patches, *include_patches, *patch_options,
+                    "--out", str(output_apk), str(input_apk)
                 ]
                 utils.run_process(morphe_cmd, capture=True, stream=True)
             else:
@@ -279,15 +288,15 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                     utils.run_process([
                         "java", "-jar", str(cli),
                         "patch", "-p", str(patches), "-b",
-                        "--out", str(output_apk), str(input_apk),
-                        *exclude_patches, *include_patches
+                        *exclude_patches, *include_patches, *patch_options,
+                        "--out", str(output_apk), str(input_apk)
                     ], capture=True, stream=True)
                 else:
                     utils.run_process([
                         "java", "-jar", str(cli),
                         "patch", "--patches", str(patches),
-                        "--out", str(output_apk), str(input_apk),
-                        *exclude_patches, *include_patches
+                        *exclude_patches, *include_patches, *patch_options,
+                        "--out", str(output_apk), str(input_apk)
                     ], capture=True, stream=True)
 
         except subprocess.CalledProcessError as e:
