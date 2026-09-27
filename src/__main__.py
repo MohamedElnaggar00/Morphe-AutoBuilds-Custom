@@ -250,8 +250,33 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                 input_apk = target_apk
                 logging.info(f"Extracted signed base APK: {input_apk}")
             elif is_bundle:
-                logging.info(f"Input file is a bundle ({input_apk.name}), using APKEditor to merge")
-                apk_editor = downloader.download_apkeditor()
+                # BUNDLE-configured apps need the complete split set. APKEditor
+                # merge rewrites the archive and can invalidate the original
+                # signing/layout that Morphe patches expect. Prefer the base
+                # APK only when a provider gave us a bundle that contains a
+                # single base APK; otherwise keep the merge path for genuine
+                # multi-split bundles.
+                try:
+                    import zipfile
+                    with zipfile.ZipFile(input_apk, "r") as z:
+                        apk_entries = [n for n in z.namelist() if n.lower().endswith(".apk")]
+                    if len(apk_entries) == 1 and Path(apk_entries[0]).name.lower() == "base.apk":
+                        logging.info(f"Bundle contains only signed base APK; extracting it directly: {input_apk.name}")
+                        with zipfile.ZipFile(input_apk, "r") as z, z.open(apk_entries[0]) as src:
+                            with target_apk.open("wb") as dst:
+                                shutil.copyfileobj(src, dst)
+                        input_apk.unlink(missing_ok=True)
+                        input_apk = target_apk
+                        logging.info(f"Extracted signed base APK: {input_apk}")
+                        apk_entries = []
+                except Exception as e:
+                    logging.debug(f"Could not inspect bundle before merge: {e}")
+                    apk_entries = None
+                if 'apk_entries' in locals() and apk_entries == []:
+                    pass
+                else:
+                    logging.info(f"Input file is a bundle ({input_apk.name}), using APKEditor to merge")
+                    apk_editor = downloader.download_apkeditor()
                 merged_apk = input_apk.with_suffix(".apk")
                 merged_apk.unlink(missing_ok=True)
 
