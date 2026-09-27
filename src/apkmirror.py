@@ -483,14 +483,25 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             rows = table.find_all('div', class_='table-row')
     download_page_url = None
     
-    def _row_matches(row_text: str) -> bool:
+    def _row_matches(row_text: str, allow_bundle: bool = True) -> bool:
         r = row_text.lower()
         if 'variant' in r and 'arch' in r and 'version' in r:
             return False  # Skip header row
             
         c_type = (config.get('type') or '').lower()
-        if c_type and c_type not in r:
-            return False
+        if c_type:
+            if c_type == 'apk':
+                # APKMirror bundle rows often contain the word "APK" in their
+                # description. Prefer a real APK variant when one exists.
+                if 'bundle' in r and not allow_bundle:
+                    return False
+                if ' apk' not in r:
+                    return False
+            elif c_type == 'bundle':
+                if 'bundle' not in r:
+                    return False
+            elif c_type not in r:
+                return False
         
         t_arch = (target_arch or 'universal').lower()
         if t_arch in ['universal', 'noarch']:
@@ -528,7 +539,7 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
         
         # Check if row contains our exact version
         if version in row_text or version.replace('.', '-') in row_text:
-            if _row_matches(row_text):
+            if _row_matches(row_text, allow_bundle=False):
                 download_page_url = _extract_row_link(row)
                 if download_page_url:
                     break
@@ -539,7 +550,7 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             row_text = row.get_text()
             if 'variant' in row_text.lower() and 'arch' in row_text.lower():
                 continue
-            if _row_matches(row_text):
+            if _row_matches(row_text, allow_bundle=True):
                 # Check if this looks like a variant row (has version numbers)
                 if re.search(r'\d+(\.\d+)+', row_text):
                     download_page_url = _extract_row_link(row)
