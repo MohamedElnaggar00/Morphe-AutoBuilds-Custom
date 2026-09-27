@@ -128,15 +128,38 @@ def _cf_get(url, **kwargs):
 
 
 def _direct_release_candidates(version: str, config: dict) -> list[str]:
-    """Build direct APKMirror release URLs without first visiting the app page."""
+    """Build direct APKMirror release URLs without first visiting the app page.
+
+    APKMirror's human release slug is not always identical to the configured
+    app name. Generate a few deterministic aliases from publisher/app/package
+    metadata (for example facebook-messenger for package com.facebook.orca).
+    """
     version_slug = version.replace(".", "-")
     org = (config.get("org") or "").strip("/")
+
+    def _strip_numeric_suffix(value: str) -> str:
+        return re.sub(r"-\\d+$", "", value)
+
+    package_leaf = (config.get("package") or "").rsplit(".", 1)[-1].strip()
+    org_base = _strip_numeric_suffix(org)
+
     release_names = [
         config.get("release_prefix"),
         config.get("release_name"),
         config.get("name"),
         config.get("app_slug"),
     ]
+
+    # Common APKMirror naming patterns:
+    #   facebook + messenger -> facebook-messenger
+    #   adobe-acrobat + reader -> adobe-acrobat-reader
+    if org_base and config.get("name"):
+        release_names.append(f"{org_base}-{config['name']}")
+    if config.get("name") and package_leaf and package_leaf not in str(config["name"]).lower():
+        release_names.append(f"{config['name']}-{package_leaf}")
+    if org_base and package_leaf and package_leaf not in org_base.lower():
+        release_names.append(f"{org_base}-{package_leaf}")
+
     app_slugs = [
         config.get("app_slug"),
         config.get("name"),
@@ -165,7 +188,6 @@ def _direct_release_candidates(version: str, config: dict) -> list[str]:
         )
 
     return list(dict.fromkeys(candidates))
-
 
 def _get_direct_release_page(
     version: str,
