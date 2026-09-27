@@ -28,6 +28,7 @@ APP_NAMES = {
     "gboard": "Gboard",
     "vpnify": "vpnify",
     "facebook": "Facebook",
+    "tiktok": "TikTok",
 }
 
 WORK = ROOT / ".readme-cache"
