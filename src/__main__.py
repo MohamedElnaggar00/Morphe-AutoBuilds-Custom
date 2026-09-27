@@ -116,10 +116,17 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         pass
 
     if is_bundle_app:
-        # Facebook/Hushfacebook is validated against a specific APKMirror
-        # APKM build. Never substitute an XAPK/APKS/APK from another provider:
-        # the same version string can contain different version codes/builds.
-        download_methods = [downloader.download_apkmirror]
+        # Bundle apps may fall back to other public stores, but
+        # download_platform strictly validates any declared Morphe
+        # versionCode before returning the bundle.
+        download_methods = [
+            downloader.download_apkmirror,
+            downloader.download_aptoide,
+            downloader.download_github,
+            downloader.download_uptodown,
+            downloader.download_apkpure,
+            downloader.download_apkcombo,
+        ]
     else:
         download_methods = [
             downloader.download_apkmirror,
@@ -137,11 +144,12 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     for method in download_methods:
         input_apk, version, candidates = method(app_name, str(cli), str(patches), arch)
         if input_apk:
-            # Bundle patch sets here require the native APKMirror APKM.
-            # Do not accept an XAPK/APKS/APK from a different provider.
-            if is_bundle_app and input_apk.suffix.lower() != ".apkm":
+            # Bundle apps can be APKM/APKS/XAPK depending on the source.
+            # download_platform has already enforced any available Morphe
+            # build-code validation before returning the file.
+            if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk", ".zip"}:
                 logging.warning(
-                    f"Rejected non-APKM input {input_apk.name} for bundle-configured "
+                    f"Rejected non-bundle input {input_apk.name} for bundle-configured "
                     f"app {app_name}."
                 )
                 input_apk.unlink(missing_ok=True)
