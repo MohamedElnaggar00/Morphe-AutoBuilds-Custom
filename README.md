@@ -1,309 +1,300 @@
-<div align="center">
-
-# 🔧 Morphe Non-Root Builder
-
-[![Daily Build](https://img.shields.io/github/actions/workflow/status/RookieEnough/Revanced-AutoBuilds/patch.yml?label=Daily%20Build&style=for-the-badge&color=2ea44f)](https://github.com/RookieEnough/Revanced-AutoBuilds/actions/workflows/patch.yml)
-[![Latest Release](https://img.shields.io/github/v/release/RookieEnough/Revanced-AutoBuilds?style=for-the-badge&label=Latest%20Release&color=0366d6)](https://github.com/RookieEnough/Revanced-AutoBuilds/releases/latest)
-[![Python Version](https://img.shields.io/badge/Python-3.11%2B-blue?style=for-the-badge&logo=python&logoColor=white)](https://www.python.org/)
-[![License](https://img.shields.io/github/license/RookieEnough/Revanced-AutoBuilds?style=for-the-badge&color=orange)](LICENSE)
-
-
-<p align="center">
-  <a href="https://ko-fi.com/rookie_z" target="_blank"><img src="https://storage.ko-fi.com/cdn/kofi6.png?v=6" height="30" style="height:30px; border-radius:8px; display:inline-block;" alt="Donate via Ko-fi" /></a>
-  &nbsp;&nbsp;
-  <a href="https://buymeachai.ezee.li/RookieZ" target="_blank"><img src="https://raw.githubusercontent.com/TakiShiwa/donate-with-upi/ffbb38749891aeb62e758a3692698e346e3df2da/Button/SVG/UPI-light-blue-01.svg" height="30" style="height:30px; border-radius:8px; display:inline-block;" alt="Donate via UPI" /></a>
-  <br />
-  <a href="https://paypal.me/RookieEnough" target="_blank"><img src="https://raw.githubusercontent.com/stefan-niedermann/paypal-donate-button/master/paypal-donate-button.png" height="50" style="height:50px; border-radius:8px; display:inline-block; margin-top:8px;" alt="Donate via PayPal" /></a>
-</p>
-
-
-
-<p align="center">
-  <strong>Professional, Automated ReVanced APK Builder</strong><br>
-  Multi-source • Multi-architecture • GitHub Actions Powered
-</p>
-
-<p align="center">
-A sophisticated, automated pipeline that builds ready-to-install Morphe applications for <strong>non-rooted Android devices</strong>. This system automatically fetches the latest Morphe tools, downloads base APKs from multiple sources, applies patches, and publishes optimized APKs with architecture-specific builds.
-</p>
-
-[![View Latest Release](https://img.shields.io/badge/View%20Latest%20Release-0A0A0A?style=flat&logo=github&logoColor=white)](https://github.com/RookieEnough/Revanced-AutoBuilds/releases/latest)
-[![Report Bug](https://img.shields.io/badge/Report%20Bug-0A0A0A?style=flat&logo=github&logoColor=white)](https://github.com/RookieEnough/Revanced-AutoBuilds/issues)
-[![Request Feature](https://img.shields.io/badge/Request%20Feature-0A0A0A?style=flat&logo=github&logoColor=white)](https://github.com/RookieEnough/Revanced-AutoBuilds/issues)
-
-
-</div>
-
----
-
-## ⚡ Quick Downloads
-
-> **Note:** All APKs are automatically rebuilt daily at 06:00 UTC to ensure you have the latest features and security patches.
-
-### 📥 Download Links
-
-| Mirror | Description | Link |
-| :--- | :--- | :--- |
-| **GitHub Releases** | Primary source. Contains all builds. | [**Download Latest Release**](https://RookieEnough/morphe-AutoBuilds/releases/latest) |
-
-### 📱 Supported Apps & Architectures
-
-| Application | arm64-v8a | armeabi-v7a | Universal |
-| :--- | :---: | :---: | :---: |
-| **YouTube** | ✅ | ✅ | ✅ |
-| **vpnify** | ✅ | ❌ | ❌ |
-| **Facebook (Hushfacebook)** | ✅ | ❌ | ❌ |
-| **YouTube Music** | ✅ | ✅ | ❌ |
-| **Reddit** | ❌ | ❌ | ✅ |
-| **Twitter (X)** | ✅ | ❌ | ❌ |
-| **TikTok** | ❌ | ❌ | ✅ |
-| **Spotify** | ❌ | ❌ | ✅ |
-
-*( Legend: ✅ = Available / ❌ = Not configured )*
-
----
-
-## ✨ Key Features
-
-This repository utilizes a robust Python-based pipeline to ensure high reliability and optimization.
-
-* **Fully Automated:** GitHub Actions workflow executes daily at 06:00 UTC, requiring zero manual intervention.
-* **Architecture Optimization:** Builds specific `arm64-v8a`, `armeabi-v7a`, and `universal` APKs to reduce file size and improve performance on target devices.
-* **Multi-Source Strategy:** Intelligent fetching from APKMirror, APKPure, and Uptodown ensures high success rates even if one source is down.
-* **Granular Patch Control:** Simple text-based configuration allows for precise inclusion or exclusion of specific patches.
-* **Smart Failover:** The system automatically switches download sources if a fetch attempt fails.
-* **Auto-Signing:** APKs are signed during CI with the private signing keystore supplied through GitHub Actions Secrets; the keystore is decoded only on the runner and removed after the build.
-* **Clean Release Cycle:** Previous releases are replaced rather than archived, preventing clutter and making it easy for external managers (like Orion) to track updates.
-
----
-
-## 🛠️ Repository Structure
-
-```text
-revanced-nonroot/
-├── .github/workflows/      # GitHub Actions automation
-│   ├── patch.yml           # Daily automated builds (06:00 UTC)
-│   └── manual-patch.yml    # Manual trigger workflow
-├── apps/                   # APK source configurations
-│   ├── apkmirror/          # APKMirror definitions
-│   ├── apkpure/            # APKPure definitions
-│   └── uptodown/           # UptoDown definitions
-├── patches/                # Patch inclusion/exclusion rules
-├── sources/                # ReVanced tool source definitions
-├── src/                    # Core Python build logic
-├── arch-config.json        # Architecture build matrix
-├── patch-config.json       # App build configuration
-└── requirements.txt        # Project dependencies
-
-```
-
----
-
-## ⚙️ Configuration Guide
-
-This builder is highly configurable. You can adjust the following files to customize the build output.
-
-### 1. App Selection (`patch-config.json`)
-
-Define which applications the pipeline should attempt to build.
-
-```json
-{
-  "patch_list": [
-    { "app_name": "youtube", "source": "morphe" },
-    { "app_name": "youtube-music", "source": "morphe" },
-    { "app_name": "X", "source": "crimera" }
-  ]
-}
-
-```
-
-### 2. Architecture Matrix (`arch-config.json`)
-
-Specify which CPU architectures to target for each application.
-
-```json
-[
-  {
-    "app_name": "youtube",
-    "source": "morphe",
-    "arches": ["arm64-v8a", "armeabi-v7a", "universal"]
-  },
-  {
-    "app_name": "youtube-music",
-    "source": "morphe",
-    "arches": ["arm64-v8a", "armeabi-v7a"]
-  }
-]
-
-```
-
-### 3. Source Definitions
-
-Located in the `apps/` directory. Example for `apps/apkmirror/youtube.json`:
-
-```json
-{
-  "org": "google-inc",
-  "name": "youtube",
-  "type": "APK",
-  "arch": "universal",
-  "dpi": "nodpi",
-  "package": "com.google.android.youtube",
-  "version": ""
-}
-
-```
-
-### 4. Patch Rules
-
-Located in `patches/`. For Morphe builds:
-
-- `+` force-enables a patch
-- `-` disables a patch
-- `@` sets a patch option using Morphe CLI's `-O` syntax
-
-Example for `patches/youtube-morphe.txt`:
-
-```text
-# Enable a patch
-+ Theme
-
-# Exclude a patch
-- Network proxy
-
-# Set a patch option
-@darkThemeColor=#181818
-```
-
----
-
-## 🚀 Local Build Instructions
-
-If you prefer to build the APKs on your own machine, follow these steps.
-
-### Prerequisites
-
-* Python 3.11 or higher
-* Java Runtime Environment (JRE)
-* `zip` utility
-* `apksigner` (part of Android SDK Build-Tools)
-
-### Installation & Execution
-
-1. **Clone the repository:**
-```bash
-git clone https://github.com/RookieEnough/morphe-AutoBuilds.git
-cd morphe-nonroot
-
-```
-
-
-2. **Install dependencies:**
-```bash
-pip install -r requirements.txt
-pip install requests beautifulsoup4
-
-```
-
-
-3. **Run the build:**
-You can build for a specific app and source.
-```bash
-export APP_NAME="youtube"
-export SOURCE="morphe"
-python -m src
-
-```
-
-
-4. **Target specific architecture (Optional):**
-```bash
-export APP_NAME="youtube"
-export SOURCE="morphe"
-export ARCH="arm64-v8a"  # Options: arm64-v8a, armeabi-v7a, universal
-python -m src
-
-```
-
-
-
----
-
-## 🔐 APK Signing
-
-The repository does **not** store the private signing keystore in Git.
-
-The CI workflow expects one GitHub Actions secret:
-
-- `MORPHE_KEYSTORE_BASE64` — base64-encoded contents of the private BKS keystore.
-
-The current signing configuration is:
-
-- **Keystore type:** BKS (Bouncy Castle Keystore v2)
-- **Alias:** `Morphe`
-- **Keystore password:** empty
-- **Key password:** empty
-
-### Add the signing secret
-
-On GitHub:
-
-1. Open **Settings → Secrets and variables → Actions**.
-2. Create a **New repository secret** named `MORPHE_KEYSTORE_BASE64`.
-3. On your own computer, base64-encode the keystore and paste the result as the secret value. Do not commit the keystore itself.
-4. Run the workflow manually once and verify that the produced APK is signed with the expected certificate.
-
-The workflow deletes the temporary decoded keystore at the end of each build job.
-
-## 🔄 GitHub Actions Workflows
-
-### Daily Automated Build (`patch.yml`)
-
-* **Schedule:** Runs daily at 06:00 UTC.
-* **Function:** Iterates through all configured apps and architectures.
-* **Output:** Updates the single "Latest" release tag.
-
-### Manual Build (`manual-patch.yml`)
-
-* **Trigger:** Manually via the GitHub Actions "Run workflow" button.
-* **Capabilities:**
-* Target specific apps.
-* Target specific architectures.
-* Force specific APK versions.
-* Option to update the public release or just build artifacts.
-
-
-
----
-
-## 🤝 Contributing
-
-Contributions to improve the toolchain or add support for new apps are welcome.
-
-1. **Fork** the repository.
-2. **Create** a feature branch (`git checkout -b feature/new-app`).
-3. **Test** your changes locally using the Python scripts.
-4. **Commit** your changes (`git commit -m "Add support for new-app"`).
-5. **Push** to the branch (`git push origin feature/new-app`).
-6. **Open** a Pull Request.
-
----
-
-## ⚠️ Disclaimer & Legal
-
-> **Important:** This project is an automated build tool. The APKs provided in the releases are generated automatically using official Morphe tools and patches.
-
-* **Affiliation:** These builds are **not** officially affiliated with the Morphe Team.
-* **Usage:** Provided for educational and convenience purposes only. Use at your own risk.
-* **GmsCore:** Morphe's MicroG-RE is required for these non-root apps to function correctly.
-* **Updates:** Patches are automatically pulled from the latest sources; builds may occasionally contain experimental features.
-
----
-
-<div align="center">
-
-**If you found this project helpful, please consider giving it a ⭐ Star.**  
-<br>
-**Made with 💜 by RookieZ**
-
+## YouTube — 21.38.123
+Patch source: morphe — v1.44.0
+
+<details>
+<summary>🩹 Patches — 83/88 applied</summary>
+
+- ✅ Add to queue
+- ✅ Alternative thumbnails
+- ✅ Ambient mode
+- ✅ App refresh rate
+- ✅ Bypass image region restrictions
+- ✅ Bypass link redirects
+- ✅ Captions
+- ✅ Change form factor
+- ✅ Change header
+- ❌ Change installer source
+- ✅ Change start page
+- ✅ Channel search
+- ✅ Check watch history domain name resolution
+- ❌ Clone app
+- ✅ Copy video link
+- ✅ Custom branding
+- ✅ Custom player overlay opacity
+- ✅ Disable DRC audio
+- ❌ Disable Play Store updates
+- ✅ Disable QUIC protocol
+- ✅ Disable Shorts resuming on startup
+- ✅ Disable double tap actions
+- ✅ Disable fullscreen gestures
+- ✅ Disable haptic feedback
+- ✅ Disable layout updates
+- ✅ Disable player popup panels
+- ✅ Disable playlist autoplay
+- ✅ Disable rolling number animations
+- ✅ Disable scrolling speed limit
+- ✅ Disable sign in to TV popup
+- ✅ Disable video codecs
+- ✅ Double tap to seek
+- ✅ Downloads
+- ✅ Enable debugging
+- ✅ Exit fullscreen mode
+- ✅ Force fullscreen landscape
+- ✅ Force original audio
+- ✅ Fullscreen video scale
+- ✅ GmsCore support
+- ✅ Hide Shorts components
+- ✅ Hide ads
+- ✅ Hide autoplay preview
+- ✅ Hide end screen cards
+- ✅ Hide end screen suggested video
+- ✅ Hide info cards
+- ✅ Hide layout components
+- ✅ Hide player flyout menu components
+- ✅ Hide player overlay buttons
+- ✅ Hide related video overlay
+- ✅ Hide related videos
+- ✅ Hide timestamp
+- ✅ Hide video action buttons
+- ✅ Loop video
+- ✅ Media notification controls
+- ✅ Miniplayer
+- ✅ Mute button
+- ✅ Navigation bar
+- ❌ Network proxy
+- ✅ Open Shorts in regular player
+- ✅ Open channel of live avatar
+- ✅ Open links externally
+- ✅ Open system share sheet
+- ✅ Open videos fullscreen
+- ✅ Override YouTube Music buttons
+- ❌ Override certificate pinning
+- ✅ Play all
+- ✅ Playback in feeds
+- ✅ Playback speed
+- ✅ PoToken provider
+- ✅ Reload video
+- ✅ Remember live stream playback position
+- ✅ Remove background playback restrictions
+- ✅ Remove viewer discretion dialog
+- ✅ Return YouTube Dislike
+- ✅ Sanitize sharing links
+- ✅ Save to Watch later
+- ✅ Seekbar
+- ✅ Settings menu filter
+- ✅ Shorts autoplay
+- ✅ SponsorBlock
+- ✅ Spoof app version
+- ✅ Spoof device dimensions
+- ✅ Spoof video streams
+- ✅ Swipe controls
+- ✅ Theme
+- ✅ Video quality
+- ✅ Voice over translation
+- ✅ Wide search bar
+
+</details>
+
+## Reddit — 2026.38.0
+Patch source: morphe — v1.44.0
+
+<details>
+<summary>🩹 Patches — 18/24 applied</summary>
+
+- ✅ App icon
+- ❌ Change installer source
+- ❌ Clone app
+- ❌ Custom branding name for Reddit
+- ✅ Custom font
+- ❌ Disable Play Store updates
+- ✅ Disable modern home
+- ✅ Disable screenshot popup
+- ✅ Force system font
+- ✅ Hide Ask button
+- ❌ Hide Reddit search
+- ✅ Hide Trending shelves
+- ✅ Hide ads
+- ✅ Hide communities shelf
+- ✅ Hide navigation buttons
+- ✅ Hide sidebar components
+- ✅ Open links directly
+- ✅ Open links externally
+- ❌ Override certificate pinning
+- ✅ Remove subreddit dialog
+- ✅ Sanitize sharing links
+- ✅ Show view count
+- ✅ Spoof signature
+- ✅ Start as guest
+
+</details>
+
+## X — 12.29.1
+Patch source: piko-newx — v3.42.0
+
+<details>
+<summary>🩹 Patches — 48/48 selected by current source configuration</summary>
+
+- ✅ Theme
+- ✅ Classic inline action spacing
+- ✅ Gallery profile Photos tab
+- ✅ Crash logs
+- ✅ Customize navigation bar
+- ✅ Customize post menu items
+- ✅ Hide post dividers
+- ✅ Set default media tab
+- ✅ Set default profile post sorting
+- ✅ Set default reply sorting
+- ✅ Disable blur effects
+- ✅ Hide post reply bar
+- ✅ Show poll results
+- ✅ Hide timeline tabs bar
+- ✅ Customize timeline tabs
+- ✅ Server error logging
+- ✅ Unlock color customization
+- ✅ Hide posts by verified account type
+- ✅ Restore Twitter branding
+- ✅ Disable video player scrolling
+- ✅ Remove ads
+- ✅ Browse tweet object
+- ✅ Open canonical URLs
+- ✅ Custom font
+- ✅ Custom sharing domain
+- ✅ Customize drawer items
+- ✅ Feature switch overrides
+- ✅ Customize inline actions
+- ✅ Inline download button
+- ✅ Force highest video/audio quality
+- ✅ Customize default media tab
+- ✅ Customize navigation bar items
+- ✅ Customize default reply sorting
+- ✅ Share post as image
+- ✅ Hide premium upsell
+- ✅ Unlock downloads
+- ✅ Disable automatic timeline refresh
+- ✅ Filter For You by topic
+- ✅ Hide AI-generated posts
+- ✅ Hide Discover more
+- ✅ Hide compose button
+- ✅ Hide new posts pill
+- ✅ Hide Spaces bar
+- ✅ Hide who to follow
+- ✅ Restore timeline position
+- ✅ Show sensitive media
+- ✅ Filter posts by keyword
+
+</details>
+
+## Gboard — 18.0.3.954559732-release-arm64-v8a
+Patch source: jasonwu1994 — v3.11.0
+
+<details>
+<summary>🩹 Patches — 42/42 applied</summary>
+
+- ✅ AI Writing Tools
+- ✅ Access Points menu style
+- ✅ Add Gboard Signature Bypass
+- ✅ Advanced Voice Typing
+- ✅ Backup & Restore
+- ✅ Change emoji size
+- ✅ Clipboard Custom Character Limit
+- ✅ Clipboard Enhancements
+- ✅ Close Proactive Suggestions
+- ✅ Custom Symbols
+- ✅ Custom Theme
+- ✅ Developer options
+- ✅ Emojis, stickers & GIFs Tab Order
+- ✅ Enable Inline Autofill Suggestions
+- ✅ Enable OCR / Scan Text
+- ✅ Enable accessibility layout
+- ✅ Enable cursor trackpad mode
+- ✅ Enable split keyboard
+- ✅ English QWERTY Up-Flick Uppercase
+- ✅ FTP Server
+- ✅ Floating Web Search
+- ✅ G Logo on Spacebar
+- ✅ Grammar Checker
+- ✅ Hyperspeed Typing Animation
+- ✅ Incognito Mode Toggle
+- ✅ Inline Suggestions
+- ✅ Key Shape Selection
+- ✅ Latin Globe Key Ignore Interval
+- ✅ Long-Press Editing Shortcuts
+- ✅ Package Rename
+- ✅ Quick Insert
+- ✅ Rounded Keyboard Panel
+- ✅ Settings Homepage Override
+- ✅ Simple Calculator
+- ✅ Swipeable Custom Top Row
+- ✅ Toolbar Editing Buttons
+- ✅ Top Toolbar Item Count
+- ✅ Use Bluetooth Microphone
+- ✅ Web Clipboard
+- ✅ Zhuyin Bottom Row Key Sizes
+- ✅ Zhuyin Quick Traditional/Simplified Toggle
+- ✅ Zhuyin Slide Input
+
+</details>
+
+## vpnify — 2.3.0
+Patch source: hxreborn — v1.32.0
+
+<details>
+<summary>🩹 Patches — 2/3 applied</summary>
+
+- ✅ Disable rating prompt
+- ❌ Override certificate pinning
+- ✅ Unlock premium
+
+</details>
+
+## Facebook — 580.0.0.51.74
+Patch source: hushfacebook — v0.2.0
+
+<details>
+<summary>🩹 Patches — 39/43 applied</summary>
+
+- ❌ AMOLED black theme
+- ✅ Block ad telemetry
+- ✅ Block background ad prefetch
+- ✅ Block background-return feed refresh
+- ✅ Block promotional notifications
+- ✅ Clean up Reels
+- ✅ Default comment order
+- ✅ Disable Audience Network
+- ✅ Don't send reel watch history
+- ✅ Download any reel
+- ✅ Download any story
+- ✅ Download any video
+- ✅ Hide AI-detected posts
+- ✅ Hide Menu promotions
+- ✅ Hide Meta AI in search
+- ✅ Hide Reels in the feed
+- ✅ Hide Stories tray
+- ✅ Hide posts by words
+- ✅ Hide sponsored Marketplace listings
+- ✅ Hide sponsored posts
+- ✅ Hide sponsored profile posts
+- ✅ Hide sponsored reels
+- ✅ Hide sponsored search results
+- ✅ Hide sponsored stories
+- ✅ Hide suggested and promoted posts
+- ✅ Hide suggested stories
+- ✅ Hide the Get Messenger card
+- ✅ Hushfacebook in the Menu
+- ✅ Hushfacebook settings
+- ✅ Install beside Meta's apps
+- ❌ Marketplace only
+- ❌ Material You theme
+- ❌ Open links in external browser
+- ❌ Open on a chosen tab
+- ❌ Restore screens on re-signed builds
+- ❌ Resume long videos
+- ❌ Sanitize sharing links
+- ❌ Stop Story auto-advance
+- ❌ Stop update prompts
+- ❌ Tag suggestions only after @
+- ❌ Tap to play
+- ❌ Use the phone's emoji
+- ❌ Use the system font
+
+</details>
