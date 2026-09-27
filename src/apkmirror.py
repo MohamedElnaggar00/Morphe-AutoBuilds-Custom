@@ -515,8 +515,23 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
         if c_dpi in ['nodpi', '120-640dpi', 'all', '']:
             # All DPIs acceptable for universal/nodpi/bundle
             pass
-        elif c_dpi not in r:
-            return False
+        else:
+            # APKMirror often splits the same bundle across overlapping DPI
+            # ranges (for example 360-480dpi / 560-640dpi). A configured
+            # range such as 240-640dpi means any variant fully contained in
+            # that range is compatible; do not require the literal range
+            # string to appear in the row.
+            def _dpi_range(value):
+                m = re.search(r'(?<!\\d)(\\d+)\\s*[-–]\\s*(\\d+)\\s*dpi', value)
+                return (int(m.group(1)), int(m.group(2))) if m else None
+
+            configured_dpi = _dpi_range(c_dpi)
+            row_dpi = _dpi_range(r)
+            if configured_dpi and row_dpi:
+                if row_dpi[0] < configured_dpi[0] or row_dpi[1] > configured_dpi[1]:
+                    return False
+            elif c_dpi not in r:
+                return False
 
         return True
 
