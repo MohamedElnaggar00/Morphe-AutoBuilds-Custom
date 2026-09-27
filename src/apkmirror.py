@@ -491,11 +491,12 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
         c_type = (config.get('type') or '').lower()
         if c_type:
             if c_type == 'apk':
-                # APKMirror bundle rows often contain the word "APK" in their
-                # description. Prefer a real APK variant when one exists.
-                if 'bundle' in r and not allow_bundle:
+                # A real APK variant is preferred, but some APK-configured apps
+                # are only exposed by APKMirror as bundle rows. In that case the
+                # caller may intentionally accept the bundle as a fallback.
+                if not allow_bundle and 'bundle' in r:
                     return False
-                if ' apk' not in r:
+                if not allow_bundle and not re.search(r'\\bapk\\b', r):
                     return False
             elif c_type == 'bundle':
                 if 'bundle' not in r:
