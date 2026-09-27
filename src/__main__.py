@@ -318,12 +318,12 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             raise RuntimeError("apksigner not found")
 
         # --- SIGN APK ---
-        # Signing material is supplied by the environment in CI so the private
-        # keystore never needs to be committed to the repository.
+        # Follow the original Morphe-AutoBuilds signing approach: apksigner
+        # receives a JKS keystore, alias, and passwords. In CI the JKS is
+        # materialized from the encrypted Actions secret at runtime.
         signing_keystore = getenv("SIGNING_KEYSTORE_PATH")
-        signing_keystore_type = getenv("SIGNING_KEYSTORE_TYPE", "BKS")
-        signing_alias = getenv("SIGNING_KEY_ALIAS", "Morphe")
-        signing_keystore_password = getenv("SIGNING_KEYSTORE_PASSWORD", "")
+        signing_alias = getenv("SIGNING_KEY_ALIAS", "public")
+        signing_keystore_password = getenv("SIGNING_KEYSTORE_PASSWORD", "public")
         signing_key_password = getenv("SIGNING_KEY_PASSWORD", signing_keystore_password)
 
         if not signing_keystore:
@@ -338,13 +338,11 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         signing_common_args = [
             str(apksigner), "sign", "--verbose",
             "--ks", signing_keystore,
-            "--ks-type", signing_keystore_type,
             "--ks-pass", "env:SIGNING_KEYSTORE_PASSWORD",
             "--key-pass", "env:SIGNING_KEY_PASSWORD",
             "--ks-key-alias", signing_alias,
             "--in", str(output_apk), "--out", str(signed_apk)
         ]
-
         try:
             utils.run_process(
                 signing_common_args,
