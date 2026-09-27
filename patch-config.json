@@ -27,6 +27,10 @@
     {
       "app_name": "messenger",
       "source": "rushiranpise"
+    },
+    {
+      "app_name": "adobe-acrobat",
+      "source": "hoomans"
     }
   ]
 }
