@@ -400,10 +400,10 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
+- ❌ Limit background traffic
 - ❌ Drop the animated image cache
 - ❌ Skip update checks
 - ❌ Skip the splash ad
-- ❌ Limit background traffic
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
 - ❌ Block P2P video relay
