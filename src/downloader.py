@@ -383,15 +383,16 @@ def download_platform(
                 min_size_mb = config.get("min_size_mb")
                 if min_size_mb is not None:
                     min_size_bytes = float(min_size_mb) * 1024 * 1024
-                    if filepath.stat().st_size <= min_size_bytes:
+                    actual_size_mb = filepath.stat().st_size / (1024 * 1024)
+                    if actual_size_mb <= float(min_size_mb):
                         logging.warning(
-                            f"Rejected {filepath.name}: file size {filepath.stat().st_size / (1024 * 1024):.2f} MB "
+                            f"Rejected {filepath.name}: file size {actual_size_mb:.2f} MB "
                             f"is not greater than {float(min_size_mb):.2f} MB"
                         )
                         filepath.unlink(missing_ok=True)
                         last_error = ValueError(
                             f"Artifact for {app_name} is too small: "
-                            f"{filepath.stat().st_size / (1024 * 1024):.2f} MB"
+                            f"{actual_size_mb:.2f} MB"
                         )
                         continue
 
