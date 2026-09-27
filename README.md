@@ -155,18 +155,23 @@ Located in the `apps/` directory. Example for `apps/apkmirror/youtube.json`:
 
 ### 4. Patch Rules
 
-Located in `patches/`. Example for `patches/youtube-morphe.txt`. Use `+` to force include and `-` to exclude.
+Located in `patches/`. For Morphe builds:
+
+- `+` force-enables a patch
+- `-` disables a patch
+- `@` sets a patch option using Morphe CLI's `-O` syntax
+
+Example for `patches/youtube-morphe.txt`:
 
 ```text
-# Essential patches
-+ microg-support
-+ premium-heading
-+ hide-infocard-suggestions
+# Enable a patch
++ Theme
 
-# Exclusions
-- custom-branding
-- amoled
+# Exclude a patch
+- Network proxy
 
+# Set a patch option
+@darkThemeColor=#181818
 ```
 
 ---
