@@ -1,6 +1,8 @@
 {
   "org": "vpnify",
   "name": "vpnify",
+  "app_slug": "vpnify-unlimited-vpn-proxy",
+  "release_prefix": "vpnify-unlimited-vpn-proxy",
   "type": "APK",
   "arch": "arm64-v8a",
   "dpi": "nodpi",
