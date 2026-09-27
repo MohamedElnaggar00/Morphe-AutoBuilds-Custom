@@ -457,3 +457,15 @@ Architecture: arm64-v8a
 - ✅ Translate comments
 
 </details>
+
+## CamScanner — 7.20.0.2606230000
+Patch source: hoodles — v1.44.1
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 2/2 applied</summary>
+
+- ✅ Disable telemetry
+- ✅ Enable Premium
+
+</details>
