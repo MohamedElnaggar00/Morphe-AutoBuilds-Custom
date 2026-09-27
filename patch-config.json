@@ -15,6 +15,10 @@
     {
       "app_name": "gboard",
       "source": "jasonwu1994"
+    },
+    {
+      "app_name": "vpnify",
+      "source": "hxreborn"
     }
   ]
 }
