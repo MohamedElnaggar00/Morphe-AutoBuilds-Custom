@@ -116,7 +116,17 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         pass
 
     if is_bundle_app:
-        download_methods = [downloader.download_apkmirror]
+        # APKMirror remains preferred, but bundle-compatible providers are valid
+        # fallbacks when APKMirror is blocked. downloader.py validates the
+        # returned bundle's declared versionCode before accepting it.
+        download_methods = [
+            downloader.download_apkmirror,
+            downloader.download_apkpure,
+            downloader.download_apkcombo,
+            downloader.download_aptoide,
+            downloader.download_uptodown,
+            downloader.download_github,
+        ]
     else:
         download_methods = [
             downloader.download_apkmirror,
@@ -134,12 +144,13 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     for method in download_methods:
         input_apk, version, candidates = method(app_name, str(cli), str(patches), arch)
         if input_apk:
-            # BUNDLE patch sets here are checked against APKMirror's native
-            # APKM container. Never substitute an APK/XAPK from another source.
-            if is_bundle_app and input_apk.suffix.lower() != ".apkm":
+            # Bundle patch sets require a split archive. Never substitute
+            # a standalone APK; APKM/XAPK/APKS are all bundle containers Morphe
+            # can consume.
+            if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".xapk", ".apks"}:
                 logging.warning(
-                    f"Rejected non-APKM input {input_apk.name} for bundle-configured "
-                    f"app {app_name}; the patch set requires the APKMirror APKM."
+                    f"Rejected non-bundle input {input_apk.name} for bundle-configured "
+                    f"app {app_name}; trying the next provider."
                 )
                 input_apk.unlink(missing_ok=True)
                 input_apk = None
