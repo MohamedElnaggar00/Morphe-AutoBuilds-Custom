@@ -1,0 +1,3 @@
+# hxreborn Morphe patches for vpnify
++ Disable rating prompt
++ Unlock premium
