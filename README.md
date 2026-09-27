@@ -293,21 +293,8 @@ Patch source: rushiranpise — v1.22.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 13/20 applied</summary>
+<summary>🩹 Patches — 0/7 applied</summary>
 
-- ✅ Enable chat heads
-- ✅ Hide inbox ads
-- ✅ Hide inbox stories and notes tray
-- ✅ Hide inbox subtabs
-- ✅ Disable typing indicator
-- ✅ Hide Facebook buttons
-- ✅ Open links externally
-- ✅ Disable media transcoding
-- ✅ Remove Meta AI
-- ✅ Change package name
-- ✅ Spoof package version
-- ✅ Allow screen capture
-- ✅ Block screenshot detection
 - ❌ Disable PairIP license check
 - ❌ Provide Original app certificate
 - ❌ Spoof Widevine / DRM level
@@ -400,15 +387,15 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
+- ❌ Limit background traffic
 - ❌ Drop the animated image cache
 - ❌ Skip update checks
-- ❌ Limit background traffic
 - ❌ Skip the splash ad
-- ❌ Remove content credential and card scanner assets
-- ❌ Remove unused language packs
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
 - ❌ Block P2P video relay
+- ❌ Remove content credential and card scanner assets
+- ❌ Remove unused language packs
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
