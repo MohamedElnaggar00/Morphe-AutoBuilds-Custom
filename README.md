@@ -239,7 +239,7 @@ Architecture: arm64-v8a
 </details>
 
 ## vpnify — —
-Patch source: hxreborn — v1.32.0
+Patch source: hxreborn — v1.33.0
 Architecture: arm64-v8a
 
 <details>
