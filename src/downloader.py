@@ -1,5 +1,7 @@
 import json
 import logging
+import re
+import subprocess
 import time
 from pathlib import Path
 from src import (
@@ -124,6 +126,23 @@ def download_from_bundle(bundle_info: dict) -> tuple[list[Path], str]:
     
     return downloaded_files, name
 
+def get_supported_version_codes(package_name: str, cli: str, patches: str) -> dict[str, list[int]]:
+    """Return Morphe's declared version codes for each supported version."""
+    cmd = [
+        "java", "-jar", cli,
+        "list-versions",
+        "-f", package_name,
+        "--patches", patches,
+    ]
+    output = utils.run_process(cmd, capture=True, silent=True, check=False) or ""
+    result: dict[str, list[int]] = {}
+    for line in output.splitlines():
+        m = re.search(r"^\\s*(\\d+(?:\\.\\d+)+).*?versionCodes:\\s*[^=]+=([0-9]+)", line)
+        if not m:
+            continue
+        result.setdefault(m.group(1), []).append(int(m.group(2)))
+    return result
+
 def download_platform(
     app_name: str,
     platform: str,
@@ -194,6 +213,36 @@ def download_platform(
                 except Exception as e:
                     logging.debug(f"Could not get latest version for {app_name} on {platform}: {e}")
 
+        expected_codes = get_supported_version_codes(config["package"], cli, patches) if str(config.get("type", "APK")).upper() == "BUNDLE" else {}
+
+        def bundle_version_code(filepath: Path) -> int | None:
+            if filepath.suffix.lower() not in {".apkm", ".apks", ".xapk", ".zip"}:
+                return None
+            import zipfile
+            try:
+                with zipfile.ZipFile(filepath) as archive:
+                    base_name = next((n for n in archive.namelist() if n.lower().endswith("/base.apk") or n.lower() == "base.apk"), None)
+                    if not base_name:
+                        return None
+                    temp_base = filepath.with_name(f".{filepath.stem}-base.apk")
+                    with archive.open(base_name) as src, temp_base.open("wb") as dst:
+                        import shutil
+                        shutil.copyfileobj(src, dst)
+                candidates_aapt = sorted(Path(os.environ.get("ANDROID_HOME", "")).glob("build-tools/*/aapt2"), reverse=True) if os.environ.get("ANDROID_HOME") else []
+                if not candidates_aapt:
+                    return None
+                out = subprocess.run([str(candidates_aapt[0]), "dump", "badging", str(temp_base)], capture_output=True, text=True, check=False).stdout
+                m = re.search(r"versionCode='(\\d+)'", out)
+                return int(m.group(1)) if m else None
+            except Exception as exc:
+                logging.debug("Could not inspect bundle versionCode for %s: %s", filepath, exc)
+                return None
+            finally:
+                try:
+                    temp_base.unlink(missing_ok=True)
+                except Exception:
+                    pass
+
         last_error: Exception | None = None
         for version in candidates:
             if not version:
@@ -204,6 +253,14 @@ def download_platform(
                 continue
             try:
                 filepath = download_resource(download_link)
+                required_codes = expected_codes.get(version, [])
+                if required_codes:
+                    actual_code = bundle_version_code(filepath)
+                    if actual_code is not None and actual_code not in required_codes:
+                        logging.warning(f"Rejected {filepath.name}: versionCode {actual_code} is not declared for {version}; expected {required_codes}")
+                        filepath.unlink(missing_ok=True)
+                        last_error = ValueError(f"Wrong build code for {app_name} {version}: {actual_code} (expected {required_codes})")
+                        continue
                 return filepath, version, candidates
             except Exception as e:
                 last_error = e
