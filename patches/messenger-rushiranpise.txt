@@ -1,0 +1,17 @@
+# rushiranpise Morphe patches for Messenger
++ Allow screen capture
++ Block screenshot detection
++ Change package name
++ Disable media transcoding
++ Disable typing indicator
++ Enable chat heads
++ Hide Facebook buttons
++ Hide inbox ads
++ Hide inbox stories and notes tray
++ Hide inbox subtabs
++ Open links externally
++ Remove Meta AI
++ Spoof package version
+
+# Patch options
+@messengerAppName=Messenger
