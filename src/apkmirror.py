@@ -184,6 +184,35 @@ def _direct_release_candidates(version: str, config: dict) -> list[str]:
     if org_base and package_leaf and package_leaf not in org_base.lower():
         release_names.append(f"{org_base}-{package_leaf}")
 
+    app_slugs = [
+        config.get("app_slug"),
+        config.get("name"),
+        config.get("org"),
+    ]
+
+    candidates = []
+    explicit = config.get("release_url")
+    if explicit:
+        candidates.append(explicit)
+
+    for app_slug in app_slugs:
+        if not app_slug or not org:
+            continue
+        for release_name in release_names:
+            if not release_name:
+                continue
+            candidates.append(
+                f"{base_url}/apk/{org}/{quote(str(app_slug), safe='')}/"
+                f"{quote(str(release_name), safe='')}-{version_slug}-release/"
+            )
+        # APKMirror sometimes uses the app slug itself as the release prefix.
+        candidates.append(
+            f"{base_url}/apk/{org}/{quote(str(app_slug), safe='')}/"
+            f"{quote(str(app_slug), safe='')}-{version_slug}-release/"
+        )
+
+    return list(dict.fromkeys(candidates))
+
 
 def _get_api_variant_urls(
     version: str,
