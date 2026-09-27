@@ -33,7 +33,10 @@ def get_latest_version(app_name: str, config: Dict) -> Optional[str]:
     data = _safe_get_json(url_versions) or {}
     items = data.get("list") or (((data.get("datalist") or {}).get("list")) or [])
     for it in items:
-        if it.get("package") == package and it.get("file", {}).get("vername"):
+        # listAppVersions is already scoped to the exact package. Some
+        # Aptoide responses omit the package field on version rows, so do not
+        # discard an otherwise valid version just because that field is absent.
+        if (not it.get("package") or it.get("package") == package) and it.get("file", {}).get("vername"):
             return it["file"]["vername"]
 
     # 2. Fallback to apps/search filtered by package
@@ -60,7 +63,9 @@ def get_download_link(version: str, app_name: str, config: Dict) -> Optional[str
     url_versions = f"{BASE_URL}listAppVersions?package_name={package}&limit=100"
     data = _safe_get_json(url_versions) or {}
     items = data.get("list") or (((data.get("datalist") or {}).get("list")) or [])
-    items = [it for it in items if it.get("package") == package]
+    # The endpoint is already package-scoped; tolerate rows that omit the
+    # package field while still rejecting an explicitly different package.
+    items = [it for it in items if not it.get("package") or it.get("package") == package]
     
     vercode = None
     
