@@ -1,0 +1,8 @@
+{
+  "name": "facebook",
+  "package": "com.facebook.katana",
+  "type": "BUNDLE",
+  "arch": "arm64-v8a",
+  "dpi": "240-640dpi",
+  "version": ""
+}
