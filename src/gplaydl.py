@@ -60,14 +60,25 @@ def _version_codes(package_name: str, cli: str, patches: str) -> dict[str, list[
 
         # Morphe prints architecture-specific version codes, e.g.
         # ARMEABI_V7A=345212666, ARM64_V8A=345212670.
-        # The previous parser accidentally captured the first code
-        # (usually ARMv7) regardless of the requested architecture.
-        codes: list[int] = []
-        for match in re.finditer(r"(?:ARMEABI_V7A|ARM64_V8A|X86_64|X86)\s*=\s*(\d+)", code_text):
-            codes.append(int(match.group(1)))
+        # Keep the mapping by ABI. The old implementation flattened all
+        # architecture codes into one list, which made an arm64 build try
+        # the ARMv7 versionCode first.
+        arch_codes: dict[str, int] = {}
+        for match in re.finditer(
+            r"(ARMEABI_V7A|ARM64_V8A|X86_64|X86)\s*=\s*(\d+)",
+            code_text,
+        ):
+            arch_codes[match.group(1)] = int(match.group(2))
 
-        if codes:
-            result.setdefault(version, []).extend(codes)
+        if arch_codes:
+            # Store the architecture mapping as an ordered list with ARM64
+            # first. download_app() filters this list to the requested ABI.
+            ordered = [
+                arch_codes[name]
+                for name in ("ARM64_V8A", "ARMEABI_V7A", "X86_64", "X86")
+                if name in arch_codes
+            ]
+            result.setdefault(version, []).extend(ordered)
     return result
 
 
@@ -322,9 +333,19 @@ def download_app(
     # Try Morphe-supported versions from highest to lowest. Google Play is
     # asked for the exact versionCode, avoiding nearest-version behavior.
     candidates: list[tuple[str, int]] = []
+    # Morphe can expose multiple ABI-specific versionCodes for the same
+    # version. Never try another ABI's code for an arm64 build.
+    requested_code_index = {
+        "arm64-v8a": 0,
+        "armeabi-v7a": 1,
+        "x86_64": 2,
+        "x86": 3,
+    }.get(arch, 0)
+
     for version in versions:
-        for code in supported.get(version, []):
-            candidates.append((version, code))
+        codes = supported.get(version, [])
+        if len(codes) > requested_code_index:
+            candidates.append((version, codes[requested_code_index]))
 
     if not candidates:
         logging.info(
