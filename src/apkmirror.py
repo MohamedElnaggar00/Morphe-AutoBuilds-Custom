@@ -152,7 +152,7 @@ def _direct_release_candidates(version: str, config: dict) -> list[str]:
     org = (config.get("org") or "").strip("/")
 
     def _strip_numeric_suffix(value: str) -> str:
-        return re.sub(r"-\\d+$", "", value)
+        return re.sub(r"-\d+$", "", value)
 
     package_leaf = (config.get("package") or "").rsplit(".", 1)[-1].strip()
     org_base = _strip_numeric_suffix(org)
@@ -297,14 +297,14 @@ def _get_api_variant_urls(
 
             # Config can use a range such as 240-640dpi while the API may expose
             # individual densities (e.g. 360, 480, 640) or a range per variant.
-            range_match = re.fullmatch(r"(\\d+)\\s*-\\s*(\\d+)dpi", wanted_dpi)
+            range_match = re.fullmatch(r"(\d+)\s*-\s*(\d+)dpi", wanted_dpi)
             if range_match:
                 low, high = map(int, range_match.groups())
                 for value in raw_dpis:
-                    m = re.fullmatch(r"(\\d+)", value)
+                    m = re.fullmatch(r"(\d+)", value)
                     if m and low <= int(m.group(1)) <= high:
                         return True
-                    m = re.fullmatch(r"(\\d+)\\s*-\\s*(\\d+)dpi", value)
+                    m = re.fullmatch(r"(\d+)\s*-\s*(\d+)dpi", value)
                     if m:
                         item_low, item_high = map(int, m.groups())
                         if item_low >= low and item_high <= high:
@@ -346,7 +346,7 @@ def _variant_matches_extra_criteria(text: str, config: dict, version: str | None
     raw = " ".join(str(text or "").split()).lower()
 
     expected_code = str(config.get("expected_version_code") or "").strip()
-    if expected_code and not re.search(rf"(?<!\\d){re.escape(expected_code)}(?!\\d)", raw):
+    if expected_code and not re.search(rf"(?<!\d){re.escape(expected_code)}(?!\d)", raw):
         logging.info("Rejected Facebook variant: versionCode %s not found", expected_code)
         return False
 
@@ -356,18 +356,18 @@ def _variant_matches_extra_criteria(text: str, config: dict, version: str | None
         return False
 
     android_min = int(config.get("android_min") or 11)
-    android_ok = bool(re.search(rf"android\\s*{android_min}\\s*\\+", raw))
+    android_ok = bool(re.search(rf"android\s*{android_min}\s*\+", raw))
     if not android_ok:
-        android_ok = bool(re.search(rf"android\\s*{android_min}\\s*(?:and\\s*above|or\\s*later)", raw))
+        android_ok = bool(re.search(rf"android\s*{android_min}\s*(?:and\s*above|or\s*later)", raw))
     if not android_ok:
         logging.info("Rejected Facebook variant: Android %s+ requirement not found", android_min)
         return False
 
     expected_dpi = str(config.get("dpi") or "240-640dpi").lower()
-    dpi_match = re.fullmatch(r"(\\d+)\\s*-\\s*(\\d+)dpi", expected_dpi)
+    dpi_match = re.fullmatch(r"(\d+)\s*-\s*(\d+)dpi", expected_dpi)
     if dpi_match:
         low, high = map(int, dpi_match.groups())
-        if not re.search(rf"(?<!\\d){low}\\s*-\\s*{high}\\s*dpi", raw):
+        if not re.search(rf"(?<!\d){low}\s*-\s*{high}\s*dpi", raw):
             logging.info("Rejected Facebook variant: DPI range %s not found", expected_dpi)
             return False
 
@@ -965,7 +965,7 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
                 # caller may intentionally accept the bundle as a fallback.
                 if not allow_bundle and 'bundle' in r:
                     return False
-                if not allow_bundle and not re.search(r'\\bapk\\b', r):
+                if not allow_bundle and not re.search(r'\bapk\b', r):
                     return False
             elif c_type == 'bundle':
                 if 'bundle' not in r:
@@ -991,7 +991,7 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             # that range is compatible; do not require the literal range
             # string to appear in the row.
             def _dpi_range(value):
-                m = re.search(r'(?<!\\d)(\\d+)\\s*[-–]\\s*(\\d+)\\s*dpi', value)
+                m = re.search(r'(?<!\d)(\d+)\s*[-–]\s*(\d+)\s*dpi', value)
                 return (int(m.group(1)), int(m.group(2))) if m else None
 
             configured_dpi = _dpi_range(c_dpi)
