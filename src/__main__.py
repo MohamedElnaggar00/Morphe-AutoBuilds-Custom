@@ -27,6 +27,22 @@ def _should_retry_with_older_version(output: str | None) -> bool:
         or "patching aborted" in t
     )
 
+def _configured_package(app_name: str) -> str | None:
+    """Resolve the Android package from the existing app configuration."""
+    for platform in ("aptoide", "apkmirror", "uptodown", "apkpure", "apkcombo"):
+        path = Path("apps") / platform / f"{app_name}.json"
+        if not path.exists():
+            continue
+        try:
+            with path.open() as cfg:
+                package = json.load(cfg).get("package")
+            if package:
+                return package
+        except Exception:
+            continue
+    return None
+
+
 def _release_already_has_build(app_name: str, arch: str, version: str) -> bool:
     """
     Avoid rebuilding an APK that is already published for the exact app,
@@ -157,7 +173,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     # application. This lets us compare against an already-published Release
     # and skip redundant Facebook/other app rebuilds.
     supported_versions = utils.get_supported_versions(
-        _find_package(app_name, source) if False else app_name,
+        _configured_package(app_name) or app_name,
         str(cli),
         str(patches),
     )
