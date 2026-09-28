@@ -27,7 +27,6 @@ APP_NAMES = {
     "x": "X",
     "gboard": "Gboard",
     "vpnify": "vpnify",
-    "facebook": "Facebook",
     "tiktok": "TikTok",
     "tiktok-metra": "TikTok (Metra)",
     "camscanner": "CamScanner",
