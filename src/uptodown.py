@@ -120,6 +120,47 @@ def _direct_url_from_page(soup: BeautifulSoup, page_url: str) -> str | None:
     return None
 
 
+def _ajax_download_url(soup: BeautifulSoup, page_url: str) -> str | None:
+    """Try Uptodown's AJAX download-url endpoint when the legacy data-url is absent."""
+    button = soup.find(id="detail-download-button")
+    if not button:
+        return None
+
+    app_id = button.get("data-app-id")
+    file_id = button.get("data-file-id") or button.get("data-download-version")
+    token = (
+        button.get("data-token")
+        or button.get("data-turnstile-token")
+        or button.get("data-cf-token")
+    )
+    if not (app_id and file_id and token):
+        return None
+
+    origin = page_url.split("/android", 1)[0]
+    endpoint = f"{origin}/ajax/app/{app_id}/file/{file_id}/download-url"
+    try:
+        response = session.post(
+            endpoint,
+            headers={
+                **HEADERS,
+                "Content-Type": "application/json",
+                "X-Requested-With": "XMLHttpRequest",
+                "Referer": page_url,
+            },
+            json={"token": token, "onlyXapk": button.get("data-only-xapk", "0")},
+            timeout=20,
+        )
+        if response.status_code != 200:
+            return None
+        data = response.json()
+        download_url = ((data.get("data") or {}).get("downloadURL") or "").strip()
+        if download_url:
+            return urljoin("https://dw.uptodown.com/dwn/", download_url)
+    except Exception as exc:
+        logging.debug("Uptodown AJAX download-url failed for %s: %s", page_url, exc)
+    return None
+
+
 def _variant_file_id(base_url: str, data_code: str, version_page: BeautifulSoup, arch: str) -> str | None:
     """Select an Uptodown variant as rvb does before opening the -x page."""
     variants_button = version_page.select_one(".button.variants[data-version]")
@@ -197,12 +238,15 @@ def get_download_link(version: str, app_name: str, config: dict) -> str | None:
             if variant_id:
                 variant_response = _get(f"{base_url}/download/{variant_id}-x")
                 if variant_response:
-                    link = _direct_url_from_page(
-                        BeautifulSoup(variant_response.content, "html.parser"), variant_response.url
-                    )
+                    variant_soup = BeautifulSoup(variant_response.content, "html.parser")
+                    link = _direct_url_from_page(variant_soup, variant_response.url)
+                    if not link:
+                        link = _ajax_download_url(variant_soup, variant_response.url)
                     if link:
                         return link
             link = _direct_url_from_page(version_soup, page_response.url)
+            if not link:
+                link = _ajax_download_url(version_soup, page_response.url)
             if link:
                 return link
             logging.warning(
