@@ -1,0 +1,7 @@
+-AMOLED black theme
+-Material You theme
+-Open on a chosen tab
+-Tag suggestions only after @
+-Use the phone's emoji
+-Use the system font
+-Don't send reel watch history
