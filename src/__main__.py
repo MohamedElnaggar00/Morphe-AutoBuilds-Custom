@@ -116,12 +116,20 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         pass
 
     if is_bundle_app:
+        # Native APKM/APKS bundle sources remain authoritative for bundle apps.
+        # gplaydl is intentionally not inserted here because --no-splits would
+        # turn a bundle download into a base APK that is not equivalent to the
+        # native Morphe bundle.
         download_methods = [
             downloader.download_apkmirror,
             downloader.download_apkcombo,
         ]
     else:
+        # Prefer Google Play when GPLAYDL_API_KEY is configured and the patch
+        # set exposes an exact compatible versionCode. If it fails, continue
+        # through the existing public-store fallbacks unchanged.
         download_methods = [
+            downloader.download_gplaydl,
             downloader.download_apkmirror,
             downloader.download_aptoide,
             downloader.download_github,
