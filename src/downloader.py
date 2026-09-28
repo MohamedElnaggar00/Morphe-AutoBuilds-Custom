@@ -219,16 +219,24 @@ def download_platform(
                         with other_path.open() as json_file:
                             other_cfg = json.load(json_file)
                         if other_cfg.get("package"):
+                            # A config synthesized from another provider is only
+                            # a package/variant mapping. Never inherit that
+                            # provider's pinned version or release-specific
+                            # validation, because those values may be tied to
+                            # APKMirror and can prevent a fallback source from
+                            # discovering its own compatible version.
                             config = {
                                 "name": other_cfg.get("name", app_name),
                                 "package": other_cfg["package"],
-                                "version": other_cfg.get("version", ""),
+                                "version": "",
                                 "arch": other_cfg.get("arch", "universal"),
                                 "type": other_cfg.get("type", "APK"),
                                 "dpi": other_cfg.get("dpi", "nodpi"),
-                                "org": other_cfg.get("org", app_name)
                             }
-                            logging.info(f"Synthesized {platform} config for {app_name} from {other_platform}")
+                            logging.info(
+                                f"Synthesized {platform} config for {app_name} "
+                                f"from {other_platform} without provider-specific version pin"
+                            )
                             break
                     except Exception:
                         continue
