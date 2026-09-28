@@ -37,7 +37,10 @@ def _get(url: str):
     """Use curl-cffi first, then standard requests if that edge rejects it."""
     try:
         response = session.get(url, headers=HEADERS, timeout=15)
-        if _is_app_page(response) or response.status_code == 200 and "/apps/" in url:
+        # Keep the same session/cookies for every Uptodown request. The
+        # original downloader primes the /download page before resolving the
+        # variant; falling back to plain requests here would lose that state.
+        if response.status_code == 200:
             return response
         status = response.status_code
     except Exception as exc:
@@ -120,47 +123,6 @@ def _direct_url_from_page(soup: BeautifulSoup, page_url: str) -> str | None:
     return None
 
 
-def _ajax_download_url(soup: BeautifulSoup, page_url: str) -> str | None:
-    """Try Uptodown's AJAX download-url endpoint when the legacy data-url is absent."""
-    button = soup.find(id="detail-download-button")
-    if not button:
-        return None
-
-    app_id = button.get("data-app-id")
-    file_id = button.get("data-file-id") or button.get("data-download-version")
-    token = (
-        button.get("data-token")
-        or button.get("data-turnstile-token")
-        or button.get("data-cf-token")
-    )
-    if not (app_id and file_id and token):
-        return None
-
-    origin = page_url.split("/android", 1)[0]
-    endpoint = f"{origin}/ajax/app/{app_id}/file/{file_id}/download-url"
-    try:
-        response = session.post(
-            endpoint,
-            headers={
-                **HEADERS,
-                "Content-Type": "application/json",
-                "X-Requested-With": "XMLHttpRequest",
-                "Referer": page_url,
-            },
-            json={"token": token, "onlyXapk": button.get("data-only-xapk", "0")},
-            timeout=20,
-        )
-        if response.status_code != 200:
-            return None
-        data = response.json()
-        download_url = ((data.get("data") or {}).get("downloadURL") or "").strip()
-        if download_url:
-            return urljoin("https://dw.uptodown.com/dwn/", download_url)
-    except Exception as exc:
-        logging.debug("Uptodown AJAX download-url failed for %s: %s", page_url, exc)
-    return None
-
-
 def _variant_file_id(base_url: str, data_code: str, version_page: BeautifulSoup, arch: str) -> str | None:
     """Select an Uptodown variant as rvb does before opening the -x page."""
     variants_button = version_page.select_one(".button.variants[data-version]")
@@ -207,6 +169,11 @@ def get_download_link(version: str, app_name: str, config: dict) -> str | None:
     base_url, listing = _get_app_page(config, "/versions")
     if not listing:
         return None
+
+    # Match the original Uptodown flow: request /download first so the same
+    # session has the cookies/state needed by the subsequent /download/<id>-x
+    # request.
+    _get(f"{base_url}/download")
     heading = BeautifulSoup(listing.content, "html.parser").find("h1", id="detail-app-name")
     data_code = heading.get("data-code") if heading else None
     if not data_code:
@@ -240,17 +207,13 @@ def get_download_link(version: str, app_name: str, config: dict) -> str | None:
                 if variant_response:
                     variant_soup = BeautifulSoup(variant_response.content, "html.parser")
                     link = _direct_url_from_page(variant_soup, variant_response.url)
-                    if not link:
-                        link = _ajax_download_url(variant_soup, variant_response.url)
                     if link:
                         return link
             link = _direct_url_from_page(version_soup, page_response.url)
-            if not link:
-                link = _ajax_download_url(version_soup, page_response.url)
             if link:
                 return link
             logging.warning(
-                "Uptodown found %s %s but its download endpoint requires an interactive token",
+                "Uptodown found %s %s but could not extract its download URL",
                 app_name, version,
             )
             return None
