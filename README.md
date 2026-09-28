@@ -396,8 +396,8 @@ Architecture: arm64-v8a
 - ✅ Use non-personalized search
 - ✅ Show LIVE search
 - ❌ Hide search suggestions
-- ✅ Show the progress bar thumbnail
 - ✅ Show the progress bar
+- ✅ Show the progress bar thumbnail
 - ❌ Hide already seen videos
 - ❌ Skip content warnings
 - ❌ Share sheet tools
