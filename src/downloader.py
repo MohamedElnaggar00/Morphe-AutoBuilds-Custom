@@ -14,6 +14,7 @@ from src import (
     apkmirror,
     github,
     apkcombo,
+    gplaydl,
 )
 
 def download_resource(url: str, name: str = None) -> Path:
@@ -442,7 +443,22 @@ def download_platform(
         return None, None, []
 
 # Update the specific download functions
-def download_gplaydl(\n    app_name: str,\n    cli: str,\n    patches: str,\n    arch: str = None,\n    override_version: str = None,\n) -> tuple[Path | None, str | None, list[str]]:\n    """Prefer Google Play through gplaydl when its CI API key is configured."""\n    filepath, version = gplaydl.download_app(\n        app_name, cli, patches, arch or "arm64-v8a", override_version\n    )\n    if filepath and version:\n        return filepath, version, [version]\n    return None, None, []\n\ndef download_apkmirror(
+def download_gplaydl(
+    app_name: str,
+    cli: str,
+    patches: str,
+    arch: str = None,
+    override_version: str = None,
+) -> tuple[Path | None, str | None, list[str]]:
+    """Prefer Google Play through gplaydl when its CI API key is configured."""
+    filepath, version = gplaydl.download_app(
+        app_name, cli, patches, arch or "arm64-v8a", override_version
+    )
+    if filepath and version:
+        return filepath, version, [version]
+    return None, None, []
+
+def download_apkmirror(
     app_name: str,
     cli: str,
     patches: str,
