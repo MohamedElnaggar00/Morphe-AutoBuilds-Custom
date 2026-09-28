@@ -290,6 +290,150 @@ def _merge_play_splits(apks: list[Path], work_dir: Path, package_name: str) -> P
     return final
 
 
+
+def _download_with_compat_profiles(
+    package_name: str,
+    version_code: int,
+    arch: str,
+    output_dir: Path,
+) -> list[Path]:
+    """
+    Use gplaydl's own Google Play API/profile machinery, but try every
+    compatible device profile instead of stopping after its limited retry set.
+
+    This specifically handles old/pinned versionCodes that Google refuses for
+    a modern default profile such as Pixel 9a, while keeping the requested ABI.
+    """
+    try:
+        from gplaydl.api import (
+            AppNotAvailableError,
+            AppNotSupportedError,
+            AuthExpiredError,
+            PlayAPIError,
+            get_delivery,
+            purchase,
+        )
+        from gplaydl.auth import fetch_token_for_profile
+        from gplaydl.download import DownloadSpec, download_batch
+        from gplaydl.profiles import get_compat_profiles
+    except Exception as exc:
+        logging.warning("Could not import gplaydl compatibility API: %s", exc)
+        return []
+
+    play_arch = _arch_name(arch)
+    profiles = get_compat_profiles(play_arch)
+
+    if not profiles:
+        logging.warning(
+            "gplaydl exposed no compatibility profiles for %s.",
+            play_arch,
+        )
+        return []
+
+    logging.info(
+        "gplaydl compatibility fallback: trying %d profiles for %s versionCode %s.",
+        len(profiles),
+        play_arch,
+        version_code,
+    )
+
+    for profile_name, profile in profiles:
+        device = profile.get("UserReadableName", profile_name)
+        try:
+            logging.info(
+                "gplaydl compatibility fallback: requesting token with profile %s.",
+                device,
+            )
+            auth = fetch_token_for_profile(profile)
+            if not auth:
+                logging.info(
+                    "gplaydl compatibility fallback: profile %s did not yield a token.",
+                    device,
+                )
+                continue
+
+            delivery_token = purchase(package_name, version_code, auth)
+            delivery = get_delivery(
+                package_name,
+                version_code,
+                auth,
+                delivery_token,
+            )
+
+            specs: list[DownloadSpec] = []
+            base_name = f"{package_name}-{version_code}.apk"
+            use_gzip = bool(delivery.gzipped_url and delivery.gzipped_size)
+            specs.append(
+                DownloadSpec(
+                    url=delivery.gzipped_url if use_gzip else delivery.download_url,
+                    dest=output_dir / base_name,
+                    cookies=delivery.cookies,
+                    label=base_name,
+                    gzipped=use_gzip,
+                    sha256=delivery.sha256,
+                    sha1=delivery.sha1,
+                )
+            )
+
+            for split in delivery.splits:
+                split_name = f"{package_name}-{version_code}-{split.name}.apk"
+                use_gzip = bool(split.gzipped_url and split.gzipped_size)
+                specs.append(
+                    DownloadSpec(
+                        url=split.gzipped_url if use_gzip else split.url,
+                        dest=output_dir / split_name,
+                        label=split_name,
+                        gzipped=use_gzip,
+                        sha256=split.sha256,
+                    )
+                )
+
+            download_batch(specs)
+
+            apks = sorted(output_dir.glob("*.apk"))
+            if apks:
+                logging.info(
+                    "gplaydl compatibility fallback succeeded with profile %s: %s",
+                    device,
+                    ", ".join(p.name for p in apks),
+                )
+                return apks
+
+        except AuthExpiredError:
+            logging.info(
+                "gplaydl compatibility fallback: token expired for profile %s.",
+                device,
+            )
+        except (AppNotSupportedError, AppNotAvailableError) as exc:
+            logging.info(
+                "gplaydl compatibility fallback: profile %s cannot receive "
+                "versionCode %s: %s",
+                device,
+                version_code,
+                exc,
+            )
+        except PlayAPIError as exc:
+            logging.info(
+                "gplaydl compatibility fallback: Google Play rejected profile "
+                "%s for versionCode %s: %s",
+                device,
+                version_code,
+                exc,
+            )
+        except Exception as exc:
+            logging.warning(
+                "gplaydl compatibility fallback failed with profile %s: %s",
+                device,
+                exc,
+            )
+
+        # Do not let a partially downloaded/failed attempt poison the next profile.
+        for path in output_dir.glob("*"):
+            if path.is_file():
+                path.unlink(missing_ok=True)
+
+    return []
+
 def download_app(
     app_name: str,
     cli: str,
@@ -400,22 +544,51 @@ def download_app(
                 return None, None
 
             if proc.returncode != 0:
+                error_text = (proc.stderr or proc.stdout).strip()[-1200:]
                 logging.warning(
                     "gplaydl failed for %s versionCode %s: %s",
                     app_name,
                     version_code,
-                    (proc.stderr or proc.stdout).strip()[-1200:],
+                    error_text,
                 )
-                continue
 
-            apks = sorted(output_dir.glob("*.apk"))
+                # gplaydl's CLI has a finite compatibility-profile retry budget.
+                # For pinned Morphe versions, Google may reject the modern
+                # default profile while still serving the exact same versionCode
+                # to an older compatible profile. Re-enter gplaydl through its
+                # Python API and try the complete compatibility-profile pool.
+                if "does not serve version" in error_text.lower():
+                    compat_apks = _download_with_compat_profiles(
+                        package_name,
+                        version_code,
+                        arch,
+                        output_dir,
+                    )
+                    if compat_apks:
+                        apks = compat_apks
+                    else:
+                        continue
+                else:
+                    continue
+
+            if 'apks' not in locals() or not apks:
+                apks = sorted(output_dir.glob("*.apk"))
             if not apks:
                 logging.warning(
                     "gplaydl returned success but no APK for %s versionCode %s.",
                     app_name,
                     version_code,
                 )
-                continue
+
+                compat_apks = _download_with_compat_profiles(
+                    package_name,
+                    version_code,
+                    arch,
+                    output_dir,
+                )
+                if not compat_apks:
+                    continue
+                apks = compat_apks
 
             logging.info(
                 "Google Play returned %d APK components for %s: %s",
