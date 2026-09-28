@@ -353,7 +353,7 @@ Architecture: —
 </details>
 
 ## TikTok — —
-Patch source: hushfeed — v0.63.0
+Patch source: hushfeed — v0.64.0
 Architecture: arm64-v8a
 
 <details>
