@@ -1,0 +1,8 @@
+@messengerAppName=Messenger
+-Provide Original app certificate
+-Spoof app signature
+-Spoof install source
+-Disable PairIP license check
+-Fix Firebase after re-signing
+-GmsCore support (MicroG)
+-Spoof Widevine / DRM level
