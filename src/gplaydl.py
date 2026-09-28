@@ -126,13 +126,41 @@ def _merge_play_splits(apks: list[Path], work_dir: Path, package_name: str) -> P
         ))
     ]
 
-    if not arm64_splits:
+    # Google Play does not always deliver an explicit ABI split. Some apps
+    # (including current Meta builds) put the arm64-v8a native libraries
+    # directly in the base APK while only density/language resources are
+    # delivered as config splits. In that case the base APK is already the
+    # arm64 component and must NOT be rejected just because no
+    # config.arm64_v8a file was returned.
+    base_has_arm64 = False
+    try:
+        with zipfile.ZipFile(base) as archive:
+            base_has_arm64 = any(
+                name.startswith("lib/arm64-v8a/") and not name.endswith("/")
+                for name in archive.namelist()
+            )
+    except (OSError, zipfile.BadZipFile) as exc:
+        logging.warning("Could not inspect base APK ABI for %s: %s", package_name, exc)
+
+    if not arm64_splits and not base_has_arm64:
         logging.warning(
-            "Google Play did not return an arm64-v8a split for %s; refusing a "
-            "base-only/incompatible build.",
+            "Google Play returned neither an arm64-v8a split nor arm64 native "
+            "libraries in the base APK for %s; refusing an incompatible build.",
             package_name,
         )
         return None
+
+    if arm64_splits:
+        logging.info(
+            "Google Play selected explicit arm64-v8a split(s): %s",
+            ", ".join(p.name for p in arm64_splits),
+        )
+    elif base_has_arm64:
+        logging.info(
+            "Google Play placed arm64-v8a native libraries in the base APK for %s; "
+            "no separate ABI split is required.",
+            package_name,
+        )
 
     if incompatible_abis:
         logging.info(
