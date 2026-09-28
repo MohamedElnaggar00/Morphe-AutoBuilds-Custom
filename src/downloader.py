@@ -266,9 +266,21 @@ def download_platform(
             candidates = [pinned]
         else:
             candidates = utils.get_supported_versions(config["package"], cli, patches)
-            for latest in _get_store_latest_versions(app_name, config, platform):
-                if latest not in candidates:
-                    candidates.append(latest)
+            if app_name in {"facebook", "messenger"}:
+                # Keep the original downloader behavior for these two apps:
+                # query the selected provider for its latest version only.
+                try:
+                    latest = platform_module.get_latest_version(app_name, config)
+                    if latest and latest not in candidates:
+                        candidates.append(latest)
+                except Exception as e:
+                    logging.debug(
+                        f"Could not get latest version for {app_name} on {platform}: {e}"
+                    )
+            else:
+                for latest in _get_store_latest_versions(app_name, config, platform):
+                    if latest not in candidates:
+                        candidates.append(latest)
             logging.info(f"Version candidates for {app_name} on {platform}: {candidates}")
 
         expected_codes = get_supported_version_codes(config["package"], cli, patches) if str(config.get("type", "APK")).upper() == "BUNDLE" else {}
