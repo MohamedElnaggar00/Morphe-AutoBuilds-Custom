@@ -116,13 +116,13 @@ def download_app(
                 "gplaydl",
                 "download",
                 package_name,
-                "--arch",
+                "-a",
                 play_arch,
-                "--version",
+                "-v",
                 str(version_code),
                 "--no-splits",
                 "--no-extras",
-                "--output",
+                "-o",
                 str(output_dir),
             ]
             logging.info(
