@@ -23,24 +23,19 @@ def get_latest_version(app_name: str, config: Dict) -> Optional[str]:
     package = config.get('package', '')
     if not package:
         return None
-    # Enumerate versions without an ABI filter. Apply the architecture
-    # constraint later when resolving getAppMeta so older releases remain
-    # discoverable when a primary store is unavailable.
-    q = _get_q_param(config.get('arch', 'universal'))
+    arch = config.get('arch', 'universal')
+    q = _get_q_param(arch)
 
     # 1. Try listAppVersions first (direct exact package lookup)
-    url_versions = f"{BASE_URL}listAppVersions?package_name={package}&limit=1"
+    url_versions = f"{BASE_URL}listAppVersions?package_name={package}&limit=1{q}"
     data = _safe_get_json(url_versions) or {}
     items = data.get("list") or (((data.get("datalist") or {}).get("list")) or [])
     for it in items:
-        # listAppVersions is already scoped to the exact package. Some
-        # Aptoide responses omit the package field on version rows, so do not
-        # discard an otherwise valid version just because that field is absent.
-        if (not it.get("package") or it.get("package") == package) and it.get("file", {}).get("vername"):
+        if it.get("package") == package and it.get("file", {}).get("vername"):
             return it["file"]["vername"]
 
     # 2. Fallback to apps/search filtered by package
-    url = f"{BASE_URL}apps/search?query={package}&limit=10&trusted=true"
+    url = f"{BASE_URL}apps/search?query={package}&limit=10&trusted=true{q}"
     data = _safe_get_json(url) or {}
     items = (((data.get("datalist") or {}).get("list")) or data.get("list") or [])
     for app in items:
@@ -59,13 +54,10 @@ def get_download_link(version: str, app_name: str, config: Dict) -> Optional[str
     q = _get_q_param(arch)
 
     # Find vercode for specific version (search up to 100 versions)
-    # Keep version enumeration ABI-neutral; use q only for getAppMeta.
-    url_versions = f"{BASE_URL}listAppVersions?package_name={package}&limit=100"
+    url_versions = f"{BASE_URL}listAppVersions?package_name={package}&limit=100{q}"
     data = _safe_get_json(url_versions) or {}
     items = data.get("list") or (((data.get("datalist") or {}).get("list")) or [])
-    # The endpoint is already package-scoped; tolerate rows that omit the
-    # package field while still rejecting an explicitly different package.
-    items = [it for it in items if not it.get("package") or it.get("package") == package]
+    items = [it for it in items if it.get("package") == package]
     
     vercode = None
     
@@ -126,3 +118,4 @@ def _get_q_param(arch: str) -> str:
         q_str = f"myCPU={cpu}&leanback=0"
         return f"&q={base64.b64encode(q_str.encode('utf-8')).decode('utf-8')}"
     return ''
+}
