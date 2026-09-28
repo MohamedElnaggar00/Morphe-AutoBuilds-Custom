@@ -97,12 +97,18 @@ def _merge_play_splits(apks: list[Path], work_dir: Path, package_name: str) -> P
     if not apks:
         return None
 
-    base = next(
-        (p for p in apks if p.name.lower().split("-")[-1] == "base.apk"),
-        None,
-    )
+    base = next((p for p in apks if p.name.lower() == "base.apk"), None)
     if base is None:
-        base = next((p for p in apks if "base" in p.stem.lower()), None)
+        # gplaydl names the base APK like <package>-<versionCode>.apk,
+        # while split APKs include a "-config.<qualifier>" suffix.
+        base = next(
+            (
+                p for p in apks
+                if "-config." not in p.stem.lower()
+                and "asset" not in p.stem.lower()
+            ),
+            None,
+        )
     if base is None:
         logging.warning("Google Play download has no base.apk for %s.", package_name)
         return None
