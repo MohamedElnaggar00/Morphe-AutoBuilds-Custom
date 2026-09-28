@@ -515,31 +515,38 @@ jobs:
         if: steps.check-apks.outputs.skip_release == 'false'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
-          echo "🚀 Publishing rebuilt assets to release..."
+          set -euo pipefail
 
-          apk_count=$(ls -1 ./release-apks/*.apk 2>/dev/null | wc -l || echo "0")
+          apk_count=$(find ./release-apks -maxdepth 1 -type f -name "*.apk" | wc -l)
           if [ "$apk_count" -eq 0 ]; then
             echo "❌ No APKs found to release"
             exit 1
           fi
 
-          echo "📦 Releasing $apk_count APK(s)..."
-
-          ASSETS=( ./release-apks/*.apk )
-          if [ -f ./release-apks/manifest.json ]; then
-            ASSETS+=( ./release-apks/manifest.json )
-            echo "📎 Including manifest.json"
-          fi
+          echo "🚀 Publishing $apk_count rebuilt APK(s)..."
 
           if [ "${{ steps.check-release.outputs.release_exists }}" = "true" ]; then
-            echo "⬆️ Uploading rebuilt assets in place..."
-            # Upload first. This guarantees a transient upload failure cannot
-            # leave the previously published version deleted.
-            gh release upload latest "${ASSETS[@]}" --clobber
+            echo "⬆️ Release 'latest' exists; uploading assets individually..."
+            # Upload each asset separately so one problematic/missing asset cannot
+            # prevent the other rebuilt APKs from reaching the release.
+            for asset in ./release-apks/*.apk; do
+              echo "  → $(basename "$asset")"
+              gh release upload latest "$asset" --clobber
+            done
+
+            if [ -f ./release-apks/manifest.json ]; then
+              echo "  → manifest.json"
+              gh release upload latest ./release-apks/manifest.json --clobber
+            fi
           else
             echo "🆕 Creating 'latest' release..."
+            ASSETS=( ./release-apks/*.apk )
+            if [ -f ./release-apks/manifest.json ]; then
+              ASSETS+=( ./release-apks/manifest.json )
+            fi
+
             gh release create "latest" \
               --title "Morphe APKs - $(date +'%Y-%m-%d %H:%M')" \
               --notes-file release_notes.md \
@@ -547,7 +554,34 @@ jobs:
               --latest
           fi
 
-          echo "✅ Release publish/upload step completed!"
+          echo "🔎 Verifying every rebuilt APK is actually attached to the release..."
+          gh release view latest --json assets --jq '.assets[].name' > published_assets.txt
+
+          missing=0
+          while IFS= read -r asset; do
+            [ -n "$asset" ] || continue
+            filename=$(basename "$asset")
+            if ! grep -Fxq "$filename" published_assets.txt; then
+              echo "⚠️ Missing from release after upload: $filename"
+              echo "🔁 Retrying upload for $filename..."
+              gh release upload latest "$asset" --clobber
+              if ! grep -Fxq "$filename" <(gh release view latest --json assets --jq '.assets[].name'); then
+                echo "❌ Asset is still missing after retry: $filename"
+                missing=1
+              else
+                echo "✅ Recovered: $filename"
+              fi
+            else
+              echo "✅ Published: $filename"
+            fi
+          done < <(find ./release-apks -maxdepth 1 -type f -name "*.apk" | sort)
+
+          if [ "$missing" -ne 0 ]; then
+            echo "❌ One or more rebuilt APKs could not be verified in the release."
+            exit 1
+          fi
+
+          echo "✅ All rebuilt APKs are confirmed in release 'latest'."
 
       - name: Prune Superseded APK Assets
         if: steps.check-apks.outputs.skip_release == 'false' && steps.check-release.outputs.release_exists == 'true'
