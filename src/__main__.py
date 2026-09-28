@@ -115,11 +115,19 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     except Exception:
         pass
 
-    if is_bundle_app:
-        # APKMirror remains authoritative when available. APKCombo is the
-        # no-proxy fallback for split bundles when APKMirror is blocked by
-        # Cloudflare. download_platform still validates the exact Morphe-
-        # supported versionCode before the file reaches the patcher.
+    # Facebook and Messenger must follow the original Morphe-AutoBuilds
+    # source-selection order. In particular, do not classify them as bundles
+    # from an APKMirror config and thereby skip Aptoide.
+    if app_name in {"facebook", "messenger"}:
+        download_methods = [
+            downloader.download_apkmirror,
+            downloader.download_aptoide,
+            downloader.download_github,
+            downloader.download_uptodown,
+            downloader.download_apkpure,
+            downloader.download_apkcombo,
+        ]
+    elif is_bundle_app:
         download_methods = [
             downloader.download_apkmirror,
             downloader.download_apkcombo,
