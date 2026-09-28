@@ -125,11 +125,11 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             downloader.download_apkcombo,
         ]
     else:
-        # Prefer Google Play when GPLAYDL_API_KEY is configured and the patch
-        # set exposes an exact compatible versionCode. If it fails, continue
-        # through the existing public-store fallbacks unchanged.
-        download_methods = [
-            downloader.download_gplaydl,
+        # Keep the original public-source order for TikTok. TikTok was already
+        # building successfully with these sources before gplaydl was added,
+        # so Google Play must remain a fallback rather than becoming the
+        # preferred downloader for this app.
+        public_download_methods = [
             downloader.download_apkmirror,
             downloader.download_aptoide,
             downloader.download_github,
@@ -137,6 +137,14 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             downloader.download_apkpure,
             downloader.download_apkcombo,
         ]
+
+        if app_name in {"tiktok", "tiktok-metra"}:
+            download_methods = public_download_methods + [downloader.download_gplaydl]
+        else:
+            # For non-bundle apps other than TikTok, prefer Google Play when
+            # its CI API key is configured, then preserve the existing
+            # public-store fallbacks.
+            download_methods = [downloader.download_gplaydl] + public_download_methods
 
     input_apk = None
     version = None
