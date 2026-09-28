@@ -239,7 +239,7 @@ Architecture: arm64-v8a
 </details>
 
 ## vpnify — —
-Patch source: hxreborn — v1.33.0
+Patch source: hxreborn — v1.34.0
 Architecture: arm64-v8a
 
 <details>
@@ -252,7 +252,7 @@ Architecture: arm64-v8a
 </details>
 
 ## Facebook — —
-Patch source: hushfacebook — v0.3.4
+Patch source: hushfacebook — v0.4.0
 Architecture: arm64-v8a
 
 <details>
@@ -396,8 +396,8 @@ Architecture: arm64-v8a
 - ✅ Use non-personalized search
 - ✅ Show LIVE search
 - ❌ Hide search suggestions
-- ✅ Show the progress bar
 - ✅ Show the progress bar thumbnail
+- ✅ Show the progress bar
 - ❌ Hide already seen videos
 - ❌ Skip content warnings
 - ❌ Share sheet tools
