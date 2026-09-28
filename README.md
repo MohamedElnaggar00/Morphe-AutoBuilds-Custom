@@ -396,8 +396,8 @@ Architecture: arm64-v8a
 - ✅ Use non-personalized search
 - ✅ Show LIVE search
 - ❌ Hide search suggestions
-- ✅ Show the progress bar thumbnail
 - ✅ Show the progress bar
+- ✅ Show the progress bar thumbnail
 - ❌ Hide already seen videos
 - ❌ Skip content warnings
 - ❌ Share sheet tools
@@ -425,9 +425,9 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
-- ❌ Skip update checks
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
+- ❌ Skip update checks
 - ❌ Skip the splash ad
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
