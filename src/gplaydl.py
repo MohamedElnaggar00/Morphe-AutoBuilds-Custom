@@ -532,6 +532,7 @@ def download_app(
                 play_arch,
             )
 
+            apks: list[Path] = []
             try:
                 proc = subprocess.run(
                     cmd,
@@ -571,7 +572,7 @@ def download_app(
                 else:
                     continue
 
-            if 'apks' not in locals() or not apks:
+            if not apks:
                 apks = sorted(output_dir.glob("*.apk"))
             if not apks:
                 logging.warning(
