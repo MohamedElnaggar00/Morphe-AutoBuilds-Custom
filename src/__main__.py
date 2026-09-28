@@ -115,14 +115,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     except Exception:
         pass
 
-    # Facebook and Messenger are intentionally Aptoide-only.
-    # Do not probe APKMirror or any other fallback source for these apps.
-    if app_name in {"facebook", "messenger"}:
-        is_bundle_app = False
-        download_methods = [
-            downloader.download_aptoide,
-        ]
-    elif is_bundle_app:
+    if is_bundle_app:
         download_methods = [
             downloader.download_apkmirror,
             downloader.download_apkcombo,
