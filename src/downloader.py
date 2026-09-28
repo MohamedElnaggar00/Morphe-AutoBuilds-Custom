@@ -283,7 +283,17 @@ def download_platform(
                         candidates.append(latest)
             logging.info(f"Version candidates for {app_name} on {platform}: {candidates}")
 
-        expected_codes = get_supported_version_codes(config["package"], cli, patches) if str(config.get("type", "APK")).upper() == "BUNDLE" else {}
+        # Facebook and Messenger must use the original provider flow without
+        # APKMirror-specific bundle/build-code validation.
+        expected_codes = (
+            {}
+            if app_name in {"facebook", "messenger"}
+            else (
+                get_supported_version_codes(config["package"], cli, patches)
+                if str(config.get("type", "APK")).upper() == "BUNDLE"
+                else {}
+            )
+        )
 
         def bundle_version_code(filepath: Path) -> int | None:
             if filepath.suffix.lower() not in {".apkm", ".apks", ".xapk", ".zip"}:
@@ -362,7 +372,11 @@ def download_platform(
                 # Some APKMirror releases contain multiple builds with the same
                 # version name. Enforce an explicit artifact versionCode when the
                 # app config declares one, before allowing the file into patching.
-                expected_version_code = str(config.get("expected_version_code") or "").strip()
+                expected_version_code = (
+                    ""
+                    if app_name in {"facebook", "messenger"}
+                    else str(config.get("expected_version_code") or "").strip()
+                )
                 required_codes = expected_codes.get(version, [])
                 if expected_version_code or required_codes:
                     actual_code = bundle_version_code(filepath)
