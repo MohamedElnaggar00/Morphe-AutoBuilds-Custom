@@ -58,9 +58,25 @@ def get_download_link(version: str, app_name: str, config: Dict) -> Optional[str
     data = _safe_get_json(url_versions) or {}
     items = data.get("list") or (((data.get("datalist") or {}).get("list")) or [])
     items = [it for it in items if it.get("package") == package]
-    
+
+    # Temporary diagnostics for Facebook/Messenger only:
+    # Do not alter the Aptoide selection logic; expose what the API actually returns.
+    if app_name in {"facebook", "messenger"}:
+        raw_items = data.get("list") or (((data.get("datalist") or {}).get("list")) or [])
+        raw_versions = []
+        for it in raw_items[:10]:
+            raw_versions.append(
+                f"{it.get('package')}:{it.get('file', {}).get('vername')}@{it.get('file', {}).get('vercode')}"
+            )
+        logging.info(
+            f"Aptoide diagnostic for {app_name}: arch={arch}, q={q or '<none>'}, "
+            f"response_keys={list(data.keys()) if isinstance(data, dict) else type(data).__name__}, "
+            f"raw_items={len(raw_items)}, package_items={len(items)}, "
+            f"raw_versions={raw_versions}"
+        )
+
     vercode = None
-    
+
     if version and version.lower() != "latest":
         clean_target = re.sub(r'[\(\[].*?[\)\]]', '', version).strip()
         target_norm = utils.normalize_version(version)
