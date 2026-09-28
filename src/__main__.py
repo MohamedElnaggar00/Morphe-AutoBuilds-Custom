@@ -138,13 +138,9 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             downloader.download_apkcombo,
         ]
 
-        if app_name in {"tiktok", "tiktok-metra"}:
-            download_methods = public_download_methods + [downloader.download_gplaydl]
-        else:
-            # For non-bundle apps other than TikTok, prefer Google Play when
-            # its CI API key is configured, then preserve the existing
-            # public-store fallbacks.
-            download_methods = [downloader.download_gplaydl] + public_download_methods
+        # Keep the original, proven public download path first for every
+        # non-bundle app. gplaydl is strictly a last-resort fallback.
+        download_methods = public_download_methods + [downloader.download_gplaydl]
 
     input_apk = None
     version = None
