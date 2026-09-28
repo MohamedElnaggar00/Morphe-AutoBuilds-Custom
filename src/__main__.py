@@ -27,6 +27,57 @@ def _should_retry_with_older_version(output: str | None) -> bool:
         or "patching aborted" in t
     )
 
+def _release_already_has_build(app_name: str, arch: str, version: str) -> bool:
+    """
+    Avoid rebuilding an APK that is already published for the exact app,
+    architecture, and Morphe-supported version.
+
+    GitHub Actions starts from a clean checkout, so local output files cannot
+    be used for this decision. Check the latest GitHub Release instead.
+    If GitHub metadata is unavailable, fail open and let the normal build run.
+    """
+    token = getenv("GITHUB_TOKEN") or getenv("GH_TOKEN")
+    repo = getenv("GITHUB_REPOSITORY")
+    if not token or not repo:
+        return False
+
+    import urllib.request
+
+    url = f"https://api.github.com/repos/{repo}/releases/latest"
+    request = urllib.request.Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "Authorization": f"Bearer {token}",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "Morphe-AutoBuilds-Custom",
+        },
+    )
+
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            release = json.load(response)
+    except Exception as exc:
+        logging.info("Could not inspect latest GitHub Release for skip check: %s", exc)
+        return False
+
+    expected_prefix = f"{app_name}-{arch}-"
+    expected_suffix = f"-v{version}.apk"
+
+    for asset in release.get("assets", []):
+        name = str(asset.get("name") or "")
+        if name.startswith(expected_prefix) and name.endswith(expected_suffix):
+            logging.info(
+                "⏭️ %s %s is already published in the latest Release as %s; skipping rebuild.",
+                app_name,
+                arch,
+                name,
+            )
+            return True
+
+    return False
+
+
 def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     """Build APK for specific architecture"""
     download_files, name = downloader.download_required(source)
@@ -101,6 +152,24 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
     logging.info(f"✅ Using CLI: {cli.name}")
     logging.info(f"✅ Using patches: {patches.name}")
+
+    # Determine the highest Morphe-supported version before downloading the
+    # application. This lets us compare against an already-published Release
+    # and skip redundant Facebook/other app rebuilds.
+    supported_versions = utils.get_supported_versions(
+        _find_package(app_name, source) if False else app_name,
+        str(cli),
+        str(patches),
+    )
+
+    # The utility above normally resolves the package internally in the
+    # downloader. For the skip check, use the same configured app version
+    # returned by Morphe only when it is available.
+    if supported_versions:
+        latest_supported = supported_versions[0]
+        if _release_already_has_build(app_name, arch, latest_supported):
+            print(f"⏭️ Skipping {app_name}: {latest_supported} is already built and published.")
+            return None
 
     # Bundle patch sets are tied to the exact split bundle they were
     # checked against. For these apps the authoritative source is APKMirror's
