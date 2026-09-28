@@ -335,9 +335,9 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
+- ❌ Skip update checks
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
-- ❌ Skip update checks
 - ❌ Skip the splash ad
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
@@ -466,5 +466,58 @@ Architecture: arm64-v8a
 - ❌ GmsCore support (MicroG)
 - ❌ Spoof install source
 - ❌ Spoof app signature
+
+</details>
+
+## Facebook — —
+Patch source: hushfacebook — v0.4.0
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 28/43 applied</summary>
+
+- ✅ Disable Audience Network
+- ✅ Block background ad prefetch
+- ✅ Hide sponsored Marketplace listings
+- ✅ Hide sponsored posts
+- ✅ Hide sponsored profile posts
+- ✅ Hide sponsored reels
+- ✅ Hide sponsored search results
+- ✅ Hide sponsored stories
+- ✅ Block ad telemetry
+- ✅ Hide the Get Messenger card
+- ✅ Install beside Meta's apps
+- ❌ Default comment order
+- ❌ Tag suggestions only after @
+- ✅ Download any reel
+- ✅ Download any story
+- ❌ Download any video
+- ❌ Use the phone's emoji
+- ✅ Hide AI-detected posts
+- ❌ Hide Reels in the feed
+- ❌ Block background-return feed refresh
+- ❌ Hide Stories tray
+- ✅ Hide suggested and promoted posts
+- ✅ Hide posts by words
+- ❌ Use the system font
+- ❌ AMOLED black theme
+- ❌ Material You theme
+- ✅ Resume long videos
+- ❌ Tap to play
+- ✅ Hide Menu promotions
+- ✅ Hushfacebook in the Menu
+- ✅ Open links in external browser
+- ✅ Restore screens on re-signed builds
+- ✅ Hushfacebook settings
+- ✅ Sanitize sharing links
+- ✅ Marketplace only
+- ❌ Open on a chosen tab
+- ✅ Block promotional notifications
+- ❌ Clean up Reels
+- ❌ Don't send reel watch history
+- ✅ Hide Meta AI in search
+- ❌ Stop Story auto-advance
+- ✅ Hide suggested stories
+- ✅ Stop update prompts
 
 </details>
