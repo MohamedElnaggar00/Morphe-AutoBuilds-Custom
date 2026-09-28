@@ -49,12 +49,25 @@ def _version_codes(package_name: str, cli: str, patches: str) -> dict[str, list[
 
     for line in output.splitlines():
         m = re.search(
-            r"^\s*(\d+(?:\.\d+)+).*?versionCodes:\s*[^=]+=([0-9]+)",
+            r"^\s*(\d+(?:\.\d+)+).*?versionCodes:\s*(.*?)(?:\s*\([^)]*\))?\s*$",
             line,
         )
         if not m:
             continue
-        result.setdefault(m.group(1), []).append(int(m.group(2)))
+
+        version = m.group(1)
+        code_text = m.group(2)
+
+        # Morphe prints architecture-specific version codes, e.g.
+        # ARMEABI_V7A=345212666, ARM64_V8A=345212670.
+        # The previous parser accidentally captured the first code
+        # (usually ARMv7) regardless of the requested architecture.
+        codes: list[int] = []
+        for match in re.finditer(r"(?:ARMEABI_V7A|ARM64_V8A|X86_64|X86)\s*=\s*(\d+)", code_text):
+            codes.append(int(match.group(1)))
+
+        if codes:
+            result.setdefault(version, []).extend(codes)
     return result
 
 
