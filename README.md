@@ -133,7 +133,7 @@ Architecture: arm64-v8a
 </details>
 
 ## X — —
-Patch source: piko-newx — v3.42.1
+Patch source: piko-newx — v3.42.2
 Architecture: arm64-v8a
 
 <details>
