@@ -133,7 +133,7 @@ Architecture: arm64-v8a
 </details>
 
 ## X — —
-Patch source: piko-newx — v3.42.0
+Patch source: piko-newx — v3.42.1
 Architecture: arm64-v8a
 
 <details>
@@ -252,19 +252,25 @@ Architecture: arm64-v8a
 </details>
 
 ## Facebook — —
-Patch source: hushfacebook — v0.2.0
+Patch source: hushfacebook — v0.3.4
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 23/27 applied</summary>
+<summary>🩹 Patches — 39/43 applied</summary>
 
 - ✅ Disable Audience Network
 - ✅ Block background ad prefetch
+- ✅ Hide sponsored Marketplace listings
 - ✅ Hide sponsored posts
+- ✅ Hide sponsored profile posts
 - ✅ Hide sponsored reels
+- ✅ Hide sponsored search results
 - ✅ Hide sponsored stories
 - ✅ Block ad telemetry
+- ✅ Hide the Get Messenger card
 - ✅ Install beside Meta's apps
+- ✅ Default comment order
+- ✅ Tag suggestions only after @
 - ✅ Download any reel
 - ✅ Download any story
 - ✅ Download any video
@@ -274,16 +280,26 @@ Architecture: arm64-v8a
 - ✅ Block background-return feed refresh
 - ✅ Hide Stories tray
 - ✅ Hide suggested and promoted posts
+- ✅ Hide posts by words
 - ❌ Use the system font
 - ❌ AMOLED black theme
 - ❌ Material You theme
+- ✅ Resume long videos
+- ✅ Tap to play
+- ✅ Hide Menu promotions
+- ✅ Hushfacebook in the Menu
 - ✅ Open links in external browser
 - ✅ Restore screens on re-signed builds
 - ✅ Hushfacebook settings
 - ✅ Sanitize sharing links
+- ✅ Marketplace only
+- ✅ Open on a chosen tab
+- ✅ Block promotional notifications
 - ✅ Clean up Reels
 - ✅ Don't send reel watch history
+- ✅ Hide Meta AI in search
 - ✅ Stop Story auto-advance
+- ✅ Hide suggested stories
 - ✅ Stop update prompts
 
 </details>
@@ -337,11 +353,11 @@ Architecture: —
 </details>
 
 ## TikTok — —
-Patch source: hushfeed — v0.61.0
+Patch source: hushfeed — v0.63.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 38/96 applied</summary>
+<summary>🩹 Patches — 39/98 applied</summary>
 
 - ❌ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -359,6 +375,7 @@ Architecture: arm64-v8a
 - ✅ Keep the Favorites tab
 - ✅ Hide feed save button
 - ✅ Hide feed follow button
+- ❌ Mute feed videos
 - ✅ Hide feed LIVE button
 - ✅ Hide feed search button
 - ❌ Double-tap controls
@@ -366,6 +383,7 @@ Architecture: arm64-v8a
 - ❌ Swipe-left controls
 - ❌ Ghost mode
 - ❌ Automatic video advance
+- ✅ Stay on the video in full screen
 - ✅ Stop video looping
 - ❌ Not interested button
 - ✅ Custom offline videos limit
