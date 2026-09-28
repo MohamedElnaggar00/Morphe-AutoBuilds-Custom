@@ -115,19 +115,13 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     except Exception:
         pass
 
-    # Facebook and Messenger must follow the original Morphe-AutoBuilds
-    # source-selection order. In particular, do not classify them as bundles
-    # from an APKMirror config and thereby skip Aptoide.
+    # Facebook and Messenger follow the original multi-source path.
+    # Their APKMirror configs may be bundle-shaped, but the original builder
+    # does not classify them as bundles here, so Aptoide remains available.
     if app_name in {"facebook", "messenger"}:
-        download_methods = [
-            downloader.download_apkmirror,
-            downloader.download_aptoide,
-            downloader.download_github,
-            downloader.download_uptodown,
-            downloader.download_apkpure,
-            downloader.download_apkcombo,
-        ]
-    elif is_bundle_app:
+        is_bundle_app = False
+
+    if is_bundle_app:
         download_methods = [
             downloader.download_apkmirror,
             downloader.download_apkcombo,
