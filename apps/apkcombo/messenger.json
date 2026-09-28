@@ -1,0 +1,9 @@
+{
+  "name": "messenger",
+  "package": "com.facebook.orca",
+  "type": "APK",
+  "arch": "arm64-v8a",
+  "dpi": "nodpi",
+  "apkcombo_slug": "facebook-messenger",
+  "version": ""
+}
