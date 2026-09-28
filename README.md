@@ -5,7 +5,7 @@ Patch source: morphe — v1.44.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 83/88 applied</summary>
+<summary>🩹 Patches — 84/88 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
@@ -25,7 +25,7 @@ Architecture: arm64-v8a
 - ✅ Save to Watch later
 - ✅ Seekbar
 - ✅ Swipe controls
-- ❌ Custom branding
+- ✅ Custom branding
 - ✅ Change header
 - ✅ Hide video action buttons
 - ✅ Navigation bar
