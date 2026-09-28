@@ -39,6 +39,10 @@
     {
       "app_name": "messenger",
       "source": "hushmessenger"
+    },
+    {
+      "app_name": "facebook",
+      "source": "hushfacebook"
     }
   ]
 }
