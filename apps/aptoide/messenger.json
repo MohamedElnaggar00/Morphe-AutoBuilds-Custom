@@ -1,8 +1,1 @@
-{
-  "name": "messenger",
-  "package": "com.facebook.orca",
-  "type": "APK",
-  "arch": "arm64-v8a",
-  "dpi": "nodpi",
-  "version": ""
-}
+{"name":"messenger","package":"com.facebook.orca","version":""}
