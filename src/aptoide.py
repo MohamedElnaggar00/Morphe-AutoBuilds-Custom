@@ -118,4 +118,3 @@ def _get_q_param(arch: str) -> str:
         q_str = f"myCPU={cpu}&leanback=0"
         return f"&q={base64.b64encode(q_str.encode('utf-8')).decode('utf-8')}"
     return ''
-}
