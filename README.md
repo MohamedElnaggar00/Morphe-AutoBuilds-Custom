@@ -335,9 +335,9 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
-- ❌ Skip update checks
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
+- ❌ Skip update checks
 - ❌ Skip the splash ad
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
@@ -440,32 +440,31 @@ Architecture: arm64-v8a
 </details>
 
 ## Messenger — —
-Patch source: hushmessenger — v0.4.2
+Patch source: hushmessenger — v1.22.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 21/21 applied</summary>
+<summary>🩹 Patches — 12/20 applied</summary>
 
-- ✅ Install beside Meta apps
+- ✅ Enable chat heads
 - ✅ Hide inbox ads
-- ✅ Hide People You May Know
-- ✅ Hide friend request cards
-- ✅ Hide growth prompts
-- ✅ Hide inbox promotions
-- ✅ Hide stories and notes
-- ✅ Hide inbox tabs
-- ✅ Hide Facebook shortcuts
-- ✅ Hide Meta AI buttons
-- ✅ Hide Chat Moments
-- ✅ Hide Reels badge
-- ✅ Hide AI sticker tools
-- ✅ Hide avatar stickers
-- ✅ Hide chat promotions
-- ✅ Hide business reply suggestions
-- ✅ Hide business typing suggestions
-- ✅ Hide event prompts
-- ✅ Hide typing indicator
-- ✅ Open web links externally
-- ✅ Allow chat bubbles
+- ✅ Hide inbox stories and notes tray
+- ✅ Hide inbox subtabs
+- ✅ Disable typing indicator
+- ✅ Hide Facebook buttons
+- ✅ Open links externally
+- ✅ Disable media transcoding
+- ✅ Remove Meta AI
+- ✅ Change package name
+- ❌ Spoof package version
+- ✅ Allow screen capture
+- ✅ Block screenshot detection
+- ❌ Disable PairIP license check
+- ❌ Provide Original app certificate
+- ❌ Spoof Widevine / DRM level
+- ❌ Fix Firebase after re-signing
+- ❌ GmsCore support (MicroG)
+- ❌ Spoof install source
+- ❌ Spoof app signature
 
 </details>
