@@ -293,6 +293,7 @@ def _merge_play_splits(apks: list[Path], work_dir: Path, package_name: str) -> P
 
 def _download_with_compat_profiles(
     package_name: str,
+    target_version: str,
     version_code: int,
     arch: str,
     output_dir: Path,
@@ -311,6 +312,7 @@ def _download_with_compat_profiles(
             AuthExpiredError,
             PlayAPIError,
             get_delivery,
+            get_details,
             purchase,
         )
         from gplaydl.auth import fetch_token_for_profile
@@ -352,16 +354,46 @@ def _download_with_compat_profiles(
                 )
                 continue
 
-            delivery_token = purchase(package_name, version_code, auth)
+            # Google Play can expose the same version string under a
+            # profile-specific versionCode. Morphe's patch metadata gives us
+            # the ABI-specific code, but that exact code is not necessarily
+            # the code accepted by every Play profile.
+            details = get_details(package_name, auth)
+            profile_version = details.version_string
+            profile_version_code = details.version_code
+            if profile_version != target_version or not profile_version_code:
+                logging.info(
+                    "gplaydl compatibility fallback: profile %s serves %s "
+                    "(versionCode %s), not requested %s; skipping profile.",
+                    device,
+                    profile_version or "(unknown)",
+                    profile_version_code or "(unknown)",
+                    target_version,
+                )
+                continue
+
+            if profile_version_code != version_code:
+                logging.info(
+                    "gplaydl compatibility fallback: profile %s exposes the "
+                    "requested %s as versionCode %s (instead of %s); using the "
+                    "profile-specific code.",
+                    device,
+                    target_version,
+                    profile_version_code,
+                    version_code,
+                )
+
+            effective_version_code = profile_version_code
+            delivery_token = purchase(package_name, effective_version_code, auth)
             delivery = get_delivery(
                 package_name,
-                version_code,
+                effective_version_code,
                 auth,
                 delivery_token,
             )
 
             specs: list[DownloadSpec] = []
-            base_name = f"{package_name}-{version_code}.apk"
+            base_name = f"{package_name}-{effective_version_code}.apk"
             use_gzip = bool(delivery.gzipped_url and delivery.gzipped_size)
             specs.append(
                 DownloadSpec(
@@ -376,7 +408,7 @@ def _download_with_compat_profiles(
             )
 
             for split in delivery.splits:
-                split_name = f"{package_name}-{version_code}-{split.name}.apk"
+                split_name = f"{package_name}-{effective_version_code}-{split.name}.apk"
                 use_gzip = bool(split.gzipped_url and split.gzipped_size)
                 specs.append(
                     DownloadSpec(
@@ -561,6 +593,7 @@ def download_app(
                 if "does not serve version" in error_text.lower():
                     compat_apks = _download_with_compat_profiles(
                         package_name,
+                        version,
                         version_code,
                         arch,
                         output_dir,
@@ -583,6 +616,7 @@ def download_app(
 
                 compat_apks = _download_with_compat_profiles(
                     package_name,
+                    version,
                     version_code,
                     arch,
                     output_dir,
