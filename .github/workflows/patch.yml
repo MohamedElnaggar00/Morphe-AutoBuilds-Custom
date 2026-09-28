@@ -284,6 +284,7 @@ jobs:
           ARCH: ${{ matrix.arch }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
+          GPLAYDL_API_KEY: ${{ secrets.GPLAYDL_API_KEY }}
           TRAWL_URL: http://localhost:8191
           SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/morphe-signing.jks
           SIGNING_KEYSTORE_TYPE: JKS
