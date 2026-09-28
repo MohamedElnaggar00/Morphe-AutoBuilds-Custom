@@ -138,9 +138,18 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             downloader.download_apkcombo,
         ]
 
-        # Keep the original, proven public download path first for every
-        # non-bundle app. gplaydl is strictly a last-resort fallback.
-        download_methods = public_download_methods + [downloader.download_gplaydl]
+        # Facebook and Messenger are now downloaded from Google Play first.
+        # Their current Play artifacts may contain arm64 native libraries in the
+        # base APK rather than a separate config.arm64_v8a split, and public
+        # providers are also frequently blocked by Cloudflare. gplaydl therefore
+        # gets first chance for these two apps, with the public providers kept as
+        # a fallback if Google Play cannot serve the requested version.
+        if app_name in {"facebook", "messenger"}:
+            download_methods = [downloader.download_gplaydl] + public_download_methods
+        else:
+            # Keep the original, proven public download path first for every
+            # other non-bundle app. gplaydl remains a last-resort fallback.
+            download_methods = public_download_methods + [downloader.download_gplaydl]
 
     input_apk = None
     version = None
