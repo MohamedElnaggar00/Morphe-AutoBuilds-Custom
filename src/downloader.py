@@ -314,7 +314,7 @@ def download_platform(
                                 check=False,
                             ).stdout
                             package_match = re.search(r"package: name='([^']+)'", out)
-                            code_match = re.search(r"versionCode='(\\d+)'", out)
+                            code_match = re.search(r"versionCode='(\d+)'", out)
                             if not code_match:
                                 continue
                             if expected_package and package_match and package_match.group(1) != expected_package:
