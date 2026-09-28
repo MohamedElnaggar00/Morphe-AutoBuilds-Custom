@@ -1,4 +1,4 @@
-# YouTube / Morphe — enable all currently available YouTube patches except Network proxy
+# YouTube / Morphe — enable all currently available YouTube patches except Network proxy and Custom Branding
 + Add to queue
 + Alternative thumbnails
 + Ambient mode
@@ -85,6 +85,7 @@
 
 # Explicitly excluded
 - Network proxy
+- Custom Branding
 
 # Patch options
 @darkThemeColor=#181818
