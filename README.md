@@ -340,11 +340,11 @@ Architecture: arm64-v8a
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
 - ❌ Skip the splash ad
-- ❌ Remove LIVE extras
 - ❌ Remove creation tools
 - ❌ Block P2P video relay
 - ❌ Remove content credential and card scanner assets
 - ❌ Remove unused language packs
+- ❌ Remove LIVE extras
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
