@@ -1,6 +1,6 @@
 # Morphe AutoBuilds
 
-## YouTube — —
+## YouTube — — ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
 Patch source: morphe — v1.44.0
 Architecture: arm64-v8a
 
@@ -98,7 +98,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Reddit — —
+## Reddit — — ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
 Patch source: morphe — v1.44.0
 Architecture: arm64-v8a
 
@@ -132,7 +132,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — —
+## X — — ([v3.43.0](https://github.com/crimera/piko-newx))
 Patch source: piko-newx — v3.43.0
 Architecture: arm64-v8a
 
@@ -187,7 +187,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Gboard — —
+## Gboard — — ([v3.11.0](https://github.com/jasonwu1994/Gboard-patches))
 Patch source: jasonwu1994 — v3.11.0
 Architecture: arm64-v8a
 
@@ -239,7 +239,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — —
+## vpnify — — ([v1.36.0](https://github.com/hxreborn/morphe-patches))
 Patch source: hxreborn — v1.36.0
 Architecture: arm64-v8a
 
@@ -252,7 +252,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Adobe-Acrobat — —
+## Adobe-Acrobat — — ([v1.53.0](https://github.com/arandomhooman/hoomans-morphe-patches))
 Patch source: hoomans — v1.53.0
 Architecture: arm64-v8a
 
@@ -263,7 +263,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — —
+## TikTok — — ([v0.64.0](https://github.com/SysAdminDoc/hushfeed))
 Patch source: hushfeed — v0.64.0
 Architecture: arm64-v8a
 
@@ -307,8 +307,8 @@ Architecture: arm64-v8a
 - ✅ Use non-personalized search
 - ✅ Show LIVE search
 - ❌ Hide search suggestions
-- ✅ Show the progress bar
 - ✅ Show the progress bar thumbnail
+- ✅ Show the progress bar
 - ❌ Hide already seen videos
 - ❌ Skip content warnings
 - ❌ Share sheet tools
@@ -336,9 +336,9 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
-- ❌ Skip update checks
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
+- ❌ Skip update checks
 - ❌ Skip the splash ad
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
@@ -371,7 +371,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok (Metra) — —
+## TikTok (Metra) — — ([v0.8.0](https://github.com/icysymmetra/tiktok-patches-for-morphe))
 Patch source: metra — v0.8.0
 Architecture: arm64-v8a
 
@@ -423,7 +423,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## CamScanner — —
+## CamScanner — — ([v1.45.0](https://github.com/hoo-dles/morphe-patches))
 Patch source: hoodles — v1.45.0
 Architecture: arm64-v8a
 
@@ -440,7 +440,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — —
+## Messenger — — ([v1.4.4](https://github.com/RookieEnough/De-Vanced))
 Patch source: devanced — v1.4.4
 Architecture: —
 
@@ -459,7 +459,7 @@ Architecture: —
 
 </details>
 
-## Messenger — —
+## Messenger — — ([v0.5.0](https://github.com/SysAdminDoc/HushMessenger))
 Patch source: hushmessenger — v0.5.0
 Architecture: arm64-v8a
 
@@ -496,7 +496,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — —
+## Facebook — — ([v0.4.0](https://github.com/SysAdminDoc/Hushfacebook))
 Patch source: hushfacebook — v0.4.0
 Architecture: arm64-v8a
 
