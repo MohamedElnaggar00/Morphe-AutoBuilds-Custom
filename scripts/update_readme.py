@@ -210,8 +210,11 @@ def main():
             source_version = str(release.get("tag_name", "latest")).lstrip("v")
             applied_count = sum(1 for _, value in final_rows if value)
 
+            patch_repo_url = f"https://github.com/{owner}/{repo}"
+            patch_version_link = f"[v{md_escape(source_version)}]({patch_repo_url})"
+
             sections += [
-                f"## {display} — {md_escape(app_version)}",
+                f"## {display} — {md_escape(app_version)} ({patch_version_link})",
                 f"Patch source: {md_escape(source)} — v{md_escape(source_version)}",
                 f"Architecture: {md_escape(arch.get((app, source), '—'))}",
                 "",
