@@ -276,16 +276,20 @@ def download_platform(
                 candidates = ["576.0.0.47.92"]
 
             if app_name in {"facebook", "messenger"}:
-                # Keep the original downloader behavior for these two apps:
-                # query the selected provider for its latest version only.
-                try:
-                    latest = platform_module.get_latest_version(app_name, config)
-                    if latest and latest not in candidates:
-                        candidates.append(latest)
-                except Exception as e:
-                    logging.debug(
-                        f"Could not get latest version for {app_name} on {platform}: {e}"
-                    )
+                # Keep the original downloader behavior for these two apps,
+                # except for source-specific pinned builds.
+                if not (
+                    app_name == "messenger"
+                    and Path(patches).stem == "messenger-rushiranpise"
+                ):
+                    try:
+                        latest = platform_module.get_latest_version(app_name, config)
+                        if latest and latest not in candidates:
+                            candidates.append(latest)
+                    except Exception as e:
+                        logging.debug(
+                            f"Could not get latest version for {app_name} on {platform}: {e}"
+                        )
             else:
                 for latest in _get_store_latest_versions(app_name, config, platform):
                     if latest not in candidates:
