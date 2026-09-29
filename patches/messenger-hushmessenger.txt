@@ -5,3 +5,4 @@
 -Remove Meta AI
 -Open links externally
 -Spoof package version
+-Allow chat bubbles
