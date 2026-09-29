@@ -306,8 +306,8 @@ Architecture: arm64-v8a
 - ✅ Use non-personalized search
 - ✅ Show LIVE search
 - ❌ Hide search suggestions
-- ✅ Show the progress bar thumbnail
 - ✅ Show the progress bar
+- ✅ Show the progress bar thumbnail
 - ❌ Hide already seen videos
 - ❌ Skip content warnings
 - ❌ Share sheet tools
@@ -335,9 +335,9 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
+- ❌ Skip update checks
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
-- ❌ Skip update checks
 - ❌ Skip the splash ad
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
@@ -440,32 +440,21 @@ Architecture: arm64-v8a
 </details>
 
 ## Messenger — —
-Patch source: hushmessenger — v1.22.0
-Architecture: arm64-v8a
+Patch source: devanced — v1.4.4
+Architecture: —
 
 <details>
-<summary>🩹 Patches — 6/20 applied</summary>
+<summary>🩹 Patches — 7/9 applied</summary>
 
-- ✅ Enable chat heads
-- ❌ Hide inbox ads
+- ❌ Clone app
+- ✅ Hide inbox ads
 - ✅ Hide inbox stories and notes tray
-- ❌ Hide inbox subtabs
-- ❌ Disable typing indicator
-- ❌ Hide Facebook buttons
-- ❌ Open links externally
-- ✅ Disable media transcoding
-- ❌ Remove Meta AI
-- ✅ Change package name
+- ✅ Hide inbox subtabs
+- ✅ Disable typing indicator
+- ✅ Hide Facebook buttons
+- ✅ Open links externally
+- ✅ Remove Meta AI
 - ❌ Spoof package version
-- ✅ Allow screen capture
-- ✅ Block screenshot detection
-- ❌ Disable PairIP license check
-- ❌ Provide Original app certificate
-- ❌ Spoof Widevine / DRM level
-- ❌ Fix Firebase after re-signing
-- ❌ GmsCore support (MicroG)
-- ❌ Spoof install source
-- ❌ Spoof app signature
 
 </details>
 
