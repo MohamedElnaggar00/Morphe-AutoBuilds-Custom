@@ -70,13 +70,6 @@
     ]
   },
   {
-    "app_name": "messenger",
-    "source": "rushiranpise",
-    "arches": [
-      "arm64-v8a"
-    ]
-  },
-  {
     "app_name": "facebook",
     "source": "hushfacebook",
     "arches": [
