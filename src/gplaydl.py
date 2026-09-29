@@ -291,6 +291,27 @@ def _merge_play_splits(apks: list[Path], work_dir: Path, package_name: str) -> P
 
 
 
+def _apk_version_name(apk: Path) -> str | None:
+    """Read versionName from a merged APK without relying on patch metadata."""
+    try:
+        android_home = os.environ.get("ANDROID_HOME", "")
+        aapt2_candidates = (
+            sorted(Path(android_home).glob("build-tools/*/aapt2"), reverse=True)
+            if android_home else []
+        )
+        if not aapt2_candidates:
+            return None
+        out = subprocess.run(
+            [str(aapt2_candidates[0]), "dump", "badging", str(apk)],
+            capture_output=True, text=True, check=False,
+        ).stdout
+        match = re.search(r"versionName='([^']+)'", out)
+        return match.group(1) if match else None
+    except Exception as exc:
+        logging.debug("Could not read APK versionName from %s: %s", apk, exc)
+        return None
+
+
 def _download_with_compat_profiles(
     package_name: str,
     target_version: str,
@@ -664,6 +685,55 @@ def download_app(
                 target,
             )
             return target, version
+
+    # HushMessenger may use the newest Google Play build when its declared
+    # patch target cannot be downloaded. This is deliberately source-specific
+    # and dynamic: no Messenger version/versionCode is hardcoded here.
+    is_hush_messenger_latest_fallback = (
+        app_name == "messenger"
+        and os.getenv("SOURCE", "") == "hushmessenger"
+        and not override_version
+    )
+    if is_hush_messenger_latest_fallback:
+        with tempfile.TemporaryDirectory(prefix="gplaydl-messenger-latest-") as tmp:
+            output_dir = Path(tmp)
+            latest_cmd = [
+                "gplaydl", "download", package_name,
+                "-a", play_arch, "--no-extras", "-o", str(output_dir),
+            ]
+            logging.info(
+                "HushMessenger fallback: supported Messenger build was not downloadable; "
+                "requesting the latest Google Play build dynamically via gplaydl."
+            )
+            try:
+                proc = subprocess.run(latest_cmd, capture_output=True, text=True, check=False)
+            except FileNotFoundError:
+                logging.warning("gplaydl command is not installed.")
+                return None, None
+
+            if proc.returncode == 0:
+                apks = sorted(output_dir.glob("*.apk"))
+                if apks:
+                    merged = _merge_play_splits(apks, output_dir, package_name)
+                    if merged is not None:
+                        latest_version = _apk_version_name(merged)
+                        if latest_version:
+                            target = Path(f"{app_name}-{latest_version}-gplaydl.apk")
+                            shutil.copy2(merged, target)
+                            merged.unlink(missing_ok=True)
+                            logging.warning(
+                                "HushMessenger fallback selected latest Google Play version %s, "
+                                "outside the patch source's declared targets; Morphe will be "
+                                "invoked with --force.", latest_version,
+                            )
+                            return target, latest_version
+                        logging.warning(
+                            "HushMessenger latest fallback produced an APK but versionName "
+                            "could not be determined; refusing to guess the version."
+                        )
+            else:
+                error_text = (proc.stderr or proc.stdout).strip()[-1200:]
+                logging.warning("HushMessenger latest Google Play fallback failed: %s", error_text)
 
     logging.warning("gplaydl could not download a usable build for %s.", app_name)
     return None, None
