@@ -307,8 +307,8 @@ Architecture: arm64-v8a
 - ✅ Use non-personalized search
 - ✅ Show LIVE search
 - ❌ Hide search suggestions
-- ✅ Show the progress bar
 - ✅ Show the progress bar thumbnail
+- ✅ Show the progress bar
 - ❌ Hide already seen videos
 - ❌ Skip content warnings
 - ❌ Share sheet tools
@@ -336,9 +336,9 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
-- ❌ Skip update checks
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
+- ❌ Skip update checks
 - ❌ Skip the splash ad
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
@@ -464,10 +464,10 @@ Patch source: hushmessenger — v0.5.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 25/27 applied</summary>
+<summary>🩹 Patches — 19/27 applied</summary>
 
-- ✅ Install beside Meta apps
-- ✅ Restore screens on re-signed builds
+- ❌ Install beside Meta apps
+- ❌ Restore screens on re-signed builds
 - ❌ Hide inbox ads
 - ✅ Hide People You May Know
 - ✅ Hide friend request cards
@@ -486,43 +486,13 @@ Architecture: arm64-v8a
 - ✅ Hide business typing suggestions
 - ✅ Hide event prompts
 - ✅ Hide typing indicator
-- ✅ Open web links externally
+- ❌ Open web links externally
 - ❌ Allow chat bubbles
 - ✅ Use system emoji
-- ✅ Allow screenshots
-- ✅ Hide read receipts
-- ✅ Keep unsent messages
+- ❌ Allow screenshots
+- ❌ Hide read receipts
+- ❌ Keep unsent messages
 - ✅ Open settings from menu
-
-</details>
-
-## Messenger — —
-Patch source: rushiranpise — v1.22.0
-Architecture: arm64-v8a
-
-<details>
-<summary>🩹 Patches — 10/20 applied</summary>
-
-- ✅ Enable chat heads
-- ✅ Hide inbox ads
-- ✅ Hide inbox stories and notes tray
-- ✅ Hide inbox subtabs
-- ✅ Disable typing indicator
-- ✅ Hide Facebook buttons
-- ✅ Open links externally
-- ✅ Disable media transcoding
-- ✅ Remove Meta AI
-- ✅ Change package name
-- ❌ Spoof package version
-- ❌ Allow screen capture
-- ❌ Block screenshot detection
-- ❌ Disable PairIP license check
-- ❌ Provide Original app certificate
-- ❌ Spoof Widevine / DRM level
-- ❌ Fix Firebase after re-signing
-- ❌ GmsCore support (MicroG)
-- ❌ Spoof install source
-- ❌ Spoof app signature
 
 </details>
 
