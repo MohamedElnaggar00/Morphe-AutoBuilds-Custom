@@ -504,15 +504,8 @@ def download_app(
     if override_version:
         versions = [override_version]
     else:
-        versions = utils.get_supported_versions(package_name, cli, patches)
-
-        # Some third-party patch sources intentionally pin Messenger to an
-        # older, tested build even when the combined Morphe CLI version list
-        # advertises a newer Meta release. Keep this source-specific pin local
-        # to that patch bundle instead of changing the global version logic.
-        patch_source = Path(patches).stem
-        if app_name == "messenger" and patch_source == "messenger-rushiranpise":
-            versions = ["576.0.0.47.92"]
+        source_codes = utils.get_source_supported_version_codes(package_name, os.getenv("SOURCE", ""))
+        versions = list(source_codes) if source_codes else utils.get_supported_versions(package_name, cli, patches)
 
     # Try Morphe-supported versions from highest to lowest. Google Play is
     # asked for the exact versionCode, avoiding nearest-version behavior.
@@ -532,17 +525,9 @@ def download_app(
             candidates.append((version, codes[requested_code_index]))
             continue
 
-        # Rushi's Messenger patch bundle is explicitly tested against
-        # 576.0.0.47.92 / ARM64 versionCode 345212670. Morphe CLI may expose a
-        # newer aggregate Messenger version even though this source does not
-        # support it, so retain the source's authoritative ABI-specific code.
-        if (
-            app_name == "messenger"
-            and Path(patches).stem == "messenger-rushiranpise"
-            and version == "576.0.0.47.92"
-            and arch == "arm64-v8a"
-        ):
-            candidates.append((version, 345212670))
+        source_codes = utils.get_source_supported_version_codes(package_name, os.getenv("SOURCE", ""))
+        if version in source_codes and arch == "arm64-v8a" and not codes and source_codes[version]:
+            candidates.append((version, source_codes[version][0]))
 
     if not candidates:
         logging.info(
