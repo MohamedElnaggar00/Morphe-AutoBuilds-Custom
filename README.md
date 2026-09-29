@@ -495,6 +495,36 @@ Architecture: arm64-v8a
 
 </details>
 
+## Messenger — —
+Patch source: rushiranpise — v1.22.0
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 10/20 applied</summary>
+
+- ✅ Enable chat heads
+- ✅ Hide inbox ads
+- ✅ Hide inbox stories and notes tray
+- ✅ Hide inbox subtabs
+- ✅ Disable typing indicator
+- ✅ Hide Facebook buttons
+- ✅ Open links externally
+- ✅ Disable media transcoding
+- ✅ Remove Meta AI
+- ✅ Change package name
+- ❌ Spoof package version
+- ❌ Allow screen capture
+- ❌ Block screenshot detection
+- ❌ Disable PairIP license check
+- ❌ Provide Original app certificate
+- ❌ Spoof Widevine / DRM level
+- ❌ Fix Firebase after re-signing
+- ❌ GmsCore support (MicroG)
+- ❌ Spoof install source
+- ❌ Spoof app signature
+
+</details>
+
 ## Facebook — —
 Patch source: hushfacebook — v0.4.0
 Architecture: arm64-v8a
