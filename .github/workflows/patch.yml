@@ -297,10 +297,15 @@ jobs:
 
           python -m src
 
-          # Do not report a green build when the builder skipped the app and produced no APK.
+          # An APK that is already present in the latest release is a normal skip,
+          # not a failed build. Only a real build with no output should fail.
           apk_count=$(find . -maxdepth 1 -type f -name "*.apk" | wc -l)
           echo "Produced APKs: $apk_count"
           if [ "$apk_count" -eq 0 ]; then
+            if [ -f .build-skipped ]; then
+              echo "⏭️ Build skipped: APK is already published in the latest release."
+              exit 0
+            fi
             echo "::error::Build completed without producing an APK."
             exit 1
           fi
