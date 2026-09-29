@@ -314,7 +314,7 @@ def _apk_version_name(apk: Path) -> str | None:
 
 def _version_key(version: str) -> tuple[int, ...]:
     """Turn an Android version string into a comparable numeric tuple."""
-    return tuple(int(part) for part in re.findall(r"\\d+", version))
+    return tuple(int(part) for part in re.findall(r"\d+", version))
 
 
 def _google_play_newer_versions(
