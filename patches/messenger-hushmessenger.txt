@@ -1,4 +1,3 @@
-@messengerAppName=Messenger
 -Disable typing indicator
 -Hide inbox ads
 -Hide inbox subtabs
