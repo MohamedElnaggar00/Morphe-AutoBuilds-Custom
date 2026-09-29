@@ -6,3 +6,9 @@
 -Open links externally
 -Spoof package version
 -Allow chat bubbles
+-Allow screenshots
+-Hide read receipts
+-Keep unsent messages
+-Open web links externally
+-Install beside Meta apps
+-Restore screens on re-signed builds
