@@ -312,6 +312,88 @@ def _apk_version_name(apk: Path) -> str | None:
         return None
 
 
+def _version_key(version: str) -> tuple[int, ...]:
+    """Turn an Android version string into a comparable numeric tuple."""
+    return tuple(int(part) for part in re.findall(r"\\d+", version))
+
+
+def _google_play_newer_versions(
+    package_name: str,
+    arch: str,
+    minimum_version: str,
+) -> list[tuple[str, int]]:
+    """
+    Discover versions that Google Play exposes through its compatible device
+    profiles, then return the oldest versions strictly newer than the patch
+    source's suggested version.
+
+    We intentionally do not ask for the latest build here. Different Play
+    profiles can expose different compatible releases; collecting them first
+    lets the caller try the nearest newer release instead of jumping straight
+    to the newest one.
+    """
+    try:
+        from gplaydl.api import get_details
+        from gplaydl.auth import fetch_token_for_profile
+        from gplaydl.profiles import get_compat_profiles
+    except Exception as exc:
+        logging.warning("Could not import gplaydl profile API for version discovery: %s", exc)
+        return []
+
+    profiles = get_compat_profiles(_arch_name(arch))
+    if not profiles:
+        return []
+
+    minimum_key = _version_key(minimum_version)
+    discovered: dict[tuple[str, int], str] = {}
+
+    logging.info(
+        "gplaydl compatibility fallback: discovering Google Play versions newer "
+        "than patch-suggested %s across %d profiles.",
+        minimum_version,
+        len(profiles),
+    )
+
+    for profile_name, profile in profiles:
+        device = profile.get("UserReadableName", profile_name)
+        try:
+            auth = fetch_token_for_profile(profile)
+            if not auth:
+                continue
+            details = get_details(package_name, auth)
+            version = details.version_string
+            version_code = details.version_code
+            if not version or not version_code:
+                continue
+            if _version_key(version) <= minimum_key:
+                continue
+
+            key = (version, int(version_code))
+            discovered[key] = device
+        except Exception as exc:
+            logging.info(
+                "gplaydl version discovery: profile %s could not provide version info: %s",
+                device,
+                exc,
+            )
+
+    ordered = sorted(
+        discovered,
+        key=lambda item: (_version_key(item[0]), item[1]),
+    )
+    if ordered:
+        logging.info(
+            "gplaydl compatibility fallback: newer Google Play versions discovered: %s",
+            ", ".join(f"{version} (versionCode {code})" for version, code in ordered),
+        )
+    else:
+        logging.info(
+            "gplaydl compatibility fallback: Google Play exposed no version newer than %s.",
+            minimum_version,
+        )
+    return ordered
+
+
 def _download_with_compat_profiles(
     package_name: str,
     target_version: str,
@@ -708,10 +790,106 @@ def download_app(
             )
             return target, version
 
-    # HushMessenger may use the newest Google Play build when its declared
-    # patch target cannot be downloaded. This is deliberately source-specific
-    # and dynamic: no Messenger version/versionCode is hardcoded here.
-    if is_hush_messenger_latest_fallback:
+    # If every exact patch-supported version failed to download, do not jump
+    # straight to the latest Play build. First discover the oldest Google Play
+    # version that is strictly newer than the patch source's highest suggested
+    # version, then try those versions from oldest to newest.
+    fallback_floor = None
+    if not override_version and versions:
+        fallback_floor = max(versions, key=_version_key)
+
+    if fallback_floor:
+        newer_play_versions = _google_play_newer_versions(
+            package_name,
+            arch,
+            fallback_floor,
+        )
+        for fallback_version, fallback_code in newer_play_versions:
+            with tempfile.TemporaryDirectory(prefix=f"gplaydl-{app_name}-fallback-") as tmp:
+                output_dir = Path(tmp)
+                cmd = [
+                    "gplaydl",
+                    "download",
+                    package_name,
+                    "-a",
+                    play_arch,
+                    "-v",
+                    str(fallback_code),
+                    "--no-extras",
+                    "-o",
+                    str(output_dir),
+                ]
+                logging.info(
+                    "gplaydl compatibility fallback: trying oldest newer Google Play "
+                    "version %s (versionCode %s), above patch-suggested %s.",
+                    fallback_version,
+                    fallback_code,
+                    fallback_floor,
+                )
+                try:
+                    proc = subprocess.run(
+                        cmd,
+                        capture_output=True,
+                        text=True,
+                        check=False,
+                    )
+                except FileNotFoundError:
+                    logging.warning("gplaydl command is not installed.")
+                    return None, None
+
+                if proc.returncode != 0:
+                    error_text = (proc.stderr or proc.stdout).strip()[-1200:]
+                    logging.warning(
+                        "gplaydl fallback failed for %s versionCode %s: %s",
+                        app_name,
+                        fallback_code,
+                        error_text,
+                    )
+                    continue
+
+                apks = sorted(output_dir.glob("*.apk"))
+                if not apks:
+                    logging.warning(
+                        "gplaydl fallback returned success but no APK for %s versionCode %s.",
+                        app_name,
+                        fallback_code,
+                    )
+                    continue
+
+                logging.info(
+                    "Google Play returned %d APK components for fallback %s: %s",
+                    len(apks),
+                    fallback_version,
+                    ", ".join(p.name for p in apks),
+                )
+                merged = _merge_play_splits(apks, output_dir, package_name)
+                if merged is None:
+                    logging.warning(
+                        "Refusing fallback Google Play artifact for %s version %s because "
+                        "the complete arm64/density-compatible split set could not be produced.",
+                        app_name,
+                        fallback_version,
+                    )
+                    continue
+
+                target = Path(f"{app_name}-{fallback_code}-gplaydl.apk")
+                shutil.copy2(merged, target)
+                merged.unlink(missing_ok=True)
+                logging.warning(
+                    "Google Play fallback selected version %s (versionCode %s), the "
+                    "oldest discovered version newer than patch-suggested %s. "
+                    "Morphe will be allowed to attempt the patches on this version.",
+                    fallback_version,
+                    fallback_code,
+                    fallback_floor,
+                )
+                return target, fallback_version
+
+    # HushMessenger may use the newest Google Play build only when Morphe did
+    # not expose any patch-supported version at all. If a patch-suggested
+    # version existed and failed, the newer-version fallback above is the only
+    # fallback allowed; we must not silently jump to latest.
+    if is_hush_messenger_latest_fallback and not versions:
         with tempfile.TemporaryDirectory(prefix="gplaydl-messenger-latest-") as tmp:
             output_dir = Path(tmp)
             latest_cmd = [
