@@ -366,9 +366,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                     "patch", "--patches", str(patches),
                     *exclude_patches, *include_patches, *patch_options,
                     *([ "--force" ] if (
-                        app_name == "messenger"
-                        and source == "hushmessenger"
-                        and version not in (
+                        version not in (
                             list(utils.get_source_supported_version_codes(
                                 _configured_package(app_name) or app_name, source
                             ))
