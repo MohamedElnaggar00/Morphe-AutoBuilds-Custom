@@ -51,18 +51,6 @@
     {
       "app_name": "excel",
       "source": "rushi-excel"
-    },
-    {
-      "app_name": "samsung-keyboard",
-      "source": "ample-samsung-keyboard"
-    },
-    {
-      "app_name": "truecaller",
-      "source": "paresh-truecaller"
-    },
-    {
-      "app_name": "dwg-fastview",
-      "source": "hxreborn-dwg"
     }
   ]
 }
