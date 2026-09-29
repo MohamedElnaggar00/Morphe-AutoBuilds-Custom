@@ -391,12 +391,21 @@ def get_source_supported_version_codes(package_name: str, source: str) -> dict[s
             return {}
         common = dict(target_sets[0])
         for current in target_sets[1:]:
-            common = {
-                version: codes for version, codes in common.items()
-                if version in current and (
-                    not codes or not current[version] or set(codes) & set(current[version])
-                )
-            }
+            next_common = {}
+            for version, codes in common.items():
+                if version not in current:
+                    continue
+                current_codes = current[version]
+                if codes and current_codes:
+                    shared_codes = [code for code in codes if code in set(current_codes)]
+                    if not shared_codes:
+                        continue
+                    next_common[version] = shared_codes
+                else:
+                    # If one target declares only the version and the other
+                    # declares exact build codes, preserve the exact codes.
+                    next_common[version] = current_codes or codes
+            common = next_common
         return dict(sorted(common.items(), key=lambda item: normalize_version(item[0]), reverse=True))
     except Exception as exc:
         logging.debug("Patch source metadata lookup failed for %s/%s: %s", source, package_name, exc)
