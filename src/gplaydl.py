@@ -566,7 +566,13 @@ def download_app(
         if version in source_codes and arch == "arm64-v8a" and not codes and source_codes[version]:
             candidates.append((version, source_codes[version][0]))
 
-    if not candidates:
+    is_hush_messenger_latest_fallback = (
+        app_name == "messenger"
+        and os.getenv("SOURCE", "") == "hushmessenger"
+        and not override_version
+    )
+
+    if not candidates and not is_hush_messenger_latest_fallback:
         logging.info(
             "gplaydl skipped for %s: no versionCode matched Morphe's supported versions.",
             app_name,
@@ -705,11 +711,6 @@ def download_app(
     # HushMessenger may use the newest Google Play build when its declared
     # patch target cannot be downloaded. This is deliberately source-specific
     # and dynamic: no Messenger version/versionCode is hardcoded here.
-    is_hush_messenger_latest_fallback = (
-        app_name == "messenger"
-        and os.getenv("SOURCE", "") == "hushmessenger"
-        and not override_version
-    )
     if is_hush_messenger_latest_fallback:
         with tempfile.TemporaryDirectory(prefix="gplaydl-messenger-latest-") as tmp:
             output_dir = Path(tmp)
