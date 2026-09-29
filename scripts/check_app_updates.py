@@ -774,6 +774,47 @@ def make_manifest_key(app: str, source: str, arch: str) -> str:
     return f"{app}|{source}|{arch}"
 
 
+def _effective_patch_version_signature(sig: str) -> str:
+    """Return only the published patch-version identity from a source signature.
+
+    A source file normally contains both the patch repository and the Morphe CLI
+    repository. The CLI can receive ordinary commits/releases without changing
+    the patch version that this build is meant to track. Likewise, release
+    timestamps, asset uploads, and default-branch SHAs are implementation
+    details, not patch-version updates.
+
+    We therefore compare only each actual patch repository's release tag. This
+    keeps the existing broad source signature for diagnostics/fail-safe behavior,
+    while making the rebuild decision depend on the effective patch version.
+    """
+    raw = (sig or "").strip()
+    if not raw:
+        return ""
+
+    parts = []
+    for segment in raw.split(";"):
+        segment = segment.strip()
+        if not segment:
+            continue
+        if segment.startswith("bundle:"):
+            parts.append(segment)
+            continue
+        if "@" not in segment:
+            parts.append(segment)
+            continue
+
+        repo_id, remainder = segment.split("@", 1)
+        # Morphe CLI is the build tool, not the patch version being tracked.
+        if repo_id.rstrip("/").lower().endswith("/morphe-cli") or repo_id.lower() == "morphe-cli":
+            continue
+
+        patch_version = remainder.split("@", 1)[0].strip()
+        if patch_version:
+            parts.append(f"{repo_id}@{patch_version}")
+
+    return ";".join(parts)
+
+
 def _is_unreliable_source_sig(sig: str) -> bool:
     s = (sig or "").lower()
     return (
@@ -910,8 +951,10 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
                 reasons.append("legacy-manifest-missing-config-signature")
             elif old_config_sig != cur_config_sig:
                 reasons.append("app-config-changed")
-            if old.get("source_sig", "") != cur_src_sig:
-                reasons.append("patch-source-updated")
+            old_patch_sig = _effective_patch_version_signature(old.get("source_sig", ""))
+            cur_patch_sig = _effective_patch_version_signature(cur_src_sig)
+            if old_patch_sig != cur_patch_sig:
+                reasons.append("patch-version-updated")
             if not old.get("built_version", ""):
                 reasons.append("legacy-manifest-missing-built-version")
             # New app version detection for apps pinned to "latest" (no pinned
