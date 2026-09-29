@@ -647,6 +647,11 @@ def download_app(
             target = Path(f"{app_name}-{version_code}-gplaydl.apk")
             shutil.copy2(merged, target)
 
+            # The merged APK is only an intermediate input for Morphe.
+            # Keep the named gplaydl input and remove the intermediate so it
+            # cannot be mistaken for a second build artifact/release asset.
+            merged.unlink(missing_ok=True)
+
             logging.info(
                 "Google Play download succeeded as a single installable APK: %s -> %s",
                 merged.name,
