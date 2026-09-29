@@ -336,9 +336,9 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
+- ❌ Skip update checks
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
-- ❌ Skip update checks
 - ❌ Skip the splash ad
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
@@ -464,7 +464,7 @@ Patch source: hushmessenger — v0.5.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 26/27 applied</summary>
+<summary>🩹 Patches — 25/27 applied</summary>
 
 - ✅ Install beside Meta apps
 - ✅ Restore screens on re-signed builds
@@ -487,7 +487,7 @@ Architecture: arm64-v8a
 - ✅ Hide event prompts
 - ✅ Hide typing indicator
 - ✅ Open web links externally
-- ✅ Allow chat bubbles
+- ❌ Allow chat bubbles
 - ✅ Use system emoji
 - ✅ Allow screenshots
 - ✅ Hide read receipts
