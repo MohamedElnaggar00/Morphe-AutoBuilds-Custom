@@ -515,14 +515,30 @@ def download_app(
         return None, None
 
     supported = _version_codes(package_name, cli, patches)
-    if not supported:
+
+    # HushMessenger may proceed directly to the dynamic latest-Play fallback
+    # when Morphe has no usable versionCodes for its declared target.
+    hush_latest_only = (
+        app_name == "messenger"
+        and os.getenv("SOURCE", "") == "hushmessenger"
+        and not override_version
+        and not supported
+    )
+    if hush_latest_only:
+        logging.info(
+            "gplaydl: Morphe exposes no usable versionCodes for HushMessenger; "
+            "going directly to the dynamic latest Google Play fallback."
+        )
+    elif not supported:
         logging.info(
             "gplaydl skipped for %s: Morphe did not expose usable versionCodes.",
             app_name,
         )
         return None, None
 
-    if override_version:
+    if hush_latest_only:
+        versions = []
+    elif override_version:
         versions = [override_version]
     else:
         source_codes = utils.get_source_supported_version_codes(package_name, os.getenv("SOURCE", ""))
