@@ -334,7 +334,7 @@ def get_source_supported_version_codes(package_name: str, source: str) -> dict[s
                     break
             except Exception:
                 continue
-        if not isinstance(data, list):
+        if not isinstance(data, (list, dict)):
             return {}
 
         target_sets = []
