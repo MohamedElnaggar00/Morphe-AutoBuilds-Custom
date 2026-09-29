@@ -159,11 +159,21 @@ def _direct_release_candidates(version: str, config: dict) -> list[str]:
 
     # APKMirror release slugs are not necessarily the same as the configured
     # app name. Prefer known package-specific aliases before generic names.
-    # Messenger, for example, uses facebook-messenger rather than messenger.
+    # Messenger uses publisher slug "facebook-2" and release prefix
+    # "facebook-messenger" rather than the configured "messenger" name.
     package_release_aliases = {
         "com.facebook.orca": ["facebook-messenger"],
         "com.facebook.katana": ["facebook"],
         "com.adobe.reader": ["adobe-acrobat-reader-edit-pdf"],
+    }
+
+    # Some fallback configs contain only package/name and therefore have no
+    # APKMirror "org". Keep this correction tied to package metadata, not any
+    # particular app version.
+    package_path_aliases = {
+        "com.facebook.orca": [
+            ("facebook-2", "messenger"),
+        ],
     }
 
     release_names = [
@@ -194,6 +204,23 @@ def _direct_release_candidates(version: str, config: dict) -> list[str]:
     explicit = config.get("release_url")
     if explicit:
         candidates.append(explicit)
+
+    package_name = (config.get("package") or "").strip()
+
+    # First try explicit package path aliases. These remain usable when runtime
+    # config was synthesized from another provider and has no "org".
+    for alias_org, alias_app_slug in package_path_aliases.get(package_name, []):
+        for release_name in release_names:
+            if not release_name:
+                continue
+            candidates.append(
+                f"{base_url}/apk/{alias_org}/{quote(str(alias_app_slug), safe='')}/"
+                f"{quote(str(release_name), safe='')}-{version_slug}-release/"
+            )
+            candidates.append(
+                f"{base_url}/apk/{alias_org}/{quote(str(alias_app_slug), safe='')}/"
+                f"{quote(str(alias_app_slug), safe='')}-{version_slug}-release/"
+            )
 
     for app_slug in app_slugs:
         if not app_slug or not org:
