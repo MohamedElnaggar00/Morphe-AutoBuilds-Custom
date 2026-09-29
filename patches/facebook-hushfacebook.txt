@@ -5,3 +5,8 @@
 -Use the phone's emoji
 -Use the system font
 -Don't send reel watch history
++Download any video
++Hide Reels in the feed
++Block background-return feed refresh
++Hide Stories tray
++Clean up Reels
