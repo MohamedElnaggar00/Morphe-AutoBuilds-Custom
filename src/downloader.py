@@ -266,30 +266,24 @@ def download_platform(
         elif pinned:
             candidates = [pinned]
         else:
-            candidates = utils.get_supported_versions(config["package"], cli, patches)
+            source_codes = utils.get_source_supported_version_codes(
+                config["package"], os.getenv("SOURCE", "")
+            )
+            candidates = (
+                list(source_codes)
+                if source_codes
+                else utils.get_supported_versions(config["package"], cli, patches)
+            )
 
-            # Use the patch source's tested Messenger version when a source is
-            # intentionally pinned. Do not change the global version discovery
-            # behavior for other apps or Messenger sources.
-            patch_source = Path(patches).stem
-            if app_name == "messenger" and patch_source == "messenger-rushiranpise":
-                candidates = ["576.0.0.47.92"]
-
-            if app_name in {"facebook", "messenger"}:
-                # Keep the original downloader behavior for these two apps,
-                # except for source-specific pinned builds.
-                if not (
-                    app_name == "messenger"
-                    and Path(patches).stem == "messenger-rushiranpise"
-                ):
-                    try:
-                        latest = platform_module.get_latest_version(app_name, config)
-                        if latest and latest not in candidates:
-                            candidates.append(latest)
-                    except Exception as e:
-                        logging.debug(
-                            f"Could not get latest version for {app_name} on {platform}: {e}"
-                        )
+            if app_name in {"facebook", "messenger"} and not source_codes:
+                try:
+                    latest = platform_module.get_latest_version(app_name, config)
+                    if latest and latest not in candidates:
+                        candidates.append(latest)
+                except Exception as e:
+                    logging.debug(
+                        f"Could not get latest version for {app_name} on {platform}: {e}"
+                    )
             else:
                 for latest in _get_store_latest_versions(app_name, config, platform):
                     if latest not in candidates:
