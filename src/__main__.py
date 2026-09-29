@@ -173,10 +173,12 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     # Determine the highest Morphe-supported version before downloading the
     # application. This lets us compare against an already-published Release
     # and skip redundant Facebook/other app rebuilds.
-    supported_versions = utils.get_supported_versions(
-        _configured_package(app_name) or app_name,
-        str(cli),
-        str(patches),
+    package_name = _configured_package(app_name) or app_name
+    source_codes = utils.get_source_supported_version_codes(package_name, source)
+    supported_versions = (
+        list(source_codes)
+        if source_codes
+        else utils.get_supported_versions(package_name, str(cli), str(patches))
     )
 
     # The utility above normally resolves the package internally in the
