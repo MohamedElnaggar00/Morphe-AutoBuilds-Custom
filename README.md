@@ -336,15 +336,15 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
+- ❌ Skip update checks
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
-- ❌ Skip update checks
 - ❌ Skip the splash ad
-- ❌ Remove LIVE extras
-- ❌ Remove creation tools
-- ❌ Block P2P video relay
 - ❌ Remove content credential and card scanner assets
 - ❌ Remove unused language packs
+- ❌ Remove creation tools
+- ❌ Block P2P video relay
+- ❌ Remove LIVE extras
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
