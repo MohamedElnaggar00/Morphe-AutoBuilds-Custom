@@ -267,6 +267,14 @@ def download_platform(
             candidates = [pinned]
         else:
             candidates = utils.get_supported_versions(config["package"], cli, patches)
+
+            # Use the patch source's tested Messenger version when a source is
+            # intentionally pinned. Do not change the global version discovery
+            # behavior for other apps or Messenger sources.
+            patch_source = Path(patches).stem
+            if app_name == "messenger" and patch_source == "messenger-rushiranpise":
+                candidates = ["576.0.0.47.92"]
+
             if app_name in {"facebook", "messenger"}:
                 # Keep the original downloader behavior for these two apps:
                 # query the selected provider for its latest version only.
