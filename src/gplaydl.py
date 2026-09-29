@@ -559,9 +559,18 @@ def download_app(
     for version in versions:
         codes = source_codes.get(version, []) if source_codes else supported.get(version, [])
         if source_codes and not override_version:
-            if arch == "arm64-v8a":
+            if codes and arch == "arm64-v8a":
+                # Every published arm64 build is a valid candidate. We try the
+                # exact codes from the patch developer, not a guessed/nearest
+                # Google Play release.
                 for code in codes:
                     candidates.append((version, code))
+            elif not codes:
+                # Some sources publish the version but omit build codes.
+                # Preserve the existing Morphe CLI code mapping in that case.
+                fallback_codes = supported.get(version, [])
+                if len(fallback_codes) > requested_code_index:
+                    candidates.append((version, fallback_codes[requested_code_index]))
             continue
 
         if len(codes) > requested_code_index:
