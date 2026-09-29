@@ -335,15 +335,15 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
-- ❌ Skip update checks
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
+- ❌ Skip update checks
 - ❌ Skip the splash ad
-- ❌ Remove content credential and card scanner assets
-- ❌ Remove unused language packs
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
 - ❌ Block P2P video relay
+- ❌ Remove content credential and card scanner assets
+- ❌ Remove unused language packs
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
@@ -444,17 +444,17 @@ Patch source: hushmessenger — v1.22.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 12/20 applied</summary>
+<summary>🩹 Patches — 6/20 applied</summary>
 
 - ✅ Enable chat heads
-- ✅ Hide inbox ads
+- ❌ Hide inbox ads
 - ✅ Hide inbox stories and notes tray
-- ✅ Hide inbox subtabs
-- ✅ Disable typing indicator
-- ✅ Hide Facebook buttons
-- ✅ Open links externally
+- ❌ Hide inbox subtabs
+- ❌ Disable typing indicator
+- ❌ Hide Facebook buttons
+- ❌ Open links externally
 - ✅ Disable media transcoding
-- ✅ Remove Meta AI
+- ❌ Remove Meta AI
 - ✅ Change package name
 - ❌ Spoof package version
 - ✅ Allow screen capture
