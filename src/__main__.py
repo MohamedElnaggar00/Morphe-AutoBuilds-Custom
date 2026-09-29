@@ -365,6 +365,19 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                     "java", "-jar", str(cli),
                     "patch", "--patches", str(patches),
                     *exclude_patches, *include_patches, *patch_options,
+                    *([ "--force" ] if (
+                        app_name == "messenger"
+                        and source == "hushmessenger"
+                        and version not in (
+                            list(utils.get_source_supported_version_codes(
+                                _configured_package(app_name) or app_name, source
+                            ))
+                            or utils.get_supported_versions(
+                                _configured_package(app_name) or app_name,
+                                str(cli), str(patches)
+                            )
+                        )
+                    ) else []),
                     "--out", str(output_apk), str(input_apk)
                 ]
                 utils.run_process(morphe_cmd, capture=True, stream=True)
