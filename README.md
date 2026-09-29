@@ -336,9 +336,9 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
+- ❌ Drop the animated image cache
 - ❌ Skip update checks
 - ❌ Limit background traffic
-- ❌ Drop the animated image cache
 - ❌ Skip the splash ad
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
