@@ -133,11 +133,11 @@ Architecture: arm64-v8a
 </details>
 
 ## X — —
-Patch source: piko-newx — v3.42.2
+Patch source: piko-newx — v3.43.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 40/44 applied</summary>
+<summary>🩹 Patches — 41/45 applied</summary>
 
 - ✅ NewX: Remove ads
 - ✅ NewX: Disable blur effects
@@ -153,6 +153,7 @@ Architecture: arm64-v8a
 - ✅ NewX: Classic inline action spacing
 - ✅ NewX: Customize inline actions
 - ✅ NewX: Inline download button
+- ✅ NewX: Redirect downloads to chosen folder
 - ✅ NewX: Force highest video/audio quality
 - ✅ NewX: Set default media tab
 - ✅ NewX: Gallery profile Photos tab
@@ -335,15 +336,15 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
+- ❌ Skip update checks
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
-- ❌ Skip update checks
 - ❌ Skip the splash ad
-- ❌ Remove LIVE extras
-- ❌ Remove creation tools
-- ❌ Block P2P video relay
 - ❌ Remove content credential and card scanner assets
 - ❌ Remove unused language packs
+- ❌ Remove creation tools
+- ❌ Block P2P video relay
+- ❌ Remove LIVE extras
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
