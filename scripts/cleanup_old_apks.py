@@ -177,18 +177,31 @@ def main() -> int:
         print("No existing APK assets to clean up.")
         return 0
 
-    # Identity prefixes that must be preserved (one or more of the keep-set may
-    # share a prefix when multiple arches of the same app are kept).
-    keep_prefixes = {identity_prefix(n) for n in keep}
-
-    to_delete = []  # list of asset dicts
+    # First enforce the invariant we actually want for APK releases:
+    # one current version per app/source/architecture identity. This is
+    # intentionally independent of the keep-file, so an older asset cannot be
+    # protected merely because two versions were produced in the same run.
+    newest_by_prefix = {}
     for asset in assets:
         name = str(asset.get("name", ""))
-        if not name or name in keep:
-            continue  # explicitly kept (or unnamed)
-        if identity_prefix(name) in keep_prefixes:
-            to_delete.append(asset)  # same app/arch, but a different (older) version
-        # else: an app/arch we didn't rebuild this run -> leave it untouched
+        if not name.lower().endswith(".apk"):
+            continue
+        prefix = identity_prefix(name)
+        if prefix not in newest_by_prefix or version_key(name) > version_key(newest_by_prefix[prefix]["name"]):
+            newest_by_prefix[prefix] = {"name": name, "asset": asset}
+
+    to_delete = []
+    for prefix, newest in newest_by_prefix.items():
+        newest_name = newest["name"]
+        for asset in assets:
+            name = str(asset.get("name", ""))
+            if not name.lower().endswith(".apk") or identity_prefix(name) != prefix:
+                continue
+            if name != newest_name:
+                to_delete.append(asset)
+
+    # Keep non-APK assets untouched. The keep-file remains useful for any
+    # future non-versioned asset handling, but APK version pruning is authoritative.
 
     if not to_delete:
         print("No superseded APK assets found.")
