@@ -336,9 +336,9 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
+- ❌ Limit background traffic
 - ❌ Drop the animated image cache
 - ❌ Skip update checks
-- ❌ Limit background traffic
 - ❌ Skip the splash ad
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
@@ -564,22 +564,5 @@ Architecture: arm64-v8a
 - ❌ GmsCore support (MicroG)
 - ❌ Spoof install source
 - ❌ Spoof app signature
-
-</details>
-
-## Truecaller — — ([v1.8.0](https://github.com/bufferk/morphe-patches))
-Patch source: bufferk — v1.8.0
-Architecture: arm64-v8a
-
-<details>
-<summary>🩹 Patches — 7/7 applied</summary>
-
-- ✅ Hide ads
-- ✅ Disable analytics
-- ✅ Enable premium features
-- ✅ Hide 'Get Premium' banners
-- ✅ Hide premium upgrade prompts
-- ✅ Mock premium
-- ✅ Remove Premium UI
 
 </details>
