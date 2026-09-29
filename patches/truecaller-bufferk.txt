@@ -1,5 +1,1 @@
--Enable premium features
--Hide 'Get Premium' banners
--Hide premium upgrade prompts
--Mock premium
--Remove Premium UI
+
