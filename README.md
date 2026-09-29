@@ -339,11 +339,11 @@ Architecture: arm64-v8a
 - ❌ Limit background traffic
 - ❌ Drop the animated image cache
 - ❌ Skip the splash ad
+- ❌ Remove unused language packs
 - ❌ Remove LIVE extras
 - ❌ Remove creation tools
 - ❌ Block P2P video relay
 - ❌ Remove content credential and card scanner assets
-- ❌ Remove unused language packs
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
@@ -458,12 +458,49 @@ Architecture: —
 
 </details>
 
+## Messenger — —
+Patch source: hushmessenger — v0.5.0
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 26/27 applied</summary>
+
+- ✅ Install beside Meta apps
+- ✅ Restore screens on re-signed builds
+- ❌ Hide inbox ads
+- ✅ Hide People You May Know
+- ✅ Hide friend request cards
+- ✅ Hide growth prompts
+- ✅ Hide inbox promotions
+- ✅ Hide stories and notes
+- ✅ Hide inbox tabs
+- ✅ Hide Facebook shortcuts
+- ✅ Hide Meta AI
+- ✅ Hide Chat Moments
+- ✅ Hide Reels badge
+- ✅ Hide AI sticker tools
+- ✅ Hide avatar stickers
+- ✅ Hide chat promotions
+- ✅ Hide business reply suggestions
+- ✅ Hide business typing suggestions
+- ✅ Hide event prompts
+- ✅ Hide typing indicator
+- ✅ Open web links externally
+- ✅ Allow chat bubbles
+- ✅ Use system emoji
+- ✅ Allow screenshots
+- ✅ Hide read receipts
+- ✅ Keep unsent messages
+- ✅ Open settings from menu
+
+</details>
+
 ## Facebook — —
 Patch source: hushfacebook — v0.4.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 28/43 applied</summary>
+<summary>🩹 Patches — 33/43 applied</summary>
 
 - ✅ Disable Audience Network
 - ✅ Block background ad prefetch
@@ -480,12 +517,12 @@ Architecture: arm64-v8a
 - ❌ Tag suggestions only after @
 - ✅ Download any reel
 - ✅ Download any story
-- ❌ Download any video
+- ✅ Download any video
 - ❌ Use the phone's emoji
 - ✅ Hide AI-detected posts
-- ❌ Hide Reels in the feed
-- ❌ Block background-return feed refresh
-- ❌ Hide Stories tray
+- ✅ Hide Reels in the feed
+- ✅ Block background-return feed refresh
+- ✅ Hide Stories tray
 - ✅ Hide suggested and promoted posts
 - ✅ Hide posts by words
 - ❌ Use the system font
@@ -502,7 +539,7 @@ Architecture: arm64-v8a
 - ✅ Marketplace only
 - ❌ Open on a chosen tab
 - ✅ Block promotional notifications
-- ❌ Clean up Reels
+- ✅ Clean up Reels
 - ❌ Don't send reel watch history
 - ✅ Hide Meta AI in search
 - ❌ Stop Story auto-advance
