@@ -303,6 +303,88 @@ def get_supported_versions(package_name: str, cli: str, patches: str) -> list[st
     return versions
 
 
+def get_source_supported_version_codes(package_name: str, source: str) -> dict[str, list[int]]:
+    """Read app versions/versionCodes directly from a patch source."""
+    if not source:
+        return {}
+    try:
+        source_path = Path("sources") / f"{source}.json"
+        if not source_path.exists():
+            return {}
+        with source_path.open() as fh:
+            entries = json.load(fh)
+        repo_entry = next(
+            (e for e in entries[1:] if isinstance(e, dict) and e.get("repo")
+             and str(e.get("repo")).lower() != "morphe-cli"
+             and str(e.get("provider", "github")).lower() == "github"),
+            None,
+        )
+        if not repo_entry:
+            return {}
+        user, repo = str(repo_entry["user"]).strip(), str(repo_entry["repo"]).strip()
+        tag = str(repo_entry.get("tag") or "latest").strip()
+        refs = [tag] if tag != "latest" else ["main", "master"]
+        data = None
+        for ref in refs:
+            try:
+                data = fetch_json(
+                    f"https://raw.githubusercontent.com/{user}/{repo}/{quote(ref, safe='')}/patches-list.json"
+                )
+                if isinstance(data, list):
+                    break
+            except Exception:
+                continue
+        if not isinstance(data, list):
+            return {}
+
+        target_sets = []
+        def walk(node):
+            if isinstance(node, dict):
+                if node.get("packageName") == package_name and isinstance(node.get("targets"), list):
+                    versions = {}
+                    for target in node["targets"]:
+                        if not isinstance(target, dict) or not target.get("version"):
+                            continue
+                        version = str(target["version"])
+                        raw_codes = target.get("versionCodes")
+                        codes = []
+                        values = raw_codes.values() if isinstance(raw_codes, dict) else (
+                            raw_codes if isinstance(raw_codes, list) else [raw_codes]
+                        )
+                        for value in values:
+                            if isinstance(value, (int, float)) and int(value) > 0:
+                                codes.append(int(value))
+                            elif isinstance(value, str) and value.isdigit():
+                                codes.append(int(value))
+                        versions.setdefault(version, [])
+                        for code in codes:
+                            if code not in versions[version]:
+                                versions[version].append(code)
+                    if versions:
+                        target_sets.append(versions)
+                for value in node.values():
+                    walk(value)
+            elif isinstance(node, list):
+                for value in node:
+                    walk(value)
+
+        walk(data)
+        if not target_sets:
+            return {}
+        common = dict(target_sets[0])
+        for current in target_sets[1:]:
+            common = {
+                version: codes for version, codes in common.items()
+                if version in current and (
+                    not codes or not current[version] or set(codes) & set(current[version])
+                )
+            }
+        return dict(sorted(common.items(), key=lambda item: normalize_version(item[0]), reverse=True))
+    except Exception as exc:
+        logging.debug("Patch source metadata lookup failed for %s/%s: %s", source, package_name, exc)
+        return {}
+
+
 def get_supported_version(package_name: str, cli: str, patches: str) -> Optional[str]:
     """Backwards compatible helper: returns the highest compatible version, if any."""
     versions = get_supported_versions(package_name, cli, patches)
