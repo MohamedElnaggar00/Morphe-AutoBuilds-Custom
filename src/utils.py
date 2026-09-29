@@ -356,6 +356,24 @@ def get_source_supported_version_codes(package_name: str, source: str) -> dict[s
                                 codes.append(int(value))
                             elif isinstance(value, str) and value.isdigit():
                                 codes.append(int(value))
+
+                        # Some patch sources, including HushMessenger, publish
+                        # their supported build codes in the target description
+                        # while leaving versionCodes null. Treat that published
+                        # build list as authoritative metadata.
+                        if not codes:
+                            description = str(target.get("description") or "")
+                            arm64_match = re.search(
+                                r"arm64\s+builds?\s+([^;]+)",
+                                description,
+                                re.IGNORECASE,
+                            )
+                            if arm64_match:
+                                codes.extend(
+                                    int(value)
+                                    for value in re.findall(r"\d+", arm64_match.group(1))
+                                )
+
                         versions.setdefault(version, [])
                         for code in codes:
                             if code not in versions[version]:
