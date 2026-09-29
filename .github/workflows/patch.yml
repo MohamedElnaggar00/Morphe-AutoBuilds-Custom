@@ -611,7 +611,15 @@ jobs:
 
           new_names = {x.strip() for x in Path("new_apks.txt").read_text().splitlines() if x.strip()}
           existing_names = {x.strip() for x in Path("existing_apks.txt").read_text().splitlines() if x.strip()}
-          new_prefixes = {identity_prefix(x) for x in new_names}
+          # Keep only the newest version when multiple builds of the same app/source/arch are produced.
+          from scripts.cleanup_old_apks import version_key
+          newest = {}
+          for x in new_names:
+              key = identity_prefix(x)
+              if key not in newest or version_key(x) > version_key(newest[key]):
+                  newest[key] = x
+          new_names = set(newest.values())
+          new_prefixes = set(newest)
           keep = set(new_names)
           keep.update(x for x in existing_names if identity_prefix(x) not in new_prefixes)
 
