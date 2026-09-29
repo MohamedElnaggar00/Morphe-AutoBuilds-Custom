@@ -89,6 +89,7 @@ def _release_already_has_build(app_name: str, arch: str, version: str) -> bool:
                 arch,
                 name,
             )
+            Path(".build-skipped").touch()
             return True
 
     return False
