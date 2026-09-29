@@ -275,7 +275,10 @@ def download_platform(
                 else utils.get_supported_versions(config["package"], cli, patches)
             )
 
-            if app_name in {"facebook", "messenger"} and not source_codes:
+            # Never replace a source-declared version with a newer store
+            # version. Public providers are only fallbacks for downloading that
+            # exact compatible version.
+            if not source_codes:
                 try:
                     latest = platform_module.get_latest_version(app_name, config)
                     if latest and latest not in candidates:
@@ -284,10 +287,6 @@ def download_platform(
                     logging.debug(
                         f"Could not get latest version for {app_name} on {platform}: {e}"
                     )
-            else:
-                for latest in _get_store_latest_versions(app_name, config, platform):
-                    if latest not in candidates:
-                        candidates.append(latest)
             logging.info(f"Version candidates for {app_name} on {platform}: {candidates}")
 
         # Facebook and Messenger must use the original provider flow without
