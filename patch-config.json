@@ -45,6 +45,10 @@
       "source": "hushmessenger"
     },
     {
+      "app_name": "messenger",
+      "source": "rushiranpise"
+    },
+    {
       "app_name": "facebook",
       "source": "hushfacebook"
     }
