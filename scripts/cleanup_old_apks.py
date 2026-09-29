@@ -79,6 +79,14 @@ def identity_prefix(apk_name: str) -> str:
     return (apk_name[: m.start()] if m else Path(apk_name).stem).lower()
 
 
+def version_key(apk_name: str) -> tuple:
+    """Return a sortable numeric version key extracted from an APK filename."""
+    m = VERSION_MARKER.search(apk_name)
+    if not m:
+        return ()
+    return tuple(int(x) for x in re.findall(r"\d+", m.group(0)))
+
+
 def load_keep_set(keep_file: Path) -> Set[str]:
     if not keep_file or not keep_file.exists():
         return set()
