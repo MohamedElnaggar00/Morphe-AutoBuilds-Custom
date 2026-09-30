@@ -231,6 +231,8 @@ def main() -> int:
     write_output("has_updates", "true" if build_matrix else "false")
     write_output("update_count", str(len(build_matrix)))
     write_output("total_count", str(len(full)))
+    write_output("carry_count", "0")
+    write_output("incremental", "false" if force else "true")
 
     print("=" * 70)
     print(f"Total app/source/arch entries: {len(full)}")
