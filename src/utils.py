@@ -196,6 +196,87 @@ def get_highest_version(versions: list[str]) -> str | None:
             highest_version = v
     return highest_version
 
+def select_preferred_patch_targets(targets: list[dict]) -> list[dict]:
+    """Select automatic patch targets, preferring explicitly stable versions.
+
+    Targets may be repeated across patches. A version is considered stable only
+    when every declaration explicitly sets isExperimental to false. A missing
+    flag, true flag, or disagreement is treated as experimental/unknown.
+
+    When at least one stable version exists, only stable versions are returned.
+    When none exists, all targets are returned to preserve compatibility with
+    sources that publish experimental versions only.
+    """
+    by_version: dict[str, dict] = {}
+
+    for target in targets or []:
+        if not isinstance(target, dict):
+            continue
+
+        version = str(target.get("version") or "").strip()
+        if not version:
+            continue
+
+        entry = by_version.setdefault(
+            version,
+            {
+                "version_codes": [],
+                "experimental_flags": set(),
+            },
+        )
+
+        flag = target.get("is_experimental")
+        if flag is None and "isExperimental" in target:
+            flag = target.get("isExperimental")
+        entry["experimental_flags"].add(
+            flag if isinstance(flag, bool) else None
+        )
+
+        codes = target.get("version_codes")
+        if codes is None:
+            codes = target.get("versionCodes")
+
+        values = (
+            codes.values()
+            if isinstance(codes, dict)
+            else codes
+            if isinstance(codes, list)
+            else [codes]
+        )
+        for value in values:
+            if isinstance(value, (int, float)) and int(value) > 0:
+                code = int(value)
+            elif isinstance(value, str) and value.isdigit():
+                code = int(value)
+            else:
+                continue
+            if code not in entry["version_codes"]:
+                entry["version_codes"].append(code)
+
+    stable_versions = {
+        version
+        for version, entry in by_version.items()
+        if entry["experimental_flags"] == {False}
+    }
+    selected_versions = stable_versions if stable_versions else set(by_version)
+
+    selected = []
+    for version in selected_versions:
+        entry = by_version[version]
+        selected.append(
+            {
+                "version": version,
+                "version_codes": sorted(set(entry["version_codes"])),
+                "is_experimental": version not in stable_versions,
+            }
+        )
+
+    selected.sort(
+        key=lambda target: normalize_version(target["version"]),
+        reverse=True,
+    )
+    return selected
+
 def get_supported_versions(package_name: str, cli: str, patches: str) -> list[str]:
     # Morphe CLI and ReVanced CLI have different list-versions syntax
     cli_name = Path(cli).name.lower()
@@ -514,30 +595,20 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
                 }
             common = next_common
 
-        # Stable means every declaration explicitly says false. If any
-        # declaration says true or omits the flag, that version is not promoted
-        # to stable. If no stable versions exist, retain all targets to preserve
-        # support for sources that currently publish experimental versions only.
-        stable_versions = {
-            version
-            for version, meta in common.items()
-            if meta["experimental_flags"] == {False}
-        }
-        selected_versions = stable_versions if stable_versions else set(common)
-
-        targets = []
-        for version in selected_versions:
-            meta = common[version]
-            targets.append({
+        merged_targets = [
+            {
                 "version": version,
-                "version_codes": sorted(set(meta["codes"])),
-                "is_experimental": version not in stable_versions,
-            })
+                "version_codes": meta["codes"],
+                "is_experimental": (
+                    False
+                    if meta["experimental_flags"] == {False}
+                    else True
+                ),
+            }
+            for version, meta in common.items()
+        ]
 
-        targets.sort(
-            key=lambda target: normalize_version(target["version"]),
-            reverse=True,
-        )
+        targets = select_preferred_patch_targets(merged_targets)
         _source_supported_targets_cache[cache_key] = list(targets)
         return list(targets)
 
