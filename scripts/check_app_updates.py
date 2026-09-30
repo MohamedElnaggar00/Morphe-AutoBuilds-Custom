@@ -4,24 +4,25 @@ Incremental update checker for Morphe AutoBuilds.
 
 Strategy:
 1. Read patch-config.json + arch-config.json -> full expected matrix.
-2. Fetch existing 'latest' release manifest (manifest.json asset, if present).
+2. Load the persistent build-state manifest from the repository.
+   During migration, fall back to the legacy 'latest' release manifest.
 3. For each (app, source, arch):
    - Determine current configured app version (from apps/<platform>/<app>.json).
    - Determine current patch-source signature (latest GitHub release tag(s) of
      repos listed in sources/<source>.json).
-   - Compare to manifest.json -> if changed OR APK missing -> needs build.
+   - Compare to persistent build state -> if changed OR no APK is recorded -> needs build.
 4. Output:
    - GitHub Actions outputs: build_matrix (JSON), has_updates, total/update counts.
    - File: build_matrix.json    (matrix entries that need rebuild).
-   - File: carry_over.json      (existing APK names to re-upload unchanged).
-   - File: new_manifest.json    (manifest to upload with the new release).
+   - File: carry_over.json      (legacy informational output; not re-uploaded).
+   - File: new_manifest.json    (complete persistent build state for the workflow).
 
 Force full rebuild: env FORCE_FULL_REBUILD=true (also: any app missing from the
 old manifest is rebuilt automatically).
 
 Fail-safe: any unexpected error -> full rebuild matrix is emitted (preserves the
 previous always-build behavior so nothing breaks).
-"""
+""
 import os
 import sys
 import re
@@ -47,7 +48,8 @@ SOURCES_DIR = REPO_ROOT / "sources"
 APPS_DIR = REPO_ROOT / "apps"
 
 MANIFEST_NAME = "manifest.json"
-RELEASE_TAG = "latest"
+STATE_MANIFEST_PATH = REPO_ROOT / ".github" / "morphe-state" / MANIFEST_NAME
+LEGACY_RELEASE_TAG = "latest"
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 FORCE_FULL = os.environ.get("FORCE_FULL_REBUILD", "false").lower() in ("true", "1", "yes")
@@ -696,54 +698,54 @@ def _get_repo_owner_name() -> Optional[Tuple[str, str]]:
 
 
 def fetch_existing_manifest() -> Optional[dict]:
-    rc, _, err = run_gh(["release", "download", RELEASE_TAG,
-                         "--pattern", MANIFEST_NAME, "--clobber"])
+    """Load persistent build state from the repository.
+
+    The legacy `latest` release is used only as a migration fallback.
+    After the first successful new-release build, the state file is the
+    authoritative planner state and Releases are no longer used as state.
+    """
+    if STATE_MANIFEST_PATH.exists():
+        try:
+            with STATE_MANIFEST_PATH.open("r", encoding="utf-8") as f:
+                manifest = json.load(f)
+            if isinstance(manifest, dict):
+                logging.info(
+                    "Loaded persistent build state from %s",
+                    STATE_MANIFEST_PATH,
+                )
+                return manifest
+        except Exception as e:
+            logging.warning(f"Bad persistent build state: {e}")
+
+    rc, _, err = run_gh([
+        "release", "download", LEGACY_RELEASE_TAG,
+        "--pattern", MANIFEST_NAME, "--clobber",
+    ])
     if rc != 0:
         msg = err.strip()[:120]
-        logging.info(f"No existing '{MANIFEST_NAME}' on '{RELEASE_TAG}' ({msg})")
+        logging.info(
+            f"No persistent build state and no legacy '{MANIFEST_NAME}' "
+            f"on release tag '{LEGACY_RELEASE_TAG}' ({msg})"
+        )
         return None
+
     try:
         with open(MANIFEST_NAME, "r", encoding="utf-8") as f:
-            return json.load(f)
-    except Exception as e:
-        logging.warning(f"Bad manifest.json: {e}")
-        return None
-
-
-def fetch_existing_apk_names() -> List[str]:
-    repo = _get_repo_owner_name()
-    if repo:
-        owner, name = repo
-        rc, out, _ = run_gh(
-            ["api", f"repos/{owner}/{name}/releases/tags/{RELEASE_TAG}", "--jq", ".id"]
-        )
-        rel_id = out.strip() if rc == 0 else ""
-        if rel_id:
-            rc, out, _ = run_gh(
-                [
-                    "api",
-                    "--paginate",
-                    f"repos/{owner}/{name}/releases/{rel_id}/assets?per_page=100",
-                    "--jq",
-                    ".[].name",
-                ],
-                timeout=300,
+            manifest = json.load(f)
+        if isinstance(manifest, dict):
+            logging.info(
+                "Loaded legacy build state from release tag '%s' for migration.",
+                LEGACY_RELEASE_TAG,
             )
-            if rc == 0:
-                names = [ln.strip() for ln in out.splitlines() if ln.strip()]
-                return [n for n in names if n.endswith(".apk")]
-
-    rc, out, _ = run_gh(["release", "view", RELEASE_TAG, "--json", "assets"])
-    if rc != 0:
-        return []
-    try:
-        return [
-            a.get("name", "")
-            for a in json.loads(out).get("assets", [])
-            if a.get("name", "").endswith(".apk")
-        ]
-    except Exception:
-        return []
+            return manifest
+    except Exception as e:
+        logging.warning(f"Bad legacy manifest.json: {e}")
+    finally:
+        try:
+            Path(MANIFEST_NAME).unlink(missing_ok=True)
+        except Exception:
+            pass
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -1136,8 +1138,22 @@ def main() -> int:
         else:
             old_manifest = fetch_existing_manifest()
 
-        existing_apks = fetch_existing_apk_names()
-        logging.info(f"Existing release has {len(existing_apks)} APK assets")
+        # The persistent manifest is now the planner's source of known APKs.
+        # A new Release may contain only one app, so Releases themselves cannot
+        # be used to decide whether another app's APK still exists.
+        entries_for_state = (
+            (old_manifest or {}).get("entries", {})
+            if isinstance(old_manifest, dict)
+            else {}
+        )
+        existing_apks = [
+            str(entry.get("apk") or "").strip()
+            for entry in entries_for_state.values()
+            if isinstance(entry, dict) and str(entry.get("apk") or "").strip()
+        ]
+        logging.info(
+            f"Persistent build state contains {len(existing_apks)} known APK records"
+        )
 
         if old_manifest is None and not FORCE_FULL:
             # No manifest yet -> first incremental run; rebuild everything once

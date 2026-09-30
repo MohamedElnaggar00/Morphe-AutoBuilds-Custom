@@ -346,12 +346,14 @@ jobs:
           if-no-files-found: ignore
 
   create-single-release:
-    name: Create Single Release
+    name: Create New Release
     needs: [check-updates, build-apps]
     runs-on: ubuntu-latest
     if: always() && needs.check-updates.result == 'success' && (needs.build-apps.result == 'success' || needs.build-apps.result == 'skipped')
     permissions:
       contents: write
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
     steps:
       - name: Checkout Repository
@@ -381,295 +383,182 @@ jobs:
       - name: Check if Any APKs Were Built
         id: check-apks
         run: |
+          mkdir -p ./all-apks
           built_count=$(find ./all-apks -name "*.apk" 2>/dev/null | wc -l)
           echo "Built APKs: $built_count"
 
           if [ "$built_count" -eq 0 ]; then
-            echo "❌ No rebuilt APKs available"
-            echo "skip_release=true" >> $GITHUB_OUTPUT
+            echo "No rebuilt APKs available"
+            echo "skip_release=true" >> "$GITHUB_OUTPUT"
           else
-            echo "✅ $built_count rebuilt APK(s) ready for release"
-            echo "skip_release=false" >> $GITHUB_OUTPUT
+            echo "$built_count rebuilt APK(s) ready for release"
+            echo "skip_release=false" >> "$GITHUB_OUTPUT"
           fi
-      
-      - name: Collect All APKs
+
+      - name: Collect Rebuilt APKs
         if: steps.check-apks.outputs.skip_release == 'false'
         run: |
           mkdir -p ./release-apks
-          echo "📦 Collecting rebuilt APKs..."
+          echo "Collecting only APKs rebuilt in this workflow run..."
           find ./all-apks -name "*.apk" -exec cp -f {} ./release-apks/ \; 2>/dev/null || true
-
-          echo "📁 APKs ready for release:"
+          test -n "$(find ./release-apks -maxdepth 1 -type f -name "*.apk" -print -quit)"
           ls -la ./release-apks/
 
-          final_count=$(ls -1 ./release-apks/*.apk 2>/dev/null | wc -l || echo "0")
-          echo "📊 Total APKs: $final_count"
-
-      - name: Build Final Manifest
+      - name: Build Persistent Manifest
         if: steps.check-apks.outputs.skip_release == 'false'
         run: |
-          echo "🧾 Building manifest.json from build-plan + build records..."
-          # The new_manifest.json (post-plan baseline) lives in the build-plan artifact
+          echo "Building complete persistent build-state manifest..."
           if [ -f ./build-plan/new_manifest.json ]; then
             cp ./build-plan/new_manifest.json ./new_manifest.json
-          elif [ -f manifest.json ]; then
-            # Last-resort baseline: keep the previous manifest instead of
-            # replacing it with an empty/incomplete one.
-            cp manifest.json ./new_manifest.json
+          elif [ -f .github/morphe-state/manifest.json ]; then
+            cp .github/morphe-state/manifest.json ./new_manifest.json
           fi
-          # Flatten all per-build records into one directory
+
+          if [ ! -s ./new_manifest.json ]; then
+            echo "No build-state manifest baseline is available."
+            exit 1
+          fi
+
           mkdir -p build_records
           if [ -d ./all-records ]; then
             find ./all-records -name "*.json" -exec cp {} build_records/ \; 2>/dev/null || true
           fi
-          python scripts/merge_manifest.py || {
-            echo "⚠️ merge_manifest.py failed; preserving the planning baseline."
-            if [ -f ./new_manifest.json ]; then
-              cp ./new_manifest.json ./manifest.json
-            fi
-          }
-          if [ -f manifest.json ]; then
-            echo "✅ manifest.json built:"
-            jq '.entries | length' manifest.json || true
-            cp manifest.json ./release-apks/manifest.json
+
+          python scripts/merge_manifest.py
+
+          if [ ! -s ./manifest.json ]; then
+            echo "merge_manifest.py did not produce manifest.json"
+            exit 1
           fi
 
-      - name: Validate GitHub Auth
-        if: steps.check-apks.outputs.skip_release == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python scripts/validate_github_auth.py
+          jq '.entries | length' manifest.json
 
-      - name: Check Existing Release
-        if: always()
-        id: check-release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if gh release view latest >/dev/null 2>&1; then
-            echo "release_exists=true" >> "$GITHUB_OUTPUT"
-            echo "✅ Release 'latest' exists; assets will be updated in place."
-          else
-            echo "release_exists=false" >> "$GITHUB_OUTPUT"
-            echo "📭 Release 'latest' does not exist; it will be created."
-          fi
-      
       - name: Generate Release Notes
         if: steps.check-apks.outputs.skip_release == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "📝 Generating release notes..."
-
-          if [ "${{ steps.check-release.outputs.release_exists }}" = "true" ]; then
-            gh release view latest --json assets --jq '.assets[].name' > current_assets.txt
-          else
-            : > current_assets.txt
-          fi
-
+          : > release_assets.txt
           for apk in ./release-apks/*.apk; do
             [ -f "$apk" ] || continue
-            basename "$apk" >> current_assets.txt
+            basename "$apk" >> release_assets.txt
           done
+          sort -u release_assets.txt -o release_assets.txt
 
-          if [ -f ./release-apks/manifest.json ]; then
-            echo "manifest.json" >> current_assets.txt
-          fi
-
-          sort -u current_assets.txt > release_assets.txt
-
-          echo "## 🩹 Patch Versions" > patch_versions.md
-          echo "" >> patch_versions.md
-          while read -r filename; do
-            [ -n "$filename" ] || continue
-            case "$filename" in
-              *.apk)
-                patch_version=$(printf '%s\n' "$filename" | sed -n 's/.*-patch-v\\(.*\\)-app-v.*/\\1/p')
-                if [ -n "$patch_version" ]; then
-                  echo "- $filename — Patch v$patch_version" >> patch_versions.md
-                fi
-                ;;
-            esac
-          done < release_assets.txt
-
-          cat > release_notes.md << 'EOF'
-          # Morphe APKs - Auto Built
-          
-          ## 📱 Available Apps
-          
-          EOF
-
+          echo "## Rebuilt APKs in this release" > release_notes.md
+          echo "" >> release_notes.md
           while read -r filename; do
             [ -n "$filename" ] || continue
             echo "- $filename" >> release_notes.md
           done < release_assets.txt
 
-          cat >> release_notes.md << 'EOF'
-          ---
-          
-          ## ⚙️ Build Information
-          - **Auto-built daily at 6:17 AM UTC**
-          - **arm64-v8a builds only**
-          - **Latest Morphe patches**
-          - **Updated automatically**
-          
-          ## ⚠️ Disclaimer
-          These APKs are built automatically. Use at your own risk.
-          
-          ## 🔄 Update Schedule
-          - Automatic updates daily at 6:17 AM UTC
-          - Manual updates available via workflow dispatch
-          - Creates `latest` if missing and uploads rebuilt assets in place
-          EOF
+          echo "" >> release_notes.md
+          echo "---" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Build Information" >> release_notes.md
+          echo "- Auto-built daily at 6:17 AM UTC" >> release_notes.md
+          echo "- arm64-v8a builds only" >> release_notes.md
+          echo "- This release contains only APKs rebuilt by this workflow run" >> release_notes.md
+          echo "- Previous releases are preserved" >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Update Schedule" >> release_notes.md
+          echo "- Automatic updates daily at 6:17 AM UTC" >> release_notes.md
+          echo "- Manual updates available via workflow dispatch" >> release_notes.md
 
-          cat patch_versions.md >> release_notes.md
+          echo "" >> release_notes.md
+          echo "## Patch Versions" >> release_notes.md
+          while read -r filename; do
+            [ -n "$filename" ] || continue
+            case "$filename" in
+              *.apk)
+                patch_version=$(printf '%s\n' "$filename" | sed -n 's/.*-patch-v\([0-9][^/]*\)-app-v.*/\1/p')
+                if [ -n "$patch_version" ]; then
+                  echo "- $filename - Patch v$patch_version" >> release_notes.md
+                fi
+                ;;
+            esac
+          done < release_assets.txt
 
-      - name: Upload Or Create Release
+      - name: Create New Release
         if: steps.check-apks.outputs.skip_release == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           set -euo pipefail
 
           apk_count=$(find ./release-apks -maxdepth 1 -type f -name "*.apk" | wc -l)
           if [ "$apk_count" -eq 0 ]; then
-            echo "❌ No APKs found to release"
+            echo "No APKs found to release"
             exit 1
           fi
 
-          echo "🚀 Publishing $apk_count rebuilt APK(s)..."
+          RELEASE_TAG="morphe-build-$GITHUB_RUN_ID-$GITHUB_RUN_ATTEMPT"
+          printf '%s\n' "$RELEASE_TAG" > .release_tag
 
-          if [ "${{ steps.check-release.outputs.release_exists }}" = "true" ]; then
-            echo "⬆️ Release 'latest' exists; uploading assets individually..."
-            # Upload each asset separately so one problematic/missing asset cannot
-            # prevent the other rebuilt APKs from reaching the release.
-            for asset in ./release-apks/*.apk; do
-              echo "  → $(basename "$asset")"
-              gh release upload latest "$asset" --clobber
-            done
+          echo "Creating new GitHub Release: $RELEASE_TAG"
+          echo "Publishing $apk_count rebuilt APK(s)..."
 
-            if [ -f ./release-apks/manifest.json ]; then
-              echo "  → manifest.json"
-              gh release upload latest ./release-apks/manifest.json --clobber
-            fi
-          else
-            echo "🆕 Creating 'latest' release..."
-            ASSETS=( ./release-apks/*.apk )
-            if [ -f ./release-apks/manifest.json ]; then
-              ASSETS+=( ./release-apks/manifest.json )
-            fi
+          gh release create "$RELEASE_TAG" \
+            --title "Morphe APKs - $(date -u +'%Y-%m-%d %H:%M') UTC" \
+            --notes-file release_notes.md \
+            ./release-apks/*.apk \
+            --latest
 
-            gh release create "latest" \
-              --title "Morphe APKs - $(date +'%Y-%m-%d %H:%M')" \
-              --notes-file release_notes.md \
-              "${ASSETS[@]}" \
-              --latest
-          fi
-
-          echo "🔎 Verifying every rebuilt APK is actually attached to the release..."
-          gh release view latest --json assets --jq '.assets[].name' > published_assets.txt
+          echo "Verifying every rebuilt APK is attached..."
+          gh release view "$RELEASE_TAG" --json assets --jq '.assets[].name' > published_assets.txt
 
           missing=0
           while IFS= read -r asset; do
             [ -n "$asset" ] || continue
             filename=$(basename "$asset")
-            if ! grep -Fxq "$filename" published_assets.txt; then
-              echo "⚠️ Missing from release after upload: $filename"
-              echo "🔁 Retrying upload for $filename..."
-              gh release upload latest "$asset" --clobber
-              if ! grep -Fxq "$filename" <(gh release view latest --json assets --jq '.assets[].name'); then
-                echo "❌ Asset is still missing after retry: $filename"
-                missing=1
-              else
-                echo "✅ Recovered: $filename"
-              fi
+            if grep -Fxq "$filename" published_assets.txt; then
+              echo "Published: $filename"
             else
-              echo "✅ Published: $filename"
+              echo "Missing from new release: $filename"
+              missing=1
             fi
           done < <(find ./release-apks -maxdepth 1 -type f -name "*.apk" | sort)
 
           if [ "$missing" -ne 0 ]; then
-            echo "❌ One or more rebuilt APKs could not be verified in the release."
+            echo "One or more rebuilt APKs are missing from $RELEASE_TAG"
             exit 1
           fi
 
-          echo "✅ All rebuilt APKs are confirmed in release 'latest'."
+          echo "All rebuilt APKs are confirmed in $RELEASE_TAG"
 
-      - name: Prune Superseded APK Assets
-        if: steps.check-release.outputs.release_exists == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Persist Build State
+        if: steps.check-apks.outputs.skip_release == 'false'
         run: |
           set -euo pipefail
 
-          # The cleanup step also runs when no APK was rebuilt in this run.
-          # Ensure the artifact directory exists so an empty build is handled safely.
-          mkdir -p ./all-apks
-          : > new_apks.txt
-          find ./all-apks -type f -name "*.apk" -exec basename {} \; | sort -u > new_apks.txt
+          if [ ! -s ./manifest.json ]; then
+            echo "Persistent manifest is missing; refusing to update build state."
+            exit 1
+          fi
 
-          gh release view latest --json assets --jq \
-            '.assets[] | select(.name | endswith(".apk")) | .name' \
-            > existing_apks.txt
+          mkdir -p .github/morphe-state
+          cp ./manifest.json .github/morphe-state/manifest.json
 
-          # Protect every existing APK whose app/arch identity was NOT rebuilt.
-          # Older versions are deleted only after the replacement upload succeeded.
-          python - <<'PY'
-          from pathlib import Path
-          from scripts.cleanup_old_apks import identity_prefix
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          new_names = {x.strip() for x in Path("new_apks.txt").read_text().splitlines() if x.strip()}
-          existing_names = {x.strip() for x in Path("existing_apks.txt").read_text().splitlines() if x.strip()}
-          # Keep only the newest version when multiple builds of the same app/source/arch are produced.
-          from scripts.cleanup_old_apks import version_key
-          newest = {}
-          for x in new_names:
-              key = identity_prefix(x)
-              if key not in newest or version_key(x) > version_key(newest[key]):
-                  newest[key] = x
-          new_names = set(newest.values())
-          new_prefixes = set(newest)
-          keep = set(new_names)
-          keep.update(x for x in existing_names if identity_prefix(x) not in new_prefixes)
+          git add .github/morphe-state/manifest.json
+          if git diff --cached --quiet; then
+            echo "Build state is already up to date."
+            exit 0
+          fi
 
-          Path("keep_apks.txt").write_text(
-              "\n".join(sorted(keep)) + ("\n" if keep else ""),
-              encoding="utf-8",
-          )
-          print(f"new/rebuilt: {len(new_names)}")
-          print(f"protected non-rebuilt existing APKs: {len(keep - new_names)}")
-          print(f"cleanup keep-set: {len(keep)}")
-          PY
+          git commit -m "chore: update Morphe build state"
 
-          python scripts/cleanup_old_apks.py --release latest --keep-file keep_apks.txt
+          git fetch origin main
+          git rebase origin/main
+          git push origin HEAD:main
 
-      - name: Refresh Release Metadata
-        if: steps.check-apks.outputs.skip_release == 'false' && steps.check-release.outputs.release_exists == 'true'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release edit latest \
-            --title "Morphe APKs - $(date +'%Y-%m-%d %H:%M')" \
-            --notes-file release_notes.md
-          echo "✅ Release metadata refreshed after successful upload and cleanup."
-      
+          echo "Persistent build state saved."
+
       - name: Display Release URL
         if: steps.check-apks.outputs.skip_release == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          release_url=$(gh release view latest --json url --jq .url)
-          echo "🔗 Release URL: $release_url"
+          RELEASE_TAG=$(cat .release_tag)
+          release_url=$(gh release view "$RELEASE_TAG" --json url --jq .url)
+          echo "Release URL: $release_url"
           echo ""
-          echo "📦 Direct Download Links:"
           for apk in ./release-apks/*.apk; do
             filename=$(basename "$apk")
             echo "- $filename: $release_url/download/$filename"
