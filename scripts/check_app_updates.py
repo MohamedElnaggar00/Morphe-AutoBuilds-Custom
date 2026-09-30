@@ -562,26 +562,16 @@ def _download_release_asset_json(asset_url: str) -> Optional[dict]:
 
 
 def _pick_recommended_target(patches_json: dict, package_name: str) -> str:
-    """Given a parsed patches-list.json and a package, return the highest
-    non-experimental supported version (i.e. the one the builder ships).
+    """Return the highest explicitly stable target for a package.
 
-    The upstream patches-list.json marks each compatiblePackages[].targets[]
-    entry with ``isExperimental``. The builder (via the Morphe/ReVanced CLI
-    `list-versions`, which is derived from this same data) picks the highest
-    target, preferring the *recommended* (isExperimental == false) one. We mirror
-    that exactly here so the planner's notion of "the current target version"
-    matches what the build job will actually emit.
-
-    If no non-experimental target exists we fall back to the highest target of
-    any kind (some packages only have experimental targets) and finally to ''.
+    The actual target-selection policy lives in src.utils so the planner and
+    builder cannot disagree about stable vs experimental versions.
     """
     patches = patches_json.get("patches") if isinstance(patches_json, dict) else None
     if not isinstance(patches, list):
         return ""
 
-    stable: List[str] = []
-    any_kind: List[str] = []
-
+    targets = []
     for patch in patches:
         if not isinstance(patch, dict):
             continue
@@ -593,16 +583,25 @@ def _pick_recommended_target(patches_json: dict, package_name: str) -> str:
             for tgt in pkg.get("targets") or []:
                 if not isinstance(tgt, dict):
                     continue
-                ver = (tgt.get("version") or "").strip()
-                if not ver:
+                version = (tgt.get("version") or "").strip()
+                if not version:
                     continue
-                any_kind.append(ver)
-                if tgt.get("isExperimental") is False:
-                    stable.append(ver)
+                targets.append({
+                    "version": version,
+                    "is_experimental": (
+                        tgt.get("isExperimental")
+                        if isinstance(tgt.get("isExperimental"), bool)
+                        else None
+                    ),
+                })
 
-    if stable:
-        return provider_utils.get_highest_version(stable) or ""
-    return ""
+    preferred = provider_utils.select_preferred_patch_targets(targets)
+    stable = [
+        target["version"]
+        for target in preferred
+        if target.get("is_experimental") is False
+    ]
+    return provider_utils.get_highest_version(stable) or ""
 
 
 def fetch_recommended_version(app_name: str, source: str) -> str:
