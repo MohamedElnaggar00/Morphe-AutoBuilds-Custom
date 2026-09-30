@@ -7,11 +7,16 @@ import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 import requests
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+import check_app_updates as legacy
+
 API = "https://api.github.com"
 TOKEN = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
 HEADERS = {
@@ -35,13 +40,16 @@ APP_NAMES = {
 WORK = ROOT / ".readme-cache"
 WORK.mkdir(exist_ok=True)
 
+
 def api_json(url: str):
     r = requests.get(url, headers=HEADERS, timeout=30)
     r.raise_for_status()
     return r.json()
 
+
 def latest_release(owner: str, repo: str) -> dict:
     return api_json(f"{API}/repos/{owner}/{repo}/releases/latest")
+
 
 def download_asset(release: dict, suffix: str, output: Path) -> str:
     candidates = [
@@ -59,6 +67,7 @@ def download_asset(release: dict, suffix: str, output: Path) -> str:
     output.write_bytes(r.content)
     return asset["name"]
 
+
 def source_repo(source: str) -> tuple[str, str]:
     data = json.loads((ROOT / "sources" / f"{source}.json").read_text(encoding="utf-8"))
     repos = [
@@ -70,12 +79,21 @@ def source_repo(source: str) -> tuple[str, str]:
     x = repos[-1]
     return x["user"], x["repo"]
 
+
 def app_package(app_name: str) -> str:
     for platform in ("apkmirror", "apkpure", "uptodown", "aptoide", "apkcombo"):
         p = ROOT / "apps" / platform / f"{app_name}.json"
         if p.exists():
             return json.loads(p.read_text(encoding="utf-8")).get("package", "")
     raise RuntimeError(f"No package config found for {app_name}")
+
+
+def normalize_patch_name(value: str) -> str:
+    """Normalize patch names so local selections match CLI names case-insensitively."""
+    value = value.strip().lower()
+    value = re.sub(r"\s+", " ", value)
+    return value
+
 
 def local_rules(app_name: str, source: str) -> tuple[set[str], set[str]]:
     p = ROOT / "patches" / f"{app_name}-{source}.txt"
@@ -84,13 +102,14 @@ def local_rules(app_name: str, source: str) -> tuple[set[str], set[str]]:
         return enabled, disabled
     for raw in p.read_text(encoding="utf-8").splitlines():
         line = raw.strip()
-        if not line or line.startswith("#"):
+        if not line or line.startswith("#") or line.startswith("@"):
             continue
         if line.startswith("+"):
-            enabled.add(line[1:].strip())
+            enabled.add(normalize_patch_name(line[1:]))
         elif line.startswith("-"):
-            disabled.add(line[1:].strip())
+            disabled.add(normalize_patch_name(line[1:]))
     return enabled, disabled
+
 
 def run_cli(cli: Path, patches: Path, args: list[str]) -> str:
     cmd = ["java", "-jar", str(cli), *args, "--patches", str(patches)]
@@ -98,6 +117,7 @@ def run_cli(cli: Path, patches: Path, args: list[str]) -> str:
     if result.returncode != 0:
         raise RuntimeError(result.stdout + "\n" + result.stderr)
     return result.stdout
+
 
 def parse_patch_list(output: str) -> list[tuple[str, bool]]:
     rows = []
@@ -117,10 +137,12 @@ def parse_patch_list(output: str) -> list[tuple[str, bool]]:
     unique = []
     seen = set()
     for name, enabled in rows:
-        if name not in seen:
+        key = normalize_patch_name(name)
+        if key not in seen:
             unique.append((name, enabled))
-            seen.add(name)
+            seen.add(key)
     return unique
+
 
 def parse_versions(output: str) -> str:
     values = []
@@ -142,8 +164,18 @@ def parse_versions(output: str) -> str:
 
     return max(values, key=key)
 
+
 def md_escape(value: str) -> str:
     return value.replace("\\", "\\\\").replace("|", "\\|")
+
+
+def resolve_app_version(app: str, source: str) -> str:
+    """Use the same source-aware version resolver used by the build/update planner."""
+    version = legacy.fetch_recommended_version(app, source).strip()
+    if version:
+        return version
+    return legacy.fetch_latest_app_version(app).strip() or "—"
+
 
 def main():
     config = json.loads((ROOT / "patch-config.json").read_text(encoding="utf-8"))
@@ -200,20 +232,18 @@ def main():
             enabled_rules, disabled_rules = local_rules(app, source)
             final_rows = []
             for name, default_enabled in rows:
-                if name in disabled_rules:
+                key = normalize_patch_name(name)
+                if key in disabled_rules:
                     applied = False
-                elif name in enabled_rules:
+                elif key in enabled_rules:
                     applied = True
                 else:
                     applied = default_enabled
                 final_rows.append((name, applied))
 
-            version_output = run_cli(
-                cli,
-                mpp,
-                ["list-versions", "--filter-package-names", package],
-            )
-            app_version = parse_versions(version_output)
+            # Keep README app version in sync with the exact source-aware version
+            # resolution used by the build planner, not a fragile CLI text parser.
+            app_version = resolve_app_version(app, source)
             source_version = str(release.get("tag_name", "latest")).lstrip("v")
             applied_count = sum(1 for _, value in final_rows if value)
 
@@ -258,6 +288,7 @@ def main():
         "\n".join(sections).rstrip() + "\n",
         encoding="utf-8",
     )
+
 
 if __name__ == "__main__":
     main()
