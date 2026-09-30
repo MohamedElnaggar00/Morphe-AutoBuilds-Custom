@@ -215,20 +215,18 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     logging.info(f"✅ Using CLI: {cli.name}")
     logging.info(f"✅ Using patches: {patches.name}")
 
-    # Determine the highest Morphe-supported version before downloading the
-    # application. This lets us compare against an already-published Release
-    # and skip redundant Facebook/other app rebuilds.
+    # Resolve the exact automatic target policy before the APK download.
+    # Stable targets are preferred over experimental ones by the shared
+    # source-target resolver, so the skip check and downloader use the same
+    # app-version decision.
     package_name = _configured_package(app_name) or app_name
-    source_codes = utils.get_source_supported_version_codes(package_name, source)
+    source_targets = utils.get_source_supported_targets(package_name, source)
     supported_versions = (
-        list(source_codes)
-        if source_codes
+        [target["version"] for target in source_targets]
+        if source_targets
         else utils.get_supported_versions(package_name, str(cli), str(patches))
     )
 
-    # The utility above normally resolves the package internally in the
-    # downloader. For the skip check, use the same configured app version
-    # returned by Morphe only when it is available.
     patch_version = _patch_source_version(source)
 
     if supported_versions:
@@ -414,9 +412,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                     *exclude_patches, *include_patches, *patch_options,
                     *([ "--force" ] if (
                         version not in (
-                            list(utils.get_source_supported_version_codes(
-                                _configured_package(app_name) or app_name, source
-                            ))
+                            [target["version"] for target in source_targets]
                             or utils.get_supported_versions(
                                 _configured_package(app_name) or app_name,
                                 str(cli), str(patches)
