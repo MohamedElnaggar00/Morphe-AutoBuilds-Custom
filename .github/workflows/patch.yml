@@ -419,7 +419,7 @@ jobs:
               exit 1
             fi
 
-            title="${app_name} v${app_version} — Patch v${patch_version} — ${source_name}"
+            title="${app_name} v${app_version} — Patch v${patch_version} — ${source_name} — ${arch}"
 
             safe_app="$(printf '%s' "$app_name" | tr -cs 'A-Za-z0-9._-' '-')"
             safe_patch="$(printf '%s' "$patch_version" | tr -cs 'A-Za-z0-9._-' '-')"
