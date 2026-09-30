@@ -173,10 +173,19 @@ def expected_app_version(app: str, source: str) -> str:
     if recommended:
         return recommended
 
-    # Fallback to the current app-store version when the patch list cannot be
-    # inspected. This preserves update detection for sources without a readable
-    # patches-list asset.
-    return legacy.fetch_latest_app_version(app).strip()
+    # NEVER use the store's latest version as a rebuild trigger when the patch
+    # source does not expose a machine-readable supported-version list.
+    #
+    # Morphe/custom sources normally publish an opaque .mpp bundle. In that
+    # case the store may already have a newer app version which the current
+    # patch bundle does not support. Comparing against the store version would
+    # therefore create false rebuilds (often for many apps at once).
+    #
+    # For opaque patch bundles, the patch-source release signature is already
+    # compared separately and is the safe signal for a new supported app
+    # version. Returning an empty value here deliberately prevents a
+    # store-version-only rebuild.
+    return ""
 
 
 def needs_build(item: dict, previous: Optional[dict]) -> Tuple[bool, str, str, str]:
