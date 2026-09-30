@@ -1,0 +1,33 @@
+name: Verify Target Selection
+
+on:
+  push:
+    paths:
+      - "src/utils.py"
+      - "src/downloader.py"
+      - "src/__main__.py"
+      - "scripts/check_app_updates.py"
+      - "tests/test_version_selection.py"
+      - ".github/workflows/verify-target-policy.yml"
+
+jobs:
+  verify:
+    if: contains(github.event.head_commit.message, '[verify-targets]')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Compile Changed Python Modules
+        run: python -m py_compile src/utils.py src/downloader.py src/__main__.py scripts/check_app_updates.py scripts/check_release_updates.py tests/test_version_selection.py
+
+      - name: Run Target Selection Tests
+        run: python -m unittest discover -s tests -p "test_*.py" -v
