@@ -244,8 +244,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v— — Patch v1.36.0
-Patch source: hxreborn — v1.36.0 ([v1.36.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v— — Patch v1.37.0
+Patch source: hxreborn — v1.37.0 ([v1.37.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -341,15 +341,15 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
-- ❌ Limit background traffic
 - ❌ Drop the animated image cache
 - ❌ Skip update checks
+- ❌ Limit background traffic
 - ❌ Skip the splash ad
+- ❌ Remove LIVE extras
 - ❌ Remove creation tools
 - ❌ Block P2P video relay
 - ❌ Remove content credential and card scanner assets
 - ❌ Remove unused language packs
-- ❌ Remove LIVE extras
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
@@ -428,8 +428,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## CamScanner — App v— — Patch v1.45.0
-Patch source: hoodles — v1.45.0 ([v1.45.0](https://github.com/hoo-dles/morphe-patches))
+## CamScanner — App v— — Patch v1.46.0
+Patch source: hoodles — v1.46.0 ([v1.46.0](https://github.com/hoo-dles/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
