@@ -53,7 +53,7 @@ from typing import List, Set
 # letter right after the digit, e.g. "v8a"). Otherwise the identity prefix would
 # be truncated at the arch segment.
 VERSION_MARKER = re.compile(r"-app-v(?=[0-9])[^/]*\.apk$", re.IGNORECASE)
-LEGACY_VERSION_MARKER = re.compile(r"-v(?=[0-9])[^/]*\.apk$", re.IGNORECASE)
+LEGACY_VERSION_MARKER = re.compile(r"-v(?=[0-9])", re.IGNORECASE)
 
 
 def gh_release_assets(release: str) -> List[dict]:
@@ -83,7 +83,7 @@ def identity_prefix(apk_name: str) -> str:
         if patch:
             prefix = prefix[: patch.start()]
         return prefix.lower()
-    legacy_matches = list(LEGACY_VERSION_MARKER.finditer(apk_name))
+    legacy_matches = list(LEGACY_VERSION_MARKER.finditer(Path(apk_name).stem))
     legacy = legacy_matches[-1] if legacy_matches else None
     return (apk_name[: legacy.start()] if legacy else Path(apk_name).stem).lower()
 
@@ -98,9 +98,15 @@ def version_key(apk_name: str) -> tuple:
     patch_match = re.search(r"-patch-v(.+?)-app-v", apk_name, re.IGNORECASE)
     patch_key = tuple(int(x) for x in re.findall(r"\d+", patch_match.group(1))) if patch_match else ()
 
-    legacy_matches = list(LEGACY_VERSION_MARKER.finditer(apk_name))
-    app_match = VERSION_MARKER.search(apk_name) or (legacy_matches[-1] if legacy_matches else None)
-    app_key = tuple(int(x) for x in re.findall(r"\d+", app_match.group(0))) if app_match else ()
+    legacy_matches = list(LEGACY_VERSION_MARKER.finditer(Path(apk_name).stem))
+    app_match = VERSION_MARKER.search(apk_name)
+    if app_match is not None:
+        app_text = app_match.group(0)
+    elif legacy_matches:
+        app_text = Path(apk_name).stem[legacy_matches[-1].start():]
+    else:
+        app_text = ""
+    app_key = tuple(int(x) for x in re.findall(r"\d+", app_text)) if app_text else ()
     return (patch_key, app_key)
 
 
