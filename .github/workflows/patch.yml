@@ -349,7 +349,7 @@ jobs:
     name: Create Single Release
     needs: [check-updates, build-apps]
     runs-on: ubuntu-latest
-    if: always() && needs.check-updates.outputs.has_updates == 'true'
+    if: always() && needs.check-updates.result == 'success' && (needs.build-apps.result == 'success' || needs.build-apps.result == 'skipped')
     permissions:
       contents: write
 
@@ -369,6 +369,7 @@ jobs:
         with:
           path: ./all-apks
           pattern: apk-*
+        continue-on-error: true
 
       - name: Download All Build Records
         uses: actions/download-artifact@v4
@@ -442,7 +443,7 @@ jobs:
           python scripts/validate_github_auth.py
 
       - name: Check Existing Release
-        if: steps.check-apks.outputs.skip_release == 'false'
+        if: always()
         id: check-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -600,7 +601,7 @@ jobs:
           echo "✅ All rebuilt APKs are confirmed in release 'latest'."
 
       - name: Prune Superseded APK Assets
-        if: steps.check-apks.outputs.skip_release == 'false' && steps.check-release.outputs.release_exists == 'true'
+        if: steps.check-release.outputs.release_exists == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
