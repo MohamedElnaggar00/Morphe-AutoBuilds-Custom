@@ -161,7 +161,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install requests curl-cffi
+          pip install requests curl-cffi PyGithub
 
       - name: Refresh README from patch sources
         env:
