@@ -50,6 +50,7 @@ APPS_DIR = REPO_ROOT / "apps"
 MANIFEST_NAME = "manifest.json"
 STATE_MANIFEST_PATH = REPO_ROOT / ".github" / "morphe-state" / MANIFEST_NAME
 LEGACY_RELEASE_TAG = "latest"
+GITHUB_REPOSITORY = os.environ.get("GITHUB_REPOSITORY", "")
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 FORCE_FULL = os.environ.get("FORCE_FULL_REBUILD", "false").lower() in ("true", "1", "yes")
@@ -86,6 +87,37 @@ def run_gh(args: List[str], timeout: int = 120) -> Tuple[int, str, str]:
         return 127, "", "gh CLI not found"
     except Exception as e:
         return 1, "", f"{e}"
+
+
+def fetch_existing_release_apk_names() -> List[str]:
+    """Return APK asset names currently present in any GitHub Release.
+
+    Releases are delivery history, not planner state. The persistent manifest
+    tells us what should exist, while the actual Release assets tell us whether
+    that APK is still downloadable. This lets a deleted APK trigger a rebuild
+    even when its manifest entry is still present.
+    """
+    if not GITHUB_REPOSITORY:
+        logging.warning("GITHUB_REPOSITORY is not set; cannot inspect Release assets")
+        return []
+
+    rc, out, err = run_gh([
+        "api",
+        "--paginate",
+        f"repos/{GITHUB_REPOSITORY}/releases",
+        "--jq",
+        ".[] | .assets[]? | select(.name | endswith(\".apk\")) | .name",
+    ], timeout=120)
+    if rc != 0:
+        msg = err.strip()[:200]
+        logging.warning(f"Could not list Release APK assets: {msg}")
+        return []
+
+    names = sorted({line.strip() for line in out.splitlines() if line.strip()})
+    logging.info(
+        f"GitHub Releases currently contain {len(names)} distinct APK asset(s)"
+    )
+    return names
 
 
 def load_patch_config() -> List[dict]:
@@ -1146,13 +1178,12 @@ def main() -> int:
             if isinstance(old_manifest, dict)
             else {}
         )
-        existing_apks = [
-            str(entry.get("apk") or "").strip()
-            for entry in entries_for_state.values()
-            if isinstance(entry, dict) and str(entry.get("apk") or "").strip()
-        ]
+        # The manifest is planner state; Release assets are the source of
+        # truth for whether a carried APK is still actually downloadable.
+        existing_apks = fetch_existing_release_apk_names()
         logging.info(
-            f"Persistent build state contains {len(existing_apks)} known APK records"
+            f"Persistent build state contains {len(entries_for_state)} known entries; "
+            f"Release history contains {len(existing_apks)} APK asset(s)"
         )
 
         if old_manifest is None and not FORCE_FULL:
