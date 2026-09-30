@@ -160,20 +160,19 @@ def delete_asset(release: str, name: str, asset_id: str = "") -> bool:
     """Delete a single release asset. Tries `gh release delete-asset` first,
     falls back to the REST API (by asset id) on failure. Returns True on
     success. Every failure is logged to stderr but never fatal."""
+    # Prefer the REST API when an asset id is available. This is deterministic
+    # and avoids depending on the installed gh CLI subcommand implementation.
+    if asset_id:
+        ok, msg = delete_asset_by_id(name, asset_id)
+        if ok:
+            return True
+        print(f"  ⚠️  API delete failed for {name} (id={asset_id}): {msg[:200]}",
+              file=sys.stderr)
+
     ok, msg = delete_asset_by_name(release, name)
     if ok:
         return True
     print(f"  ⚠️  delete-asset failed for {name}: {msg[:200]}", file=sys.stderr)
-
-    if asset_id:
-        ok2, msg2 = delete_asset_by_id(name, asset_id)
-        if ok2:
-            return True
-        print(f"  ⚠️  API fallback failed for {name} (id={asset_id}): {msg2[:200]}",
-              file=sys.stderr)
-    else:
-        print(f"  ⚠️  no asset id available for {name}; API fallback skipped",
-              file=sys.stderr)
     return False
 
 
@@ -239,6 +238,12 @@ def main() -> int:
 
     action = "would delete" if args.dry_run else "deleted"
     print(f"Done. {action} {len(to_delete) if args.dry_run else deleted} superseded asset(s).")
+    if not args.dry_run and deleted != len(to_delete):
+        print(
+            f"❌ Cleanup incomplete: {len(to_delete) - deleted} asset(s) could not be deleted.",
+            file=sys.stderr,
+        )
+        return 1
     return 0
 
 
