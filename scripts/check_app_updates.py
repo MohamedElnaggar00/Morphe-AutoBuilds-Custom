@@ -905,6 +905,80 @@ def _is_newer_version(candidate: str, reference: str) -> bool:
 
 
 
+def _patch_version_from_apk_name(apk_name: str) -> str:
+    m = re.search(r"-patch-v(.+?)-app-v", apk_name or "", re.IGNORECASE)
+    return m.group(1).strip() if m else ""
+
+
+def _apk_matches_current_patches(apk_name: str, cur_src_sig: str) -> bool:
+    """True when the patch version embedded in `apk_name` equals the tag of a
+    patch repository in the CURRENT source signature."""
+    built = _patch_version_from_apk_name(apk_name).lstrip("vV")
+    if not built:
+        return False
+    for seg in _effective_patch_version_signature(cur_src_sig).split(";"):
+        if "@" not in seg:
+            continue
+        tag = seg.split("@", 1)[1].strip().lstrip("vV")
+        if tag and tag == built:
+            return True
+    return False
+
+
+
+def _source_display_name(source: str) -> str:
+    """APK filenames use the `name` from sources/<source>.json[0], which can
+    differ from the source file name (e.g. piko-newx -> piko-patches)."""
+    f = SOURCES_DIR / f"{source}.json"
+    try:
+        data = json.loads(f.read_text(encoding="utf-8"))
+        if isinstance(data, list) and data and isinstance(data[0], dict):
+            return str(data[0].get("name") or source)
+    except Exception:
+        pass
+    return source
+
+
+def _apk_rank(apk_name: str) -> tuple:
+    m = re.search(r"-patch-v(.+?)-app-v", apk_name, re.IGNORECASE)
+    patch = tuple(int(x) for x in re.findall(r"\d+", m.group(1))) if m else ()
+    app = tuple(int(x) for x in re.findall(r"\d+", extract_version_from_filename(apk_name)))
+    return (patch, app)
+
+
+def bootstrap_manifest_from_apks(full_matrix: List[dict], existing_apks: List[str]) -> dict:
+    """Build a starting manifest from APKs that are already published.
+
+    Used when no release has a manifest.json yet (e.g. releases created before
+    manifests existed). Each entry points at the newest existing APK of its
+    app/source/arch, with EMPTY signatures. plan_incremental() then compares the
+    patch version embedded in that APK's filename with the current patch
+    release: same version -> carried over untouched, newer -> rebuilt.
+    Entries without any matching APK are simply left out, so they get built.
+    """
+    entries: dict = {}
+    for item in full_matrix:
+        app, src, arch = item["app_name"], item["source"], item["arch"]
+        prefix = f"{app}-{arch}-{_source_display_name(src)}-".lower()
+        cands = [n for n in existing_apks
+                 if n.lower().endswith(".apk") and n.lower().startswith(prefix)]
+        if not cands:
+            continue
+        best = max(cands, key=_apk_rank)
+        entries[make_manifest_key(app, src, arch)] = {
+            "app_name": app,
+            "source": src,
+            "arch": arch,
+            "config_version": load_app_config_version(app),
+            "config_sig": "",
+            "source_sig": "",
+            "apk": best,
+            "built_version": extract_version_from_filename(best),
+        }
+        logging.info(f"  bootstrap {app}/{src}/{arch}: found existing {best}")
+    return {"entries": entries}
+
+
 def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
                      existing_apks: List[str]) -> Tuple[List[dict], List[str], dict]:
     """Decide which entries need rebuilding.
@@ -930,6 +1004,17 @@ def plan_incremental(full_matrix: List[dict], old_manifest: Optional[dict],
         old_src_sig = (old or {}).get("source_sig", "")
         if old and old_src_sig and _is_unreliable_source_sig(cur_src_sig):
             cur_src_sig = old_src_sig
+        # Heal manifests published by an older full rebuild that stored EMPTY
+        # signatures. If the APK on record was built with exactly the patch
+        # version that is current now, adopt the current signatures instead of
+        # rebuilding everything again. Any other case still rebuilds.
+        if (old and not old.get("config_sig") and not old.get("source_sig")
+                and old.get("apk") and old.get("apk") in existing_apk_set
+                and not _is_unreliable_source_sig(cur_src_sig)
+                and _apk_matches_current_patches(old["apk"], cur_src_sig)):
+            logging.info(f"  {app}/{src}/{arch}: healing empty signatures "
+                         f"(apk already built with current patches: {old['apk']})")
+            old = dict(old, config_sig=cur_config_sig, source_sig=cur_src_sig)
         carried_apk = (old or {}).get("apk", "")
         # built_version is the version actually shipped in the carried APK
         # (populated post-build by record_build.py -> merge_manifest.py). Carry
@@ -1150,6 +1235,21 @@ def emit_full_rebuild(
             "apk": apk,
             "built_version": built_version,
         }
+        # Record the signatures this rebuild is based on. merge_manifest.py only
+        # promotes `pending_*` -> real signature after a SUCCESSFUL build. Without
+        # this, a full rebuild published a manifest with EMPTY signatures, and the
+        # very next run saw "missing signature" on every entry and rebuilt
+        # everything a second time.
+        try:
+            entries[key]["pending_config_sig"] = get_app_config_signature(app)
+        except Exception as e:
+            logging.warning(f"  could not compute config signature for {app}: {e}")
+        try:
+            cur_src = get_source_signature(src)
+            if not _is_unreliable_source_sig(cur_src):
+                entries[key]["pending_source_sig"] = cur_src
+        except Exception as e:
+            logging.warning(f"  could not compute source signature for {src}: {e}")
 
     Path("build_matrix.json").write_text(json.dumps(full), encoding="utf-8")
     Path("carry_over.json").write_text(json.dumps([]), encoding="utf-8")
@@ -1181,14 +1281,21 @@ def main() -> int:
         logging.info(f"Existing releases hold {len(existing_apks)} APK assets in total")
 
         if old_manifest is None and not FORCE_FULL:
-            # No manifest yet -> first incremental run; rebuild everything once
-            # to populate it. (Future runs will be incremental.)
-            emit_full_rebuild(
-                "no manifest in existing release (first incremental run)",
-                old_manifest,
-                existing_apks,
-            )
-            return 0
+            if existing_apks:
+                # Releases exist but none has a manifest.json (created before
+                # manifests, or by another workflow). Do NOT rebuild blindly:
+                # derive the state from the published APK filenames.
+                logging.info("No manifest found; bootstrapping state from "
+                             f"{len(existing_apks)} existing APK(s)")
+                old_manifest = bootstrap_manifest_from_apks(full, existing_apks)
+            else:
+                # Nothing published at all -> build everything once.
+                emit_full_rebuild(
+                    "no manifest and no APKs published yet (first run)",
+                    old_manifest,
+                    existing_apks,
+                )
+                return 0
 
         build_mx, carry_over, new_entries = plan_incremental(
             full, old_manifest, existing_apks)
