@@ -88,6 +88,10 @@ jobs:
         run: |
           python -m py_compile scripts/check_release_updates.py scripts/check_app_updates.py
 
+      - name: Run Version Selection Regression Tests
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v
+
       - name: Run Incremental Update Check
         id: check
         env:
