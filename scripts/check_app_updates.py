@@ -22,7 +22,7 @@ old manifest is rebuilt automatically).
 
 Fail-safe: any unexpected error -> full rebuild matrix is emitted (preserves the
 previous always-build behavior so nothing breaks).
-""
+"""
 import os
 import sys
 import re
