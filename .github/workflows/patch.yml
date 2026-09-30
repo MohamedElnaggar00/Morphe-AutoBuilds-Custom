@@ -140,6 +140,7 @@ jobs:
   update-readme:
     name: Update README
     needs: check-updates
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: write
