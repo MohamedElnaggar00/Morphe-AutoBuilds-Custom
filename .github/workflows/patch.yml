@@ -481,6 +481,20 @@ jobs:
 
           sort -u current_assets.txt > release_assets.txt
 
+          echo "## 🩹 Patch Versions" > patch_versions.md
+          echo "" >> patch_versions.md
+          while read -r filename; do
+            [ -n "$filename" ] || continue
+            case "$filename" in
+              *.apk)
+                patch_version=$(printf '%s\\n' "$filename" | sed -n 's/.*-patch-v\\([^ -][^-]*\\)-app-v.*/\\1/p')
+                if [ -n "$patch_version" ]; then
+                  echo "- $filename — Patch v$patch_version" >> patch_versions.md
+                fi
+                ;;
+            esac
+          done < release_assets.txt
+
           cat > release_notes.md << 'EOF'
           # Morphe APKs - Auto Built
           
@@ -510,6 +524,8 @@ jobs:
           - Manual updates available via workflow dispatch
           - Creates `latest` if missing and uploads rebuilt assets in place
           EOF
+
+          cat patch_versions.md >> release_notes.md
 
       - name: Upload Or Create Release
         if: steps.check-apks.outputs.skip_release == 'false'
