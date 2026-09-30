@@ -169,12 +169,22 @@ def md_escape(value: str) -> str:
     return value.replace("\\", "\\\\").replace("|", "\\|")
 
 
-def resolve_app_version(app: str, source: str) -> str:
-    """Use the same source-aware version resolver used by the build/update planner."""
+def resolve_app_version(app: str, source: str, cli: Path, patches: Path) -> str:
+    """Resolve the highest version actually supported by the current patch bundle."""
     version = legacy.fetch_recommended_version(app, source).strip()
     if version:
         return version
-    return legacy.fetch_latest_app_version(app).strip() or "—"
+
+    try:
+        package = app_package(app)
+        supported = legacy.get_supported_versions(package, str(cli), str(patches))
+        if supported:
+            return supported[0]
+    except Exception:
+        pass
+
+    # Do not display a potentially unsupported store version in README.
+    return "—"
 
 
 def main():
@@ -243,7 +253,7 @@ def main():
 
             # Keep README app version in sync with the exact source-aware version
             # resolution used by the build planner, not a fragile CLI text parser.
-            app_version = resolve_app_version(app, source)
+            app_version = resolve_app_version(app, source, cli, mpp)
             source_version = str(release.get("tag_name", "latest")).lstrip("v")
             applied_count = sum(1 for _, value in final_rows if value)
 
