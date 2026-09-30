@@ -152,7 +152,7 @@ def source_patch_version(source: str) -> str:
     for segment in effective.split(";"):
         if "@" not in segment:
             continue
-        version = segment.rsplit("@", 1)[-1].strip()
+        version = segment.rsplit("@", 1)[-1].strip().lstrip("vV")
         if version:
             versions.append(version)
     if not versions:
