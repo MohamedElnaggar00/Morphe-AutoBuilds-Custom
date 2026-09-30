@@ -361,6 +361,13 @@ jobs:
           pattern: apk-*
           merge-multiple: false
 
+      - name: Download Build Records
+        uses: actions/download-artifact@v4
+        with:
+          path: ./all-records
+          pattern: build-records-*
+          merge-multiple: false
+
       - name: Collect Built APKs
         run: |
           set -euo pipefail
@@ -383,29 +390,30 @@ jobs:
           set -euo pipefail
           published=0
 
-          for apk in ./release-apks/*.apk; do
-            [ -f "$apk" ] || continue
-            filename="$(basename "$apk")"
+          for record in ./all-records/*/*.json; do
+            [ -f "$record" ] || continue
+
+            filename="$(jq -r '.apk // empty' "$record")"
+            app_name="$(jq -r '.app_name // empty' "$record")"
+            source_name="$(jq -r '.source // empty' "$record")"
+            arch="$(jq -r '.arch // empty' "$record")"
+
+            if [ -z "$filename" ] || [ -z "$app_name" ] || [ -z "$source_name" ] || [ -z "$arch" ]; then
+              echo "::error::Incomplete build record: $record"
+              exit 1
+            fi
+
+            apk="./release-apks/$filename"
+            if [ ! -f "$apk" ]; then
+              echo "::error::APK referenced by $record was not found: $filename"
+              exit 1
+            fi
 
             patch_version="$(printf '%s\n' "$filename" | sed -nE 's/.*-patch-v(.+)-app-v(.+)\.apk$/\1/p')"
             app_version="$(printf '%s\n' "$filename" | sed -nE 's/.*-patch-v(.+)-app-v(.+)\.apk$/\2/p')"
 
             if [ -z "$patch_version" ] || [ -z "$app_version" ]; then
               echo "::error::Could not extract patch/app versions from $filename"
-              exit 1
-            fi
-
-            app_name="$(printf '%s\n' "$filename" | cut -d'-' -f1)"
-            arch="$(printf '%s\n' "$filename" | sed -nE 's/^[^-]+-(arm64-v8a|armeabi-v7a|x86_64|x86|universal)-.*/\1/p')"
-
-            if [ -z "$arch" ]; then
-              echo "::error::Could not extract architecture from $filename"
-              exit 1
-            fi
-
-            source_name="$(printf '%s\n' "$filename" | sed -E "s/^${app_name}-${arch}-(.+)-patch-v.+-app-v.+\.apk$/\1/")"
-            if [ -z "$source_name" ] || [ "$source_name" = "$filename" ]; then
-              echo "::error::Could not extract patch source from $filename"
               exit 1
             fi
 
