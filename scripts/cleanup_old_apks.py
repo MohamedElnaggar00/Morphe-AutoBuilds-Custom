@@ -52,7 +52,8 @@ from typing import List, Set
 # tokens "v8a"/"v7a" inside arm64-v8a / armeabi-v7a do NOT match (they have a
 # letter right after the digit, e.g. "v8a"). Otherwise the identity prefix would
 # be truncated at the arch segment.
-VERSION_MARKER = re.compile(r"-v\d[\d.()+\-]*\.apk$", re.IGNORECASE)
+VERSION_MARKER = re.compile(r"-app-v\d[\d.()+\-]*\.apk$", re.IGNORECASE)
+PATCH_MARKER = re.compile(r"-patch-v[^/]+?-app-v", re.IGNORECASE)
 
 
 def gh_release_assets(release: str) -> List[dict]:
@@ -76,7 +77,13 @@ def identity_prefix(apk_name: str) -> str:
     version marker). E.g. ``youtube-arm64-v8a-morphe-v2.5.0.apk`` ->
     ``youtube-arm64-v8a-morphe``. Falls back to the stem if no marker matches."""
     m = VERSION_MARKER.search(apk_name)
-    return (apk_name[: m.start()] if m else Path(apk_name).stem).lower()
+    if not m:
+        return Path(apk_name).stem.lower()
+    prefix = apk_name[: m.start()]
+    patch = re.search(r"-patch-v[^/]+$", prefix, re.IGNORECASE)
+    if patch:
+        prefix = prefix[: patch.start()]
+    return prefix.lower()
 
 
 def version_key(apk_name: str) -> tuple:
