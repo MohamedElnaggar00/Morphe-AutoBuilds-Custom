@@ -1,5 +1,10 @@
 # Morphe AutoBuilds
 
+## 🔄 Update Schedule
+- Automatic updates daily at 6:17 AM UTC
+- Manual updates available via workflow dispatch
+
+
 ## YouTube — — ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
 Patch source: morphe — v1.44.0
 Architecture: arm64-v8a
