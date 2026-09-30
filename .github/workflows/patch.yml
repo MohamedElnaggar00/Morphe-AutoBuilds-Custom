@@ -84,6 +84,10 @@ jobs:
           pip install -r requirements.txt
           pip install requests beautifulsoup4
 
+      - name: Validate Release Planner Syntax
+        run: |
+          python -m py_compile scripts/check_release_updates.py scripts/check_app_updates.py
+
       - name: Run Incremental Update Check
         id: check
         env:
