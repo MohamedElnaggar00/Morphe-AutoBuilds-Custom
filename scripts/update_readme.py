@@ -221,8 +221,8 @@ def main():
             patch_version_link = f"[v{md_escape(source_version)}]({patch_repo_url})"
 
             sections += [
-                f"## {display} — {md_escape(app_version)} ({patch_version_link})",
-                f"Patch source: {md_escape(source)} — v{md_escape(source_version)}",
+                f"## {display} — App v{md_escape(app_version)} — Patch v{md_escape(source_version)}",
+                f"Patch source: {md_escape(source)} — v{md_escape(source_version)} ({patch_version_link})",
                 f"Architecture: {md_escape(arch.get((app, source), '—'))}",
                 "",
                 "<details>",
