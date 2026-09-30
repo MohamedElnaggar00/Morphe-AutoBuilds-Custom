@@ -43,7 +43,33 @@ def _configured_package(app_name: str) -> str | None:
     return None
 
 
-def _release_already_has_build(app_name: str, arch: str, version: str) -> bool:
+def _patch_source_version(source: str) -> str:
+    """Return the exact published patch-source version used by this build."""
+    source_path = Path("sources") / f"{source}.json"
+    if not source_path.exists():
+        return ""
+    try:
+        with source_path.open(encoding="utf-8") as fh:
+            entries = json.load(fh)
+        patch_entry = next(
+            (
+                entry for entry in entries[1:]
+                if isinstance(entry, dict)
+                and entry.get("repo")
+                and str(entry.get("repo")).lower() != "morphe-cli"
+            ),
+            None,
+        )
+        if not patch_entry:
+            return ""
+        release = utils.detect_release(patch_entry)
+        return str(release.get("tag_name") or "").lstrip("v")
+    except Exception as exc:
+        logging.warning("Could not resolve patch version for %s: %s", source, exc)
+        return ""
+
+
+def _release_already_has_build(app_name: str, arch: str, patch_version: str, version: str) -> bool:
     """
     Avoid rebuilding an APK that is already published for the exact app,
     architecture, and Morphe-supported version.
@@ -78,11 +104,16 @@ def _release_already_has_build(app_name: str, arch: str, version: str) -> bool:
         return False
 
     expected_prefix = f"{app_name}-{arch}-"
-    expected_suffix = f"-v{version}.apk"
+    expected_patch_marker = f"-patch-v{patch_version}-"
+    expected_suffix = f"-app-v{version}.apk" if patch_version else f"-v{version}.apk"
 
     for asset in release.get("assets", []):
         name = str(asset.get("name") or "")
-        if name.startswith(expected_prefix) and name.endswith(expected_suffix):
+        if (
+            name.startswith(expected_prefix)
+            and name.endswith(expected_suffix)
+            and (not patch_version or expected_patch_marker in name)
+        ):
             logging.info(
                 "⏭️ %s %s is already published in the latest Release as %s; skipping rebuild.",
                 app_name,
@@ -184,9 +215,11 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     # The utility above normally resolves the package internally in the
     # downloader. For the skip check, use the same configured app version
     # returned by Morphe only when it is available.
+    patch_version = _patch_source_version(source)
+
     if supported_versions:
         latest_supported = supported_versions[0]
-        if _release_already_has_build(app_name, arch, latest_supported):
+        if _release_already_has_build(app_name, arch, patch_version, latest_supported):
             print(f"⏭️ Skipping {app_name}: {latest_supported} is already built and published.")
             return None
 
@@ -355,7 +388,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             logging.info(f"Preserving native Morphe bundle without modification: {input_apk.name}")
 
         # Include architecture in output filename
-        output_apk = Path(f"{app_name}-{arch}-patch-v{version}.apk")
+        output_apk = Path(f"{app_name}-{arch}-patch-v{patch_version}-app-v{version}.apk") if patch_version else Path(f"{app_name}-{arch}-patch-v{version}.apk")
 
         try:
             # USE DIFFERENT COMMANDS BASED ON SOURCE TYPE
@@ -413,7 +446,11 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         # Patch succeeded -> cleanup input and sign.
         input_apk.unlink(missing_ok=True)
 
-        signed_apk = Path(f"{app_name}-{arch}-{name}-v{version}.apk")
+        signed_apk = (
+            Path(f"{app_name}-{arch}-{name}-patch-v{patch_version}-app-v{version}.apk")
+            if patch_version
+            else Path(f"{app_name}-{arch}-{name}-v{version}.apk")
+        )
 
         apksigner = utils.find_apksigner()
         if not apksigner:
