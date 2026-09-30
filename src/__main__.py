@@ -74,8 +74,10 @@ def _release_already_has_build(app_name: str, arch: str, patch_version: str, ver
     Avoid rebuilding an APK that is already published for the exact app,
     architecture, and Morphe-supported version.
 
-    GitHub Actions starts from a clean checkout, so local output files cannot
-    be used for this decision. Check the latest GitHub Release instead.
+    Every build run publishes a NEW release containing only the APKs it
+    rebuilt, so an unchanged app lives in an older release. GitHub Actions
+    starts from a clean checkout, so local output files cannot be used for
+    this decision: check the assets of ALL published releases instead.
     If GitHub metadata is unavailable, fail open and let the normal build run.
     """
     token = getenv("GITHUB_TOKEN") or getenv("GH_TOKEN")
@@ -85,43 +87,55 @@ def _release_already_has_build(app_name: str, arch: str, patch_version: str, ver
 
     import urllib.request
 
-    url = f"https://api.github.com/repos/{repo}/releases/latest"
-    request = urllib.request.Request(
-        url,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "Authorization": f"Bearer {token}",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "Morphe-AutoBuilds-Custom",
-        },
-    )
-
-    try:
-        with urllib.request.urlopen(request, timeout=15) as response:
-            release = json.load(response)
-    except Exception as exc:
-        logging.info("Could not inspect latest GitHub Release for skip check: %s", exc)
-        return False
-
     expected_prefix = f"{app_name}-{arch}-"
     expected_patch_marker = f"-patch-v{patch_version}-"
     expected_suffix = f"-app-v{version}.apk" if patch_version else f"-v{version}.apk"
 
-    for asset in release.get("assets", []):
-        name = str(asset.get("name") or "")
-        if (
-            name.startswith(expected_prefix)
-            and name.endswith(expected_suffix)
-            and (not patch_version or expected_patch_marker in name)
-        ):
-            logging.info(
-                "⏭️ %s %s is already published in the latest Release as %s; skipping rebuild.",
-                app_name,
-                arch,
-                name,
-            )
-            Path(".build-skipped").touch()
-            return True
+    max_pages = 10  # 100 releases per page
+    for page in range(1, max_pages + 1):
+        url = f"https://api.github.com/repos/{repo}/releases?per_page=100&page={page}"
+        request = urllib.request.Request(
+            url,
+            headers={
+                "Accept": "application/vnd.github+json",
+                "Authorization": f"Bearer {token}",
+                "X-GitHub-Api-Version": "2022-11-28",
+                "User-Agent": "Morphe-AutoBuilds-Custom",
+            },
+        )
+
+        try:
+            with urllib.request.urlopen(request, timeout=15) as response:
+                releases = json.load(response)
+        except Exception as exc:
+            logging.info("Could not inspect GitHub Releases for skip check: %s", exc)
+            return False
+
+        if not releases:
+            break
+
+        for release in releases:
+            if release.get("draft"):
+                continue
+            for asset in release.get("assets", []):
+                name = str(asset.get("name") or "")
+                if (
+                    name.startswith(expected_prefix)
+                    and name.endswith(expected_suffix)
+                    and (not patch_version or expected_patch_marker in name)
+                ):
+                    logging.info(
+                        "⏭️ %s %s is already published in release %s as %s; skipping rebuild.",
+                        app_name,
+                        arch,
+                        release.get("tag_name"),
+                        name,
+                    )
+                    Path(".build-skipped").touch()
+                    return True
+
+        if len(releases) < 100:
+            break
 
     return False
 

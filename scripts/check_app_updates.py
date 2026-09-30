@@ -4,7 +4,8 @@ Incremental update checker for Morphe AutoBuilds.
 
 Strategy:
 1. Read patch-config.json + arch-config.json -> full expected matrix.
-2. Fetch existing 'latest' release manifest (manifest.json asset, if present).
+2. Fetch the manifest.json asset of the newest release (every build release
+   carries the full manifest) and the APK names present in ALL releases.
 3. For each (app, source, arch):
    - Determine current configured app version (from apps/<platform>/<app>.json).
    - Determine current patch-source signature (latest GitHub release tag(s) of
@@ -47,7 +48,10 @@ SOURCES_DIR = REPO_ROOT / "sources"
 APPS_DIR = REPO_ROOT / "apps"
 
 MANIFEST_NAME = "manifest.json"
-RELEASE_TAG = "latest"
+# Every build publishes a brand-new release (unique tag) that carries the full
+# manifest.json. The planner therefore reads the manifest from the newest
+# release and looks for APKs across ALL releases (unchanged apps keep living
+# in the older release they were built in).
 
 GITHUB_TOKEN = os.environ.get("GITHUB_TOKEN", "")
 FORCE_FULL = os.environ.get("FORCE_FULL_REBUILD", "false").lower() in ("true", "1", "yes")
@@ -695,45 +699,82 @@ def _get_repo_owner_name() -> Optional[Tuple[str, str]]:
     return owner, name
 
 
-def fetch_existing_manifest() -> Optional[dict]:
-    rc, _, err = run_gh(["release", "download", RELEASE_TAG,
-                         "--pattern", MANIFEST_NAME, "--clobber"])
-    if rc != 0:
-        msg = err.strip()[:120]
-        logging.info(f"No existing '{MANIFEST_NAME}' on '{RELEASE_TAG}' ({msg})")
-        return None
+def _load_manifest_file() -> Optional[dict]:
     try:
         with open(MANIFEST_NAME, "r", encoding="utf-8") as f:
-            return json.load(f)
+            data = json.load(f)
+        return data if isinstance(data, dict) else None
     except Exception as e:
         logging.warning(f"Bad manifest.json: {e}")
         return None
 
 
+def _list_release_tags(limit: int = 30) -> List[str]:
+    """Non-draft release tags, newest first (as ordered by GitHub)."""
+    rc, out, _ = run_gh(
+        ["release", "list", "--limit", str(limit), "--json", "tagName,isDraft"]
+    )
+    if rc != 0:
+        return []
+    try:
+        return [r["tagName"] for r in json.loads(out) if not r.get("isDraft")]
+    except Exception:
+        return []
+
+
+def fetch_existing_manifest() -> Optional[dict]:
+    """Download manifest.json from the release GitHub flags as 'latest'.
+
+    Releases created by the workflow are marked --latest, so this is the most
+    recent build and holds the complete manifest. If that release has no
+    manifest (e.g. a manual one-off release), walk back through recent
+    releases until one has it.
+    """
+    Path(MANIFEST_NAME).unlink(missing_ok=True)
+    rc, _, err = run_gh(["release", "download", "--pattern", MANIFEST_NAME, "--clobber"])
+    if rc == 0:
+        data = _load_manifest_file()
+        if data is not None:
+            return data
+    else:
+        logging.info(f"Latest release has no '{MANIFEST_NAME}' ({err.strip()[:120]})")
+
+    for tag in _list_release_tags():
+        Path(MANIFEST_NAME).unlink(missing_ok=True)
+        rc, _, _ = run_gh(
+            ["release", "download", tag, "--pattern", MANIFEST_NAME, "--clobber"]
+        )
+        if rc != 0:
+            continue
+        data = _load_manifest_file()
+        if data is not None:
+            logging.info(f"Using manifest from release '{tag}'")
+            return data
+    logging.info(f"No '{MANIFEST_NAME}' found in any recent release")
+    return None
+
+
 def fetch_existing_apk_names() -> List[str]:
+    """APK asset names across ALL non-draft releases (deduplicated)."""
     repo = _get_repo_owner_name()
     if repo:
         owner, name = repo
         rc, out, _ = run_gh(
-            ["api", f"repos/{owner}/{name}/releases/tags/{RELEASE_TAG}", "--jq", ".id"]
+            [
+                "api",
+                "--paginate",
+                f"repos/{owner}/{name}/releases?per_page=100",
+                "--jq",
+                ".[] | select(.draft | not) | .assets[].name",
+            ],
+            timeout=300,
         )
-        rel_id = out.strip() if rc == 0 else ""
-        if rel_id:
-            rc, out, _ = run_gh(
-                [
-                    "api",
-                    "--paginate",
-                    f"repos/{owner}/{name}/releases/{rel_id}/assets?per_page=100",
-                    "--jq",
-                    ".[].name",
-                ],
-                timeout=300,
-            )
-            if rc == 0:
-                names = [ln.strip() for ln in out.splitlines() if ln.strip()]
-                return [n for n in names if n.endswith(".apk")]
+        if rc == 0:
+            names = [ln.strip() for ln in out.splitlines() if ln.strip()]
+            return sorted({n for n in names if n.endswith(".apk")})
 
-    rc, out, _ = run_gh(["release", "view", RELEASE_TAG, "--json", "assets"])
+    # Fallback: only the release flagged as latest.
+    rc, out, _ = run_gh(["release", "view", "--json", "assets"])
     if rc != 0:
         return []
     try:
@@ -1137,7 +1178,7 @@ def main() -> int:
             old_manifest = fetch_existing_manifest()
 
         existing_apks = fetch_existing_apk_names()
-        logging.info(f"Existing release has {len(existing_apks)} APK assets")
+        logging.info(f"Existing releases hold {len(existing_apks)} APK assets in total")
 
         if old_manifest is None and not FORCE_FULL:
             # No manifest yet -> first incremental run; rebuild everything once
