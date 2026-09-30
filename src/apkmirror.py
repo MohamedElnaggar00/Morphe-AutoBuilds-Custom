@@ -709,6 +709,34 @@ def find_release_page_from_main(version: str, config: dict, build_number: str = 
         logging.debug(f"Error scraping main page for release URL: {e}")
         return None
 
+def _normalize_release_lookup_version(version: str, target_arch: str) -> str:
+    """Normalize Morphe's variant-qualified version for APKMirror release lookup.
+
+    Some patch sources declare an APK variant as the compatible version, e.g.
+    "18.0.3.954559732-release-arm64-v8a". APKMirror uses that full string for
+    the variant identity, but its release page/API identifies the release as
+    "18.0.3.954559732". Passing the variant-qualified value into the release
+    resolver makes it construct a non-existent release URL and can also trigger
+    a false API release-mismatch error.
+
+    Only remove the exact architecture suffix for the requested architecture;
+    do not strip other release channels such as beta/lite.
+    """
+    value = str(version or "").strip()
+    arch = str(target_arch or "").strip()
+    if not value or not arch:
+        return value
+
+    suffix = rf"-release-{re.escape(arch)}$"
+    normalized = re.sub(suffix, "", value, flags=re.IGNORECASE)
+    if normalized != value:
+        logging.info(
+            "APKMirror normalized variant version %s -> release version %s",
+            value,
+            normalized,
+        )
+    return normalized
+
 def get_download_link(version: str, app_name: str, config: dict, arch: str = None) -> str:
     global _blocked_by_cloudflare
     _blocked_by_cloudflare = False
@@ -717,6 +745,7 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
         return None
         
     target_arch = arch if (arch and arch != "universal") else config.get('arch', 'universal')
+    version = _normalize_release_lookup_version(version, target_arch)
     
     criteria = [config['type'], target_arch, config['dpi']]
     
