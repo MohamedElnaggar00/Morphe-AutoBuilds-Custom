@@ -257,17 +257,6 @@ Architecture: arm64-v8a
 
 </details>
 
-## Adobe-Acrobat — App v— — Patch v1.53.0
-Patch source: hoomans — v1.53.0 ([v1.53.0](https://github.com/arandomhooman/hoomans-morphe-patches))
-Architecture: arm64-v8a
-
-<details>
-<summary>🩹 Patches — 1/1 applied</summary>
-
-- ✅ Unlock Pro
-
-</details>
-
 ## TikTok — App v— — Patch v0.65.0
 Patch source: hushfeed — v0.65.0 ([v0.65.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
