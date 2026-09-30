@@ -161,7 +161,14 @@ def main():
     if not cli.exists():
         download_asset(cli_release, ".jar", cli)
 
-    sections = ["# Morphe AutoBuilds", ""]
+    sections = [
+        "# Morphe AutoBuilds",
+        "",
+        "## 🔄 Update Schedule",
+        "- Automatic updates daily at 6:17 AM UTC",
+        "- Manual updates available via workflow dispatch",
+        "",
+    ]
     failures = []
 
     for item in config.get("patch_list", []):
