@@ -1,5 +1,7 @@
 name: Verify Target Selection
 
+# Verification-only workflow; removed after this validation run.
+
 on:
   push:
     paths:
