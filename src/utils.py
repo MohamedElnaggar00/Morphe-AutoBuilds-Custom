@@ -354,9 +354,35 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
         if not user or not repo:
             return []
 
-        refs = [tag] if tag != "latest" else ["main", "master"]
+        # Resolve the same release selected by download_required(). For
+        # sources using tag=latest, prefer the latest stable release tag rather
+        # than the moving default branch; this prevents an unreleased/dev target
+        # from being selected when the downloaded patch bundle is older.
+        refs = []
+        try:
+            release = detect_release(repo_entry)
+            release_tag = str(release.get("tag_name") or "").strip()
+            if release_tag:
+                refs.append(release_tag)
+        except Exception as exc:
+            logging.debug(
+                "Could not resolve patch release tag for %s/%s: %s",
+                user,
+                repo,
+                exc,
+            )
+
+        if tag != "latest":
+            refs.append(tag)
+        else:
+            refs.extend(["main", "master"])
+
         data = None
+        seen_refs = set()
         for ref in refs:
+            if not ref or ref in seen_refs:
+                continue
+            seen_refs.add(ref)
             try:
                 candidate = fetch_json(
                     f"https://raw.githubusercontent.com/{user}/{repo}/{quote(ref, safe="")}/patches-list.json"
