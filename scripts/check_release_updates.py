@@ -99,21 +99,52 @@ def extract_asset_identity(name: str, app: str, source: str, arch: str) -> Optio
 def latest_build_for(app: str, source: str, arch: str,
                      releases: List[dict]) -> Optional[dict]:
     candidates = []
+    title_pattern = re.compile(
+        rf"^${app} v(.+) — Patch v(.+) — ${source} — ${arch}$"
+    )
+
     for release in releases:
+        release_name = (release.get("name") or "").strip()
+
+        # Release title is authoritative. APK filenames can contain the patch
+        # package name rather than the configured source key.
+        title_match = re.match(
+            rf"^{re.escape(app)} v(.+) — Patch v(.+) — "
+            rf"{re.escape(source)} — {re.escape(arch)}$",
+            release_name,
+        )
+        if title_match:
+            candidates.append({
+                "apk": next(
+                    (
+                        (a.get("name") or "").strip()
+                        for a in release.get("assets") or []
+                        if (a.get("name") or "").endswith(".apk")
+                    ),
+                    "",
+                ),
+                "patch_version": title_match.group(2).strip().lstrip("vV"),
+                "app_version": title_match.group(1).strip().lstrip("vV"),
+                "release_tag": release.get("tag_name") or "",
+                "release_name": release_name,
+                "published_at": release.get("published_at") or release.get("created_at") or "",
+            })
+            continue
+
+        # Backward-compatible fallback for older release titles.
         for asset in release.get("assets") or []:
             name = (asset.get("name") or "").strip()
             identity = extract_asset_identity(name, app, source, arch)
             if not identity:
                 continue
             identity["release_tag"] = release.get("tag_name") or ""
-            identity["release_name"] = release.get("name") or ""
+            identity["release_name"] = release_name
             identity["published_at"] = release.get("published_at") or release.get("created_at") or ""
             candidates.append(identity)
 
     if not candidates:
         return None
 
-    # Newest publication wins. GitHub release order is not assumed here.
     candidates.sort(key=lambda x: x["published_at"])
     return candidates[-1]
 
