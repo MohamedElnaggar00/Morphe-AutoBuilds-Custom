@@ -389,6 +389,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
           published=0
@@ -441,17 +442,18 @@ jobs:
               echo "This release contains only this app/source build."
             } > "$notes_file"
 
-            if gh release view "$tag" >/dev/null 2>&1; then
-              gh release upload "$tag" "$apk" --clobber
-              gh release edit "$tag" --title "$title" --notes-file "$notes_file"
+            if gh release view "$tag" --repo "$GH_REPO" >/dev/null 2>&1; then
+              gh release upload "$tag" "$apk" --clobber --repo "$GH_REPO"
+              gh release edit "$tag" --repo "$GH_REPO" --title "$title" --notes-file "$notes_file"
             else
               gh release create "$tag" "$apk" \
+                --repo "$GH_REPO" \
                 --title "$title" \
                 --notes-file "$notes_file" \
                 --target "$GITHUB_SHA"
             fi
 
-            if gh release view "$tag" --json assets --jq '.assets[].name' | grep -Fxq "$filename"; then
+            if gh release view "$tag" --repo "$GH_REPO" --json assets --jq '.assets[].name' | grep -Fxq "$filename"; then
               echo "Published and verified: $filename"
               published=$((published + 1))
             else
@@ -466,8 +468,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          gh release list --limit 30
+          gh release list --repo "$GH_REPO" --limit 30
 
   cleanup:
     name: Cleanup Workflow Runs
