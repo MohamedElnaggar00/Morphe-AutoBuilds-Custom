@@ -88,11 +88,18 @@ def identity_prefix(apk_name: str) -> str:
 
 
 def version_key(apk_name: str) -> tuple:
-    """Return a sortable numeric version key extracted from an APK filename."""
-    m = VERSION_MARKER.search(apk_name) or LEGACY_VERSION_MARKER.search(apk_name)
-    if not m:
-        return ()
-    return tuple(int(x) for x in re.findall(r"\d+", m.group(0)))
+    """Sort patch version first, then app version.
+
+    Patch updates are the authoritative update signal for this repository. A
+    newer patch release must therefore supersede an older patch release even
+    when the underlying app version is unchanged.
+    """
+    patch_match = re.search(r"-patch-v(.+?)-app-v", apk_name, re.IGNORECASE)
+    patch_key = tuple(int(x) for x in re.findall(r"\d+", patch_match.group(1))) if patch_match else ()
+
+    app_match = VERSION_MARKER.search(apk_name) or LEGACY_VERSION_MARKER.search(apk_name)
+    app_key = tuple(int(x) for x in re.findall(r"\d+", app_match.group(0))) if app_match else ()
+    return (patch_key, app_key)
 
 
 def load_keep_set(keep_file: Path) -> Set[str]:
