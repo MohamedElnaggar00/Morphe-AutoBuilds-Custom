@@ -303,53 +303,97 @@ def get_supported_versions(package_name: str, cli: str, patches: str) -> list[st
     return versions
 
 
-def get_source_supported_version_codes(package_name: str, source: str) -> dict[str, list[int]]:
-    """Read app versions/versionCodes directly from a patch source."""
-    if not source:
-        return {}
+def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
+    """Read patch targets for an app from a source patches-list.json.
+
+    For automatic use:
+      - If at least one target is explicitly stable (isExperimental == false),
+        experimental and unknown-status targets are excluded.
+      - If the source has only experimental targets, all of them are retained
+        so experimental-only apps keep the existing build fallback.
+
+    A missing or invalid isExperimental flag is treated as unknown/experimental
+    rather than stable. This prevents unsafe promotion of an unclassified target.
+    """
+    if not package_name or not source:
+        return []
+
     try:
         source_path = Path("sources") / f"{source}.json"
         if not source_path.exists():
-            return {}
-        with source_path.open() as fh:
+            for candidate in Path("sources").glob("*.json"):
+                if candidate.stem.lower() == source.lower():
+                    source_path = candidate
+                    break
+        if not source_path.exists():
+            return []
+
+        with source_path.open(encoding="utf-8") as fh:
             entries = json.load(fh)
+        if not isinstance(entries, list):
+            return []
+
+        # Prefer the actual patch repository entry and never treat the CLI
+        # repository as a patches-list source.
         repo_entry = next(
-            (e for e in entries[1:] if isinstance(e, dict) and e.get("repo")
-             and str(e.get("repo")).lower() != "morphe-cli"
-             and str(e.get("provider", "github")).lower() == "github"),
+            (
+                e for e in entries
+                if isinstance(e, dict)
+                and e.get("repo")
+                and str(e.get("repo")).lower() != "morphe-cli"
+                and str(e.get("provider", "github")).lower() == "github"
+            ),
             None,
         )
         if not repo_entry:
-            return {}
-        user, repo = str(repo_entry["user"]).strip(), str(repo_entry["repo"]).strip()
+            return []
+
+        user = str(repo_entry.get("user") or "").strip()
+        repo = str(repo_entry.get("repo") or "").strip()
         tag = str(repo_entry.get("tag") or "latest").strip()
+        if not user or not repo:
+            return []
+
         refs = [tag] if tag != "latest" else ["main", "master"]
         data = None
         for ref in refs:
             try:
-                data = fetch_json(
-                    f"https://raw.githubusercontent.com/{user}/{repo}/{quote(ref, safe='')}/patches-list.json"
+                candidate = fetch_json(
+                    f"https://raw.githubusercontent.com/{user}/{repo}/{quote(ref, safe="")}/patches-list.json"
                 )
-                if isinstance(data, list):
+                if isinstance(candidate, (list, dict)):
+                    data = candidate
                     break
             except Exception:
                 continue
-        if not isinstance(data, (list, dict)):
-            return {}
 
-        target_sets = []
+        if data is None:
+            return []
+
+        # A package target is commonly repeated for every patch. Merge the
+        # repeated declarations while retaining status and version-code data.
+        target_sets: list[dict[str, dict]] = []
+
         def walk(node):
             if isinstance(node, dict):
                 if node.get("packageName") == package_name and isinstance(node.get("targets"), list):
-                    versions = {}
+                    versions: dict[str, dict] = {}
                     for target in node["targets"]:
                         if not isinstance(target, dict) or not target.get("version"):
                             continue
-                        version = str(target["version"])
+
+                        version = str(target["version"]).strip()
+                        if not version:
+                            continue
+
                         raw_codes = target.get("versionCodes")
-                        codes = []
-                        values = raw_codes.values() if isinstance(raw_codes, dict) else (
-                            raw_codes if isinstance(raw_codes, list) else [raw_codes]
+                        codes: list[int] = []
+                        values = (
+                            raw_codes.values()
+                            if isinstance(raw_codes, dict)
+                            else raw_codes
+                            if isinstance(raw_codes, list)
+                            else [raw_codes]
                         )
                         for value in values:
                             if isinstance(value, (int, float)) and int(value) > 0:
@@ -357,10 +401,6 @@ def get_source_supported_version_codes(package_name: str, source: str) -> dict[s
                             elif isinstance(value, str) and value.isdigit():
                                 codes.append(int(value))
 
-                        # Some patch sources, including HushMessenger, publish
-                        # their supported build codes in the target description
-                        # while leaving versionCodes null. Treat that published
-                        # build list as authoritative metadata.
                         if not codes:
                             description = str(target.get("description") or "")
                             arm64_match = re.search(
@@ -374,12 +414,23 @@ def get_source_supported_version_codes(package_name: str, source: str) -> dict[s
                                     for value in re.findall(r"\d+", arm64_match.group(1))
                                 )
 
-                        versions.setdefault(version, [])
+                        if version not in versions:
+                            versions[version] = {
+                                "codes": [],
+                                "experimental_flags": set(),
+                            }
+
+                        flag = target.get("isExperimental")
+                        versions[version]["experimental_flags"].add(
+                            flag if isinstance(flag, bool) else None
+                        )
                         for code in codes:
-                            if code not in versions[version]:
-                                versions[version].append(code)
+                            if code not in versions[version]["codes"]:
+                                versions[version]["codes"].append(code)
+
                     if versions:
                         target_sets.append(versions)
+
                 for value in node.values():
                     walk(value)
             elif isinstance(node, list):
@@ -388,29 +439,106 @@ def get_source_supported_version_codes(package_name: str, source: str) -> dict[s
 
         walk(data)
         if not target_sets:
-            return {}
-        common = dict(target_sets[0])
+            return []
+
+        common: dict[str, dict] = {
+            version: {
+                "codes": list(meta["codes"]),
+                "experimental_flags": set(meta["experimental_flags"]),
+            }
+            for version, meta in target_sets[0].items()
+        }
+
         for current in target_sets[1:]:
-            next_common = {}
-            for version, codes in common.items():
+            next_common: dict[str, dict] = {}
+            for version, meta in common.items():
                 if version not in current:
                     continue
-                current_codes = current[version]
-                if codes and current_codes:
-                    shared_codes = [code for code in codes if code in set(current_codes)]
+
+                current_codes = current[version]["codes"]
+                existing_codes = meta["codes"]
+                if existing_codes and current_codes:
+                    shared_codes = [
+                        code for code in existing_codes
+                        if code in set(current_codes)
+                    ]
                     if not shared_codes:
                         continue
-                    next_common[version] = shared_codes
+                    codes = shared_codes
                 else:
-                    # If one target declares only the version and the other
-                    # declares exact build codes, preserve the exact codes.
-                    next_common[version] = current_codes or codes
-            common = next_common
-        return dict(sorted(common.items(), key=lambda item: normalize_version(item[0]), reverse=True))
-    except Exception as exc:
-        logging.debug("Patch source metadata lookup failed for %s/%s: %s", source, package_name, exc)
-        return {}
+                    # Preserve the old behavior when only one declaration
+                    # provides exact build codes.
+                    codes = current_codes or existing_codes
 
+                next_common[version] = {
+                    "codes": codes,
+                    "experimental_flags": (
+                        set(meta["experimental_flags"])
+                        | set(current[version]["experimental_flags"])
+                    ),
+                }
+            common = next_common
+
+        # Stable means every declaration explicitly says false. If any
+        # declaration says true or omits the flag, that version is not promoted
+        # to stable. If no stable versions exist, retain all targets to preserve
+        # support for sources that currently publish experimental versions only.
+        stable_versions = {
+            version
+            for version, meta in common.items()
+            if meta["experimental_flags"] == {False}
+        }
+        selected_versions = stable_versions if stable_versions else set(common)
+
+        targets = []
+        for version in selected_versions:
+            meta = common[version]
+            targets.append({
+                "version": version,
+                "version_codes": sorted(set(meta["codes"])),
+                "is_experimental": version not in stable_versions,
+            })
+
+        targets.sort(
+            key=lambda target: normalize_version(target["version"]),
+            reverse=True,
+        )
+        return targets
+
+    except Exception as exc:
+        logging.debug(
+            "Patch source target lookup failed for %s/%s: %s",
+            source,
+            package_name,
+            exc,
+        )
+        return []
+
+
+def get_source_supported_versions(package_name: str, source: str) -> list[str]:
+    """Return automatic build candidates, preferring stable targets."""
+    return [
+        target["version"]
+        for target in get_source_supported_targets(package_name, source)
+    ]
+
+
+def get_source_recommended_version(package_name: str, source: str) -> str:
+    """Return the highest explicitly stable target, or empty when none exists."""
+    stable = [
+        target["version"]
+        for target in get_source_supported_targets(package_name, source)
+        if target.get("is_experimental") is False
+    ]
+    return get_highest_version(stable) or ""
+
+
+def get_source_supported_version_codes(package_name: str, source: str) -> dict[str, list[int]]:
+    """Return version codes for automatic candidates, preferring stable targets."""
+    return {
+        target["version"]: target["version_codes"]
+        for target in get_source_supported_targets(package_name, source)
+    }
 
 def get_supported_version(package_name: str, cli: str, patches: str) -> Optional[str]:
     """Backwards compatible helper: returns the highest compatible version, if any."""
