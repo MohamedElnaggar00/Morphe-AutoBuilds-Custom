@@ -495,7 +495,7 @@ Patch source: hushfacebook — v0.5.0 ([v0.5.0](https://github.com/SysAdminDoc/H
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 36/51 applied</summary>
+<summary>🩹 Patches — 39/51 applied</summary>
 
 - ✅ Disable Audience Network
 - ✅ Block background ad prefetch
@@ -535,13 +535,13 @@ Architecture: arm64-v8a
 - ✅ Hushfacebook settings
 - ✅ Sanitize sharing links
 - ✅ Marketplace only
-- ❌ Hide the Reels tab
+- ✅ Hide the Reels tab
 - ✅ Hide the Reels tab dot
 - ❌ Open on a chosen tab
 - ✅ Block promotional notifications
 - ✅ Clean up Reels
-- ❌ Turn off double tap to like
-- ❌ Hold a reel for 2x
+- ✅ Turn off double tap to like
+- ✅ Hold a reel for 2x
 - ❌ Don't send reel watch history
 - ✅ Hide Meta AI in search
 - ❌ Stop Story auto-advance
