@@ -4,7 +4,6 @@
 - Automatic updates daily at 6:17 AM UTC
 - Manual updates available via workflow dispatch
 
-
 ## YouTube — — ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
 Patch source: morphe — v1.44.0
 Architecture: arm64-v8a
@@ -137,12 +136,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — — ([v3.43.0](https://github.com/crimera/piko-newx))
-Patch source: piko-newx — v3.43.0
+## X — — ([v3.45.0](https://github.com/crimera/piko-newx))
+Patch source: piko-newx — v3.45.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 41/45 applied</summary>
+<summary>🩹 Patches — 42/46 applied</summary>
 
 - ✅ NewX: Remove ads
 - ✅ NewX: Disable blur effects
@@ -160,6 +159,7 @@ Architecture: arm64-v8a
 - ✅ NewX: Inline download button
 - ✅ NewX: Redirect downloads to chosen folder
 - ✅ NewX: Force highest video/audio quality
+- ✅ NewX: Customize media menu items
 - ✅ NewX: Set default media tab
 - ✅ NewX: Gallery profile Photos tab
 - ✅ NewX: Customize navigation bar
@@ -268,8 +268,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — — ([v0.64.0](https://github.com/SysAdminDoc/hushfeed))
-Patch source: hushfeed — v0.64.0
+## TikTok — — ([v0.65.0](https://github.com/SysAdminDoc/hushfeed))
+Patch source: hushfeed — v0.65.0
 Architecture: arm64-v8a
 
 <details>
@@ -464,8 +464,8 @@ Architecture: —
 
 </details>
 
-## Messenger — — ([v0.5.0](https://github.com/SysAdminDoc/HushMessenger))
-Patch source: hushmessenger — v0.5.0
+## Messenger — — ([v0.6.0](https://github.com/SysAdminDoc/HushMessenger))
+Patch source: hushmessenger — v0.6.0
 Architecture: arm64-v8a
 
 <details>
@@ -501,12 +501,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — — ([v0.4.0](https://github.com/SysAdminDoc/Hushfacebook))
-Patch source: hushfacebook — v0.4.0
+## Facebook — — ([v0.5.0](https://github.com/SysAdminDoc/Hushfacebook))
+Patch source: hushfacebook — v0.5.0
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 33/43 applied</summary>
+<summary>🩹 Patches — 36/51 applied</summary>
 
 - ✅ Disable Audience Network
 - ✅ Block background ad prefetch
@@ -518,6 +518,7 @@ Architecture: arm64-v8a
 - ✅ Hide sponsored stories
 - ✅ Block ad telemetry
 - ✅ Hide the Get Messenger card
+- ✅ Open Messenger from the top bar
 - ✅ Install beside Meta's apps
 - ❌ Default comment order
 - ❌ Tag suggestions only after @
@@ -534,6 +535,8 @@ Architecture: arm64-v8a
 - ❌ Use the system font
 - ❌ AMOLED black theme
 - ❌ Material You theme
+- ❌ Default playback quality
+- ✅ Keep the reel speed
 - ✅ Resume long videos
 - ❌ Tap to play
 - ✅ Hide Menu promotions
@@ -543,12 +546,17 @@ Architecture: arm64-v8a
 - ✅ Hushfacebook settings
 - ✅ Sanitize sharing links
 - ✅ Marketplace only
+- ❌ Hide the Reels tab
+- ✅ Hide the Reels tab dot
 - ❌ Open on a chosen tab
 - ✅ Block promotional notifications
 - ✅ Clean up Reels
+- ❌ Turn off double tap to like
+- ❌ Hold a reel for 2x
 - ❌ Don't send reel watch history
 - ✅ Hide Meta AI in search
 - ❌ Stop Story auto-advance
+- ❌ View stories anonymously
 - ✅ Hide suggested stories
 - ✅ Stop update prompts
 
