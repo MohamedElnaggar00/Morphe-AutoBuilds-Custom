@@ -461,7 +461,7 @@ jobs:
 
   cleanup:
     name: Cleanup Workflow Runs
-    needs: [build-apps, create-single-release]
+    needs: [build-apps, create-app-releases]
     runs-on: ubuntu-latest
     if: always()
     permissions:
