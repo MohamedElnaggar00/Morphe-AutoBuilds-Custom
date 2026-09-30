@@ -254,40 +254,38 @@ def download_platform(
         platform_module = globals()[platform]
 
         # Candidate versions (highest -> lowest):
-        # - A pinned config version remains authoritative.
         # - An explicit retry override remains authoritative for that retry.
-        # - Otherwise start with Morphe/patch-compatible versions.
-        # - Then append latest versions discovered independently from public
-        #   store fallbacks. This preserves the original multi-source behavior
-        #   when APKMirror itself is unavailable to the GitHub runner.
+        # - A pinned config version remains authoritative.
+        # - Otherwise use the patch source's declared targets. When the source
+        #   declares stable targets, experimental/unknown targets are excluded.
+        #   When it declares only experimental targets, they remain as a
+        #   compatibility fallback.
+        # - Only when the source exposes no machine-readable target metadata do
+        #   we fall back to CLI/store discovery.
         pinned = (config.get("version") or "").strip()
+        source_targets = utils.get_source_supported_targets(
+            config["package"], os.getenv("SOURCE", "")
+        )
+
         if override_version:
             candidates = [override_version]
         elif pinned:
             candidates = [pinned]
+        elif source_targets:
+            candidates = [target["version"] for target in source_targets]
         else:
-            source_codes = utils.get_source_supported_version_codes(
-                config["package"], os.getenv("SOURCE", "")
-            )
-            candidates = (
-                list(source_codes)
-                if source_codes
-                else utils.get_supported_versions(config["package"], cli, patches)
-            )
+            candidates = utils.get_supported_versions(config["package"], cli, patches)
 
-            # Never replace a source-declared version with a newer store
-            # version. Public providers are only fallbacks for downloading that
-            # exact compatible version.
-            if not source_codes:
-                try:
-                    latest = platform_module.get_latest_version(app_name, config)
-                    if latest and latest not in candidates:
-                        candidates.append(latest)
-                except Exception as e:
-                    logging.debug(
-                        f"Could not get latest version for {app_name} on {platform}: {e}"
-                    )
-            logging.info(f"Version candidates for {app_name} on {platform}: {candidates}")
+            try:
+                latest = platform_module.get_latest_version(app_name, config)
+                if latest and latest not in candidates:
+                    candidates.append(latest)
+            except Exception as e:
+                logging.debug(
+                    f"Could not get latest version for {app_name} on {platform}: {e}"
+                )
+
+        logging.info(f"Version candidates for {app_name} on {platform}: {candidates}")
 
         # Facebook and Messenger must use the original provider flow without
         # APKMirror-specific bundle/build-code validation.
@@ -295,7 +293,12 @@ def download_platform(
             {}
             if app_name in {"facebook", "messenger"}
             else (
-                get_supported_version_codes(config["package"], cli, patches)
+                {
+                    target["version"]: target["version_codes"]
+                    for target in source_targets
+                }
+                if source_targets and str(config.get("type", "APK")).upper() == "BUNDLE"
+                else get_supported_version_codes(config["package"], cli, patches)
                 if str(config.get("type", "APK")).upper() == "BUNDLE"
                 else {}
             )
