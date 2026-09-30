@@ -384,8 +384,8 @@ jobs:
 
       - name: Publish One Release Per App and Patch Source
         env:
-          GITHUB_TOKEN: ${ secrets.GITHUB_TOKEN }
-          GH_TOKEN: ${ secrets.GITHUB_TOKEN }
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           published=0
@@ -462,8 +462,8 @@ jobs:
 
       - name: Show Published Releases
         env:
-          GITHUB_TOKEN: ${ secrets.GITHUB_TOKEN }
-          GH_TOKEN: ${ secrets.GITHUB_TOKEN }
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release list --limit 30
 
