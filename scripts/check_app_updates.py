@@ -10,7 +10,7 @@ Strategy:
    - Determine current configured app version (from apps/<platform>/<app>.json).
    - Determine current patch-source signature (latest GitHub release tag(s) of
      repos listed in sources/<source>.json).
-   - Compare to persistent build state -> if changed OR no APK is recorded -> needs build.
+   - Compare to persistent build state and actual Release assets -> if changed OR the recorded APK is no longer present in any Release -> needs build.
 4. Output:
    - GitHub Actions outputs: build_matrix (JSON), has_updates, total/update counts.
    - File: build_matrix.json    (matrix entries that need rebuild).
@@ -1178,7 +1178,7 @@ def main() -> int:
             if isinstance(old_manifest, dict)
             else {}
         )
-        # The manifest is planner state; Release assets are the source of
+        # The manifest is planner state; Release history is the source of
         # truth for whether a carried APK is still actually downloadable.
         existing_apks = fetch_existing_release_apk_names()
         logging.info(
