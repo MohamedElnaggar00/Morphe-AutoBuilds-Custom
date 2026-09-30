@@ -303,6 +303,11 @@ def get_supported_versions(package_name: str, cli: str, patches: str) -> list[st
     return versions
 
 
+# Cache patch-target metadata because one automatic build can traverse
+# several download providers for the same app/source.
+_source_supported_targets_cache = {}
+
+
 def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
     """Read patch targets for an app from a source patches-list.json.
 
@@ -317,6 +322,10 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
     """
     if not package_name or not source:
         return []
+
+    cache_key = (package_name, source)
+    if cache_key in _source_supported_targets_cache:
+        return list(_source_supported_targets_cache[cache_key])
 
     try:
         source_path = Path("sources") / f"{source}.json"
@@ -385,7 +394,7 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
             seen_refs.add(ref)
             try:
                 candidate = fetch_json(
-                    f"https://raw.githubusercontent.com/{user}/{repo}/{quote(ref, safe="")}/patches-list.json"
+                    f"https://raw.githubusercontent.com/{user}/{repo}/{quote(ref, safe='')}/patches-list.json"
                 )
                 if isinstance(candidate, (list, dict)):
                     data = candidate
@@ -529,7 +538,8 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
             key=lambda target: normalize_version(target["version"]),
             reverse=True,
         )
-        return targets
+        _source_supported_targets_cache[cache_key] = list(targets)
+        return list(targets)
 
     except Exception as exc:
         logging.debug(
@@ -538,6 +548,7 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
             package_name,
             exc,
         )
+        _source_supported_targets_cache[cache_key] = []
         return []
 
 
