@@ -48,7 +48,7 @@ def repo_name() -> str:
 def load_releases() -> List[dict]:
     owner, name = repo_name().split("/", 1)
     rc, out, err = gh([
-        "api", "--paginate",
+        "api", "--paginate", "--slurp",
         f"repos/{owner}/{name}/releases?per_page=100",
     ])
     if rc != 0:
@@ -57,6 +57,12 @@ def load_releases() -> List[dict]:
         data = json.loads(out)
     except Exception as e:
         raise RuntimeError(f"Invalid GitHub releases response: {e}")
+    # --slurp returns one array containing the page arrays.
+    if data and isinstance(data[0], list):
+        flattened = []
+        for page in data:
+            flattened.extend(page if isinstance(page, list) else [])
+        data = flattened
     return [r for r in data if isinstance(r, dict) and not r.get("draft")]
 
 
