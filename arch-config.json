@@ -35,13 +35,6 @@
     ]
   },
   {
-    "app_name": "adobe-acrobat",
-    "source": "hoomans",
-    "arches": [
-      "arm64-v8a"
-    ]
-  },
-  {
     "app_name": "tiktok",
     "source": "hushfeed",
     "arches": [
