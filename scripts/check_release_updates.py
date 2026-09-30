@@ -99,10 +99,6 @@ def extract_asset_identity(name: str, app: str, source: str, arch: str) -> Optio
 def latest_build_for(app: str, source: str, arch: str,
                      releases: List[dict]) -> Optional[dict]:
     candidates = []
-    title_pattern = re.compile(
-        rf"^${app} v(.+) — Patch v(.+) — ${source} — ${arch}$"
-    )
-
     for release in releases:
         release_name = (release.get("name") or "").strip()
 
