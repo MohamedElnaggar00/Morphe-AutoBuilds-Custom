@@ -10,3 +10,6 @@
 +Block background-return feed refresh
 +Hide Stories tray
 +Clean up Reels
++Hide the Reels tab
++Turn off double tap to like
++Hold a reel for 2x
