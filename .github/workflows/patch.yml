@@ -608,6 +608,9 @@ jobs:
         run: |
           set -euo pipefail
 
+          # The cleanup step also runs when no APK was rebuilt in this run.
+          # Ensure the artifact directory exists so an empty build is handled safely.
+          mkdir -p ./all-apks
           : > new_apks.txt
           find ./all-apks -type f -name "*.apk" -exec basename {} \; | sort -u > new_apks.txt
 
