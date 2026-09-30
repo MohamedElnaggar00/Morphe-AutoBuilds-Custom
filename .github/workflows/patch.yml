@@ -106,8 +106,7 @@ jobs:
           name: build-plan
           path: |
             build_matrix.json
-            carry_over.json
-            new_manifest.json
+            release_plan.json
           if-no-files-found: warn
           retention-days: 1
 
