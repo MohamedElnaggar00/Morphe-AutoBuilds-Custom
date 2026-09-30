@@ -53,7 +53,7 @@ from typing import List, Set
 # letter right after the digit, e.g. "v8a"). Otherwise the identity prefix would
 # be truncated at the arch segment.
 VERSION_MARKER = re.compile(r"-app-v\d[\d.()+\-]*\.apk$", re.IGNORECASE)
-PATCH_MARKER = re.compile(r"-patch-v[^/]+?-app-v", re.IGNORECASE)
+LEGACY_VERSION_MARKER = re.compile(r"-v\d[\d.()+\-]*\.apk$", re.IGNORECASE)
 
 
 def gh_release_assets(release: str) -> List[dict]:
@@ -77,18 +77,19 @@ def identity_prefix(apk_name: str) -> str:
     version marker). E.g. ``youtube-arm64-v8a-morphe-v2.5.0.apk`` ->
     ``youtube-arm64-v8a-morphe``. Falls back to the stem if no marker matches."""
     m = VERSION_MARKER.search(apk_name)
-    if not m:
-        return Path(apk_name).stem.lower()
-    prefix = apk_name[: m.start()]
-    patch = re.search(r"-patch-v[^/]+$", prefix, re.IGNORECASE)
-    if patch:
-        prefix = prefix[: patch.start()]
-    return prefix.lower()
+    if m:
+        prefix = apk_name[: m.start()]
+        patch = re.search(r"-patch-v[^/]+$", prefix, re.IGNORECASE)
+        if patch:
+            prefix = prefix[: patch.start()]
+        return prefix.lower()
+    legacy = LEGACY_VERSION_MARKER.search(apk_name)
+    return (apk_name[: legacy.start()] if legacy else Path(apk_name).stem).lower()
 
 
 def version_key(apk_name: str) -> tuple:
     """Return a sortable numeric version key extracted from an APK filename."""
-    m = VERSION_MARKER.search(apk_name)
+    m = VERSION_MARKER.search(apk_name) or LEGACY_VERSION_MARKER.search(apk_name)
     if not m:
         return ()
     return tuple(int(x) for x in re.findall(r"\d+", m.group(0)))
