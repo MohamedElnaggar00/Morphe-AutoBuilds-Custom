@@ -4,8 +4,8 @@
 - Automatic updates daily at 6:17 AM UTC
 - Manual updates available via workflow dispatch
 
-## YouTube — — ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
-Patch source: morphe — v1.44.0
+## YouTube — App v— — Patch v1.44.0
+Patch source: morphe — v1.44.0 ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -102,8 +102,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Reddit — — ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
-Patch source: morphe — v1.44.0
+## Reddit — App v— — Patch v1.44.0
+Patch source: morphe — v1.44.0 ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -136,8 +136,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — — ([v3.45.0](https://github.com/crimera/piko-newx))
-Patch source: piko-newx — v3.45.0
+## X — App v— — Patch v3.45.0
+Patch source: piko-newx — v3.45.0 ([v3.45.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -192,8 +192,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Gboard — — ([v3.11.0](https://github.com/jasonwu1994/Gboard-patches))
-Patch source: jasonwu1994 — v3.11.0
+## Gboard — App v— — Patch v3.11.0
+Patch source: jasonwu1994 — v3.11.0 ([v3.11.0](https://github.com/jasonwu1994/Gboard-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -244,8 +244,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — — ([v1.36.0](https://github.com/hxreborn/morphe-patches))
-Patch source: hxreborn — v1.36.0
+## vpnify — App v— — Patch v1.36.0
+Patch source: hxreborn — v1.36.0 ([v1.36.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -257,8 +257,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Adobe-Acrobat — — ([v1.53.0](https://github.com/arandomhooman/hoomans-morphe-patches))
-Patch source: hoomans — v1.53.0
+## Adobe-Acrobat — App v— — Patch v1.53.0
+Patch source: hoomans — v1.53.0 ([v1.53.0](https://github.com/arandomhooman/hoomans-morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -268,8 +268,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — — ([v0.65.0](https://github.com/SysAdminDoc/hushfeed))
-Patch source: hushfeed — v0.65.0
+## TikTok — App v— — Patch v0.65.0
+Patch source: hushfeed — v0.65.0 ([v0.65.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
@@ -376,8 +376,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok (Metra) — — ([v0.8.0](https://github.com/icysymmetra/tiktok-patches-for-morphe))
-Patch source: metra — v0.8.0
+## TikTok (Metra) — App v— — Patch v0.8.0
+Patch source: metra — v0.8.0 ([v0.8.0](https://github.com/icysymmetra/tiktok-patches-for-morphe))
 Architecture: arm64-v8a
 
 <details>
@@ -428,8 +428,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## CamScanner — — ([v1.45.0](https://github.com/hoo-dles/morphe-patches))
-Patch source: hoodles — v1.45.0
+## CamScanner — App v— — Patch v1.45.0
+Patch source: hoodles — v1.45.0 ([v1.45.0](https://github.com/hoo-dles/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -445,8 +445,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — — ([v1.4.4](https://github.com/RookieEnough/De-Vanced))
-Patch source: devanced — v1.4.4
+## Messenger — App v— — Patch v1.4.4
+Patch source: devanced — v1.4.4 ([v1.4.4](https://github.com/RookieEnough/De-Vanced))
 Architecture: —
 
 <details>
@@ -464,8 +464,8 @@ Architecture: —
 
 </details>
 
-## Messenger — — ([v0.6.0](https://github.com/SysAdminDoc/HushMessenger))
-Patch source: hushmessenger — v0.6.0
+## Messenger — App v— — Patch v0.6.0
+Patch source: hushmessenger — v0.6.0 ([v0.6.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
@@ -501,8 +501,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — — ([v0.5.0](https://github.com/SysAdminDoc/Hushfacebook))
-Patch source: hushfacebook — v0.5.0
+## Facebook — App v— — Patch v0.5.0
+Patch source: hushfacebook — v0.5.0 ([v0.5.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
@@ -562,8 +562,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Excel — — ([v1.22.0](https://github.com/rushiranpise/morphe-patches))
-Patch source: rushi-excel — v1.22.0
+## Excel — App v— — Patch v1.22.0
+Patch source: rushi-excel — v1.22.0 ([v1.22.0](https://github.com/rushiranpise/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
