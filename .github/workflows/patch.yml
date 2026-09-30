@@ -12,7 +12,7 @@ on:
         required: false
         default: false
   schedule:
-    - cron: '0 6 * * *'  # Daily at 6 AM UTC
+    - cron: '17 6 * * *'  # Daily at 6:17 AM UTC
 
 jobs:
   download-tools:
@@ -497,7 +497,7 @@ jobs:
           ---
           
           ## ⚙️ Build Information
-          - **Auto-built daily at 6 AM UTC**
+          - **Auto-built daily at 6:17 AM UTC**
           - **arm64-v8a builds only**
           - **Latest Morphe patches**
           - **Updated automatically**
@@ -506,7 +506,7 @@ jobs:
           These APKs are built automatically. Use at your own risk.
           
           ## 🔄 Update Schedule
-          - Automatic updates daily at 6 AM UTC
+          - Automatic updates daily at 6:17 AM UTC
           - Manual updates available via workflow dispatch
           - Creates `latest` if missing and uploads rebuilt assets in place
           EOF
