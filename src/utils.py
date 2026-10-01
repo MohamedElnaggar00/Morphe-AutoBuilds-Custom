@@ -609,6 +609,34 @@ def _find_aapt2() -> str | None:
     return str(candidates[0]) if candidates else shutil.which("aapt2")
 
 
+def _find_apkanalyzer() -> str | None:
+    candidates = []
+    for root in (
+        os.environ.get("ANDROID_HOME"),
+        os.environ.get("ANDROID_SDK_ROOT"),
+        "/usr/local/lib/android/sdk",
+    ):
+        if not root:
+            continue
+        candidates.extend(sorted(
+            Path(root).glob("cmdline-tools/*/bin/apkanalyzer"),
+            reverse=True,
+        ))
+    return str(candidates[0]) if candidates else shutil.which("apkanalyzer")
+
+
+def _find_aapt() -> str | None:
+    candidates = []
+    for root in (
+        os.environ.get("ANDROID_HOME"),
+        os.environ.get("ANDROID_SDK_ROOT"),
+        "/usr/local/lib/android/sdk",
+    ):
+        if root:
+            candidates.extend(sorted(Path(root).glob("build-tools/*/aapt"), reverse=True))
+    return str(candidates[0]) if candidates else shutil.which("aapt")
+
+
 def _artifact_base_apk(path: Path) -> tuple[Path, Path | None]:
     """Return (APK to inspect, temporary extracted APK if one was needed)."""
     if path.suffix.lower() not in {".apkm", ".apks", ".xapk", ".zip"}:
@@ -653,11 +681,52 @@ def _apk_badging(path: Path) -> dict:
     version_name = re.search(r"versionName='([^']+)'", text)
     version_code = re.search(r"versionCode='(\d+)'", text)
     min_sdk = re.search(r"sdkVersion:'(\d+)'", text)
+
+    parsed_min_sdk = int(min_sdk.group(1)) if min_sdk else None
+
+    # Some APKs expose package/version/versionCode through aapt2 but omit
+    # sdkVersion from the badging output. Recover the minimum API level from
+    # the binary AndroidManifest.xml with the SDK's APK Analyzer instead of
+    # guessing or trusting provider metadata.
+    if parsed_min_sdk is None:
+        apkanalyzer = _find_apkanalyzer()
+        if apkanalyzer:
+            result = subprocess.run(
+                [apkanalyzer, "manifest", "min-sdk", str(path)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0:
+                match = re.search(r"\b(\d+)\b", (result.stdout or "").strip())
+                if match:
+                    parsed_min_sdk = int(match.group(1))
+
+    # Older Android SDK installations may not have apkanalyzer. Fall back to
+    # the legacy aapt badging parser while remaining strict if neither tool
+    # can verify the value.
+    if parsed_min_sdk is None:
+        aapt = _find_aapt()
+        if aapt:
+            result = subprocess.run(
+                [aapt, "dump", "badging", str(path)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0:
+                fallback_match = re.search(
+                    r"sdkVersion:'(\d+)'",
+                    result.stdout or "",
+                )
+                if fallback_match:
+                    parsed_min_sdk = int(fallback_match.group(1))
+
     return {
         "package": package.group(1) if package else None,
         "version": version_name.group(1) if version_name else None,
         "version_code": int(version_code.group(1)) if version_code else None,
-        "min_sdk": int(min_sdk.group(1)) if min_sdk else None,
+        "min_sdk": parsed_min_sdk,
     }
 
 
