@@ -287,13 +287,22 @@ def download_platform(
 
         logging.info(f"Version candidates for {app_name} on {platform}: {candidates}")
 
-        # Source-contract validation is centralized in __main__.py after a
-        # provider returns an artifact. Keeping the downloader focused on
-        # discovering candidate URLs avoids provider-specific exceptions that
-        # could accidentally bypass the same contract.
+        last_error: Exception | None = None
+        for version in candidates:
+            if not version:
+                continue
+            download_link = platform_module.get_download_link(version, app_name, config)
+            if not download_link:
+                last_error = ValueError(
+                    f"No download link found for {app_name} version {version}"
+                )
+                continue
+
+            try:
+                filepath = download_resource(download_link)
+
                 min_size_mb = config.get("min_size_mb")
                 if min_size_mb is not None:
-                    min_size_bytes = float(min_size_mb) * 1024 * 1024
                     actual_size_mb = filepath.stat().st_size / (1024 * 1024)
                     if actual_size_mb <= float(min_size_mb):
                         logging.warning(
@@ -302,8 +311,7 @@ def download_platform(
                         )
                         filepath.unlink(missing_ok=True)
                         last_error = ValueError(
-                            f"Artifact for {app_name} is too small: "
-                            f"{actual_size_mb:.2f} MB"
+                            f"Artifact for {app_name} is too small: {actual_size_mb:.2f} MB"
                         )
                         continue
 
