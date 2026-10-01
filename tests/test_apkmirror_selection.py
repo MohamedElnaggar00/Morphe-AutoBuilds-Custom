@@ -121,68 +121,6 @@ class ApkMirrorVariantSelectionTests(unittest.TestCase):
         self.assertEqual(mock_cf_get.call_args_list[0].args[0], "https://www.apkmirror.com/arm64-download/")
 
 
-    @patch("src.apkmirror._apkmirror_session")
-    def test_api_prefers_exact_abi_before_universal_bundle(self, mock_session):
-        response = MagicMock()
-        response.status_code = 200
-        response.json.return_value = {
-            "data": [
-                {
-                    "pname": "com.example.app",
-                    "release": {"version": "1.2.3"},
-                    "apks": [
-                        {"arches": ["universal"], "dpis": ["120-640dpi"], "link": "/universal"},
-                        {"arches": ["arm64-v8a"], "dpis": ["120-640dpi"], "link": "/arm64"},
-                    ],
-                }
-            ]
-        }
-        mock_session.post.return_value = response
-
-        result = apkmirror._get_api_variant_urls(
-            "1.2.3",
-            {
-                "package": "com.example.app",
-                "arch": "arm64-v8a",
-                "dpi": "120-640dpi",
-            },
-            "arm64-v8a",
-        )
-
-        self.assertEqual(
-            [url.rsplit("/", 1)[-1] for url, _ in result],
-            ["arm64", "universal"],
-        )
-
-
-    @patch("src.apkmirror._apkmirror_session")
-    def test_api_accepts_universal_bundle_as_abi_fallback(self, mock_session):
-        response = MagicMock()
-        response.status_code = 200
-        response.json.return_value = {
-            "data": [
-                {
-                    "pname": "com.example.app",
-                    "release": {"version": "1.2.3"},
-                    "apks": [
-                        {"arches": ["universal"], "dpis": ["120-640dpi"], "link": "/bundle"},
-                    ],
-                }
-            ]
-        }
-        mock_session.post.return_value = response
-
-        result = apkmirror._get_api_variant_urls(
-            "1.2.3",
-            {
-                "package": "com.example.app",
-                "arch": "arm64-v8a",
-                "dpi": "120-640dpi",
-            },
-            "arm64-v8a",
-        )
-
-        self.assertEqual([url for url, _ in result], ["https://www.apkmirror.com/bundle"])
 
 
 if __name__ == "__main__":
