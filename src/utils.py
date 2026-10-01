@@ -264,27 +264,34 @@ def select_preferred_patch_targets(targets: list[dict]) -> list[dict]:
         if isinstance(min_sdk, (int, float)) and int(min_sdk) > 0:
             entry["min_sdks"].add(int(min_sdk))
 
-        for value in target.get("signatures") or []:
+        def metadata_values(value):
+            if value is None:
+                return []
+            return value if isinstance(value, (list, tuple, set)) else [value]
+
+        for value in metadata_values(target.get("signatures")):
             value = str(value).strip().lower()
             if value:
                 entry["signatures"].add(value)
 
-        for value in target.get("apk_file_types") or target.get("apkFileTypes") or []:
+        for value in metadata_values(
+            target.get("apk_file_types") or target.get("apkFileTypes")
+        ):
             value = str(value).strip().upper()
             if value:
                 entry["apk_file_types"].add(value)
 
-        for value in target.get("sha256") or target.get("sha256s") or []:
+        for value in metadata_values(target.get("sha256") or target.get("sha256s")):
             value = str(value).strip().lower()
             if value:
                 entry["sha256"].add(value)
 
-        for value in target.get("abis") or target.get("abi") or []:
+        for value in metadata_values(target.get("abis") or target.get("abi")):
             value = str(value).strip().lower()
             if value:
                 entry["abis"].add(value)
 
-        for value in target.get("dpis") or target.get("dpi") or []:
+        for value in metadata_values(target.get("dpis") or target.get("dpi")):
             value = str(value).strip().lower()
             if value:
                 entry["dpis"].add(value)
