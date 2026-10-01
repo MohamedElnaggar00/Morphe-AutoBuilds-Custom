@@ -333,6 +333,61 @@ def download_platform(
         return None, None, []
 
 # Update the specific download functions
+def download_archive_messenger(
+    app_name: str,
+    cli: str,
+    patches: str,
+    arch: str = None,
+    override_version: str = None,
+) -> tuple[Path | None, str | None, list[str]]:
+    """Download Messenger's pinned, exact Archive.org ARM64 artifact."""
+    if app_name != "messenger":
+        return None, None, []
+
+    target_version = str(override_version or "").strip()
+    cfg_path = Path("apps") / "archive" / f"{app_name}.json"
+    if not cfg_path.exists():
+        return None, None, []
+
+    try:
+        with cfg_path.open(encoding="utf-8") as fh:
+            cfg = json.load(fh)
+        configured_version = str(cfg.get("version") or "").strip()
+    except Exception as exc:
+        logging.warning("Could not read Archive Messenger config: %s", exc)
+        return None, None, []
+
+    if target_version != configured_version:
+        logging.info(
+            "Archive Messenger provider skipped: requested exact target %s, configured %s.",
+            target_version, configured_version,
+        )
+        return None, None, []
+
+    link = archive.get_download_link(target_version, app_name, cfg)
+    if not link:
+        return None, None, []
+
+    try:
+        filepath = download_resource(link)
+        valid, reasons = archive.validate_exact_artifact(filepath, app_name)
+        if not valid:
+            logging.warning(
+                "Archive exact-artifact rejected for %s: %s",
+                app_name, "; ".join(reasons),
+            )
+            filepath.unlink(missing_ok=True)
+            return None, None, []
+        logging.info(
+            "Archive exact-artifact passed package/version/versionCode/signature validation: %s",
+            filepath.name,
+        )
+        return filepath, configured_version, [configured_version]
+    except Exception as exc:
+        logging.warning("Archive exact-artifact download failed for %s: %s", app_name, exc)
+        return None, None, []
+
+
 def download_gplaydl(
     app_name: str,
     cli: str,
