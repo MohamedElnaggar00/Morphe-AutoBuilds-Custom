@@ -244,8 +244,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v— — Patch v1.37.0
-Patch source: hxreborn — v1.37.0 ([v1.37.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v— — Patch v1.38.0
+Patch source: hxreborn — v1.38.0 ([v1.38.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
