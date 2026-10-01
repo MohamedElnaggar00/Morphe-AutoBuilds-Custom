@@ -1,0 +1,142 @@
+name: TEMP - Test Source Contract Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: "Target to build"
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - x/piko-newx/arm64-v8a
+          - tiktok/hushfeed/arm64-v8a
+          - messenger/hushmessenger/arm64-v8a
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Test ${{ matrix.app_name }}/${{ matrix.source }}/${{ matrix.arch }}
+    runs-on: ubuntu-latest
+    services:
+      trawl:
+        image: ghcr.io/germondai/trawl:latest
+        ports:
+          - 8191:8191
+        env:
+          RESIDENTIAL_PROXY_URL: ${{ secrets.RESIDENTIAL_PROXY_URL }}
+        options: --shm-size=1gb
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app_name: x
+            source: piko-newx
+            arch: arm64-v8a
+          - app_name: tiktok
+            source: hushfeed
+            arch: arm64-v8a
+          - app_name: messenger
+            source: hushmessenger
+            arch: arm64-v8a
+
+    steps:
+      - name: Checkout test branch
+        uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install requests beautifulsoup4
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Restore Morphe tools
+        uses: actions/cache@v4
+        with:
+          path: tools/
+          key: revanced-tools-${{ hashFiles('patch-config.json', 'arch-config.json') }}
+
+      - name: Prepare Signing Keystore
+        env:
+          MORPHE_KEYSTORE_BASE64: ${{ secrets.MORPHE_KEYSTORE_BASE64 }}
+          MORPHE_KEY_PASSWORD: Morphe
+        run: |
+          set -euo pipefail
+          if [ -z "${MORPHE_KEYSTORE_BASE64:-}" ]; then
+            echo "::error::Missing MORPHE_KEYSTORE_BASE64"
+            exit 1
+          fi
+          sudo apt-get update
+          sudo apt-get install -y libbcprov-java
+          SOURCE_KEYSTORE="${RUNNER_TEMP}/morphe-signing.bks"
+          SIGNING_KEYSTORE_PATH="${RUNNER_TEMP}/morphe-signing.jks"
+          printf "%s" "${MORPHE_KEYSTORE_BASE64}" | base64 --decode > "${SOURCE_KEYSTORE}"
+          chmod 600 "${SOURCE_KEYSTORE}"
+          keytool -importkeystore \
+            -providerclass org.bouncycastle.jce.provider.BouncyCastleProvider \
+            -providerpath /usr/share/java/bcprov.jar \
+            -srckeystore "${SOURCE_KEYSTORE}" \
+            -srcstoretype BKS \
+            -srcstorepass "" \
+            -srckeypass "${MORPHE_KEY_PASSWORD}" \
+            -srcalias Morphe \
+            -destkeystore "${SIGNING_KEYSTORE_PATH}" \
+            -deststoretype JKS \
+            -deststorepass public \
+            -destkeypass public \
+            -destalias public \
+            -noprompt
+          chmod 600 "${SIGNING_KEYSTORE_PATH}"
+          rm -f "${SOURCE_KEYSTORE}"
+
+      - name: Build with source-contract validation
+        env:
+          APP_NAME: ${{ matrix.app_name }}
+          SOURCE: ${{ matrix.source }}
+          ARCH: ${{ matrix.arch }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
+          GPLAYDL_API_KEY: ${{ secrets.GPLAYDL_API_KEY }}
+          TRAWL_URL: http://localhost:8191
+          SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/morphe-signing.jks
+          SIGNING_KEYSTORE_TYPE: JKS
+          SIGNING_KEY_ALIAS: public
+          SIGNING_KEYSTORE_PASSWORD: public
+          SIGNING_KEY_PASSWORD: public
+        run: |
+          set -euo pipefail
+          echo "TEST BUILD: $APP_NAME / $SOURCE / $ARCH"
+          python -m src
+          apk_count=$(find . -maxdepth 1 -type f -name "*.apk" | wc -l)
+          echo "Produced APKs: $apk_count"
+          if [ "$apk_count" -eq 0 ]; then
+            echo "::error::No APK was produced."
+            exit 1
+          fi
+          ls -lh *.apk
+
+      - name: Cleanup Signing Keystore
+        if: always()
+        run: |
+          rm -f "${RUNNER_TEMP}/morphe-signing.bks" "${RUNNER_TEMP}/morphe-signing.jks"
+
+      - name: Upload test APK as Actions artifact only
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-apk-${{ matrix.app_name }}-${{ matrix.source }}
+          path: "*.apk"
+          if-no-files-found: error
+          retention-days: 1
