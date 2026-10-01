@@ -1078,8 +1078,8 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             # secondary match. Exact ABI rows remain preferred because they are
             # checked first by the caller.
             universal_bundle = (
-                re.search(r'\\b(?:universal|noarch)\\b', r)
-                and re.search(r'\\bbundle\\b', r)
+                re.search(r'\b(?:universal|noarch)\b', r)
+                and re.search(r'\bbundle\b', r)
             )
             if not universal_bundle:
                 return False
