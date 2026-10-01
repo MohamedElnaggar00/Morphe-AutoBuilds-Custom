@@ -689,6 +689,8 @@ def validate_source_artifact(
     target: dict,
     package_name: str,
     arch: str = "universal",
+    verify_signature: bool = True,
+    verify_sha256: bool = True,
 ) -> tuple[bool, list[str]]:
     """Validate an artifact against the patch source's declared target contract.
 
@@ -766,7 +768,7 @@ def validate_source_artifact(
                 )
 
         signatures = {str(v).replace(":", "").lower() for v in (target.get("signatures") or [])}
-        if signatures:
+        if signatures and verify_signature:
             actual_signatures = _apk_certificate_digests(apk_path)
             if not actual_signatures:
                 reasons.append("source declares signatures but artifact certificate could not be verified")
@@ -776,7 +778,7 @@ def validate_source_artifact(
                 )
 
         hashes = {str(v).replace(":", "").lower() for v in (target.get("sha256") or [])}
-        if hashes:
+        if hashes and verify_sha256:
             candidates = {hashlib.sha256(path.read_bytes()).hexdigest()}
             if apk_path != path:
                 candidates.add(hashlib.sha256(apk_path.read_bytes()).hexdigest())
