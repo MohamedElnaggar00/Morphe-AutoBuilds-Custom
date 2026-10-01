@@ -2,7 +2,7 @@
   "org": "adobe",
   "name": "adobe-acrobat",
   "app_slug": "adobe-acrobat",
-  "release_prefix": "adobe-acrobat",
+  "release_prefix": "adobe-acrobat-reader-edit-pdf",
   "type": "APK",
   "arch": "arm64-v8a",
   "dpi": "nodpi",
