@@ -732,7 +732,7 @@ def validate_source_artifact(
                 else "APK"
             )
             normalized_allowed = {
-                "APK_REQUIRED" if value == "APK" else value
+                "APK" if value in {"APK", "APK_REQUIRED"} else value
                 for value in allowed_types
             }
             if "ANY" not in normalized_allowed and actual_type not in normalized_allowed:
