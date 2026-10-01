@@ -166,6 +166,8 @@ class VersionSelectionTests(unittest.TestCase):
         )
 
 
+    @patch("src.utils.fetch_json")
+    @patch("src.utils.detect_release")
     def test_source_with_only_experimental_targets_remains_buildable(
         self, mock_detect_release, mock_fetch_json
     ):
