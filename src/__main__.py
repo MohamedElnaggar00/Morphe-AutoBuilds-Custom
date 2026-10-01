@@ -43,6 +43,22 @@ def _configured_package(app_name: str) -> str | None:
     return None
 
 
+def _configured_version(app_name: str) -> str:
+    """Return an explicitly pinned app version from the existing app config."""
+    for platform in ("apkmirror", "aptoide", "uptodown", "apkpure", "apkcombo", "github"):
+        path = Path("apps") / platform / f"{app_name}.json"
+        if not path.exists():
+            continue
+        try:
+            with path.open() as cfg:
+                version = str(json.load(cfg).get("version") or "").strip()
+            if version:
+                return version
+        except Exception:
+            continue
+    return ""
+
+
 def _patch_source_version(source: str) -> str:
     """Return the exact published patch-source version used by this build."""
     source_path = Path("sources") / f"{source}.json"
@@ -320,7 +336,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     if source_targets:
         explicit_target_versions = [target["version"] for target in source_targets]
     else:
-        pinned_version = str(config.get("version") or "").strip()
+        pinned_version = _configured_version(app_name)
         if pinned_version:
             explicit_target_versions = [pinned_version]
 
