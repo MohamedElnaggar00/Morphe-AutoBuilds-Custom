@@ -126,6 +126,12 @@ def get_download_link(
     expected_version = str(artifact.get("version") or "").strip()
     expected_arch = str(artifact.get("arch") or "").strip().lower()
     package = str(artifact.get("package") or cfg.get("package") or "").strip()
+
+    if _normalize_arch(arch) == "universal" and _normalize_arch(expected_arch) == "arm64-v8a":
+        logging.info(
+            "Archive: universal target resolved to exact arm64-v8a artifact for %s %s",
+            app_name, expected_version,
+        )
     direct_url = str(artifact.get("file_url") or "").strip()
     if not direct_url and str(artifact.get("url") or "").lower().split("?")[0].endswith(".apk"):
         direct_url = str(artifact.get("url")).strip()
