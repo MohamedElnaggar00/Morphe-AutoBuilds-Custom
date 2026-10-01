@@ -1,9 +1,12 @@
 import json
+import hashlib
 import os
 import re
 import shutil
 import time
 import logging
+import tempfile
+import zipfile
 from typing import List, Optional
 from github.GithubException import BadCredentialsException
 from src import gh
@@ -568,6 +571,194 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
         )
         _source_supported_targets_cache[cache_key] = []
         return []
+
+def _find_aapt2() -> str | None:
+    candidates = []
+    for root in (
+        os.environ.get("ANDROID_HOME"),
+        os.environ.get("ANDROID_SDK_ROOT"),
+        "/usr/local/lib/android/sdk",
+    ):
+        if root:
+            candidates.extend(sorted(Path(root).glob("build-tools/*/aapt2"), reverse=True))
+    return str(candidates[0]) if candidates else shutil.which("aapt2")
+
+
+def _artifact_base_apk(path: Path) -> tuple[Path, Path | None]:
+    """Return (APK to inspect, temporary extracted APK if one was needed)."""
+    if path.suffix.lower() not in {".apkm", ".apks", ".xapk", ".zip"}:
+        return path, None
+
+    with zipfile.ZipFile(path) as archive:
+        members = [
+            name for name in archive.namelist()
+            if name.lower().endswith(".apk") and not name.endswith("/")
+        ]
+        if not members:
+            raise ValueError("Bundle contains no APK members")
+
+        members.sort(key=lambda name: (
+            0 if Path(name).name.lower() == "base.apk" else 1,
+            name,
+        ))
+        fd, temp_name = tempfile.mkstemp(prefix="morphe-contract-", suffix=".apk")
+        os.close(fd)
+        temp_path = Path(temp_name)
+        with archive.open(members[0]) as src, temp_path.open("wb") as dst:
+            shutil.copyfileobj(src, dst)
+        return temp_path, temp_path
+
+
+def _apk_badging(path: Path) -> dict:
+    aapt2 = _find_aapt2()
+    if not aapt2:
+        raise RuntimeError("aapt2 is required for source-contract validation")
+    result = subprocess.run(
+        [aapt2, "dump", "badging", str(path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"aapt2 failed for {path.name}: {(result.stdout or result.stderr).strip()[-1000:]}"
+        )
+    text = result.stdout
+    package = re.search(r"package: name='([^']+)'", text)
+    version_name = re.search(r"versionName='([^']+)'", text)
+    version_code = re.search(r"versionCode='(\\d+)'", text)
+    min_sdk = re.search(r"sdkVersion:'(\\d+)'", text)
+    return {
+        "package": package.group(1) if package else None,
+        "version": version_name.group(1) if version_name else None,
+        "version_code": int(version_code.group(1)) if version_code else None,
+        "min_sdk": int(min_sdk.group(1)) if min_sdk else None,
+    }
+
+
+def _apk_certificate_digests(path: Path) -> set[str]:
+    apksigner = find_apksigner()
+    if not apksigner:
+        raise RuntimeError("apksigner is required when the source declares signatures")
+    result = subprocess.run(
+        [apksigner, "verify", "--print-certs", str(path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    output = (result.stdout or "") + "\\n" + (result.stderr or "")
+    if result.returncode != 0 and "certificate SHA-256 digest" not in output:
+        raise RuntimeError("apksigner could not read APK certificates")
+    return {
+        match.group(1).replace(":", "").lower()
+        for match in re.finditer(
+            r"certificate SHA-256 digest:\\s*([0-9a-fA-F:]+)",
+            output,
+            re.IGNORECASE,
+        )
+    }
+
+
+def validate_source_artifact(
+    path: Path,
+    target: dict,
+    package_name: str,
+    arch: str = "universal",
+) -> tuple[bool, list[str]]:
+    """Validate an artifact against the patch source's declared target contract.
+
+    A declared constraint is mandatory. If the source does not declare it,
+    validation does not invent one. Provider fallback must pass this function
+    before Morphe is allowed to patch the artifact.
+    """
+    reasons: list[str] = []
+    temp_path = None
+    try:
+        if not path.exists() or path.stat().st_size == 0:
+            return False, ["artifact is missing or empty"]
+
+        if not check_apk_integrity(path) and path.suffix.lower() not in {".apkm", ".apks", ".xapk", ".zip"}:
+            reasons.append("standalone APK is not a valid ZIP archive")
+            return False, reasons
+
+        apk_path, temp_path = _artifact_base_apk(path)
+        info = _apk_badging(apk_path)
+
+        if info["package"] != package_name:
+            reasons.append(
+                f"package mismatch: actual={info['package']!r}, expected={package_name!r}"
+            )
+
+        expected_version = str(target.get("version") or "").strip()
+        if expected_version and info["version"] != expected_version:
+            reasons.append(
+                f"version mismatch: actual={info['version']!r}, expected={expected_version!r}"
+            )
+
+        expected_by_arch = target.get("version_codes_by_arch") or {}
+        arch_key = {
+            "arm64-v8a": "ARM64_V8A",
+            "armeabi-v7a": "ARMEABI_V7A",
+            "x86_64": "X86_64",
+            "x86": "X86",
+        }.get((arch or "").lower())
+
+        if arch_key and expected_by_arch.get(arch_key):
+            expected_codes = expected_by_arch[arch_key]
+        else:
+            expected_codes = target.get("version_codes") or []
+
+        if expected_codes:
+            if info["version_code"] not in expected_codes:
+                reasons.append(
+                    f"versionCode mismatch: actual={info['version_code']}, expected={expected_codes}"
+                )
+
+        min_sdk = target.get("min_sdk")
+        if min_sdk is not None and info["min_sdk"] is not None and info["min_sdk"] < int(min_sdk):
+            reasons.append(
+                f"minSdk mismatch: actual={info['min_sdk']}, required>={int(min_sdk)}"
+            )
+        elif min_sdk is not None and info["min_sdk"] is None:
+            reasons.append("minSdk could not be verified")
+
+        allowed_types = {str(v).upper() for v in (target.get("apk_file_types") or [])}
+        if allowed_types:
+            suffix = path.suffix.lower()
+            actual_type = "APKM" if suffix == ".apkm" else "APKS" if suffix == ".apks" else "APK"
+            if actual_type not in allowed_types and "APK_REQUIRED" in allowed_types and actual_type != "APK":
+                reasons.append(
+                    f"artifact type mismatch: actual={actual_type}, source allows={sorted(allowed_types)}"
+                )
+
+        signatures = {str(v).replace(":", "").lower() for v in (target.get("signatures") or [])}
+        if signatures:
+            actual_signatures = _apk_certificate_digests(apk_path)
+            if not actual_signatures:
+                reasons.append("source declares signatures but artifact certificate could not be verified")
+            elif not actual_signatures.intersection(signatures):
+                reasons.append(
+                    f"signature mismatch: actual={sorted(actual_signatures)}, expected one of={sorted(signatures)}"
+                )
+
+        hashes = {str(v).replace(":", "").lower() for v in (target.get("sha256") or [])}
+        if hashes:
+            candidates = {hashlib.sha256(path.read_bytes()).hexdigest()}
+            if apk_path != path:
+                candidates.add(hashlib.sha256(apk_path.read_bytes()).hexdigest())
+            if not candidates.intersection(hashes):
+                reasons.append(
+                    f"SHA-256 mismatch: actual={sorted(candidates)}, expected one of={sorted(hashes)}"
+                )
+
+        return not reasons, reasons
+    except Exception as exc:
+        reasons.append(f"contract validation error: {exc}")
+        return False, reasons
+    finally:
+        if temp_path:
+            temp_path.unlink(missing_ok=True)
+
 
 def get_source_supported_versions(package_name: str, source: str) -> list[str]:
     """Return automatic build candidates, preferring stable targets."""
