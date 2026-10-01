@@ -251,6 +251,12 @@ def download_platform(
         elif 'arch' not in config or not config['arch']:
             config['arch'] = arch or "universal"
 
+        # When the caller is trying a specific patch-source target, providers
+        # must resolve that exact version only. This prevents a provider from
+        # silently substituting its own latest/nearest version before the
+        # caller has given the other providers a chance to serve the same target.
+        config['_strict_version'] = bool(override_version)
+
         platform_module = globals()[platform]
 
         # Candidate versions (highest -> lowest):
