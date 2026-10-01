@@ -725,10 +725,19 @@ def validate_source_artifact(
         allowed_types = {str(v).upper() for v in (target.get("apk_file_types") or [])}
         if allowed_types:
             suffix = path.suffix.lower()
-            actual_type = "APKM" if suffix == ".apkm" else "APKS" if suffix == ".apks" else "APK"
-            if actual_type not in allowed_types and "APK_REQUIRED" in allowed_types and actual_type != "APK":
+            actual_type = (
+                "APKM" if suffix == ".apkm"
+                else "APKS" if suffix == ".apks"
+                else "XAPK" if suffix == ".xapk"
+                else "APK"
+            )
+            normalized_allowed = {
+                "APK_REQUIRED" if value == "APK" else value
+                for value in allowed_types
+            }
+            if "ANY" not in normalized_allowed and actual_type not in normalized_allowed:
                 reasons.append(
-                    f"artifact type mismatch: actual={actual_type}, source allows={sorted(allowed_types)}"
+                    f"artifact type mismatch: actual={actual_type}, source allows={sorted(normalized_allowed)}"
                 )
 
         signatures = {str(v).replace(":", "").lower() for v in (target.get("signatures") or [])}
