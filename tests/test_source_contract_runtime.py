@@ -28,6 +28,40 @@ class SourceContractRuntimeTests(unittest.TestCase):
         self.assertEqual(info["version_code"], 2024701030)
         self.assertEqual(info["min_sdk"], 23)
 
+    def test_apkm_is_accepted_when_source_allows_apk(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            artifact = Path(tmp) / "example.apkm"
+            artifact.write_bytes(b"not-a-real-apkm")
+
+            with patch("src.utils.check_apk_integrity", return_value=True), \
+                 patch(
+                     "src.utils._artifact_base_apk",
+                     return_value=(artifact, None),
+                 ), \
+                 patch(
+                     "src.utils._apk_badging",
+                     return_value={
+                         "package": "com.example.app",
+                         "version": "1.0.0",
+                         "version_code": 100,
+                         "min_sdk": 23,
+                     },
+                 ):
+                valid, reasons = utils.validate_source_artifact(
+                    artifact,
+                    {
+                        "version": "1.0.0",
+                        "version_codes": [100],
+                        "min_sdk": 23,
+                        "apk_file_types": ["APK_REQUIRED"],
+                    },
+                    "com.example.app",
+                    "arm64-v8a",
+                )
+
+            self.assertTrue(valid, reasons)
+            self.assertEqual(reasons, [])
+
     def test_apkmirror_stops_after_cloudflare_block(self):
         calls = []
 
