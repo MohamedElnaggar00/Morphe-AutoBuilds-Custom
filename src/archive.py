@@ -19,30 +19,83 @@ def _load_config(app_name: str) -> dict | None:
         return None
 
 
-def _artifact_config(cfg: dict, version: str, arch: str | None = None) -> dict | None:
-    """Select one exact artifact declaration from an app's Archive manifest."""
-    requested_version = str(version or "").strip()
-    requested_arch = str(arch or "").strip().lower()
+def _normalize_arch(arch: str | None) -> str:
+    """Normalize common Android ABI labels used by manifests and callers."""
+    value = str(arch or "").strip().lower()
+    aliases = {
+        "arm64": "arm64-v8a",
+        "aarch64": "arm64-v8a",
+        "arm64_v8a": "arm64-v8a",
+        "arm64-v8a": "arm64-v8a",
+        "arm-v7a": "armeabi-v7a",
+        "armv7": "armeabi-v7a",
+        "armeabi": "armeabi-v7a",
+        "armeabi-v7a": "armeabi-v7a",
+        "all": "universal",
+        "universal": "universal",
+        "noarch": "universal",
+    }
+    return aliases.get(value, value)
 
-    artifacts = cfg.get("artifacts")
-    if isinstance(artifacts, list):
+
+def _artifact_config(cfg: dict, version: str, arch: str | None = None) -> dict | None:
+    """Select one exact artifact declaration using safe architecture priorities.
+
+    A universal build target means "must run on the repository's target
+    device ABI", not "accept any ABI". Prefer an explicit arm64-v8a artifact
+    for universal requests, then a true universal/noarch/all artifact. Never
+    use a pure armeabi-v7a artifact as a universal fallback.
+
+    For a concrete ABI request, prefer that exact ABI and then allow a true
+    universal/noarch/all artifact.
+    """
+    requested_version = str(version or "").strip()
+    requested_arch = _normalize_arch(arch)
+
+    def pick_artifact(artifacts: list[dict]) -> dict | None:
+        exact = None
+        universal = None
+        requested = None
+
         for artifact in artifacts:
             if not isinstance(artifact, dict):
                 continue
             if str(artifact.get("version") or "").strip() != requested_version:
                 continue
-            artifact_arch = str(artifact.get("arch") or "").strip().lower()
-            if requested_arch and artifact_arch and artifact_arch != requested_arch:
-                continue
-            return artifact
+
+            artifact_arch_raw = str(artifact.get("arch") or "").strip()
+            artifact_arch = _normalize_arch(artifact_arch_raw)
+
+            if not requested_arch:
+                return artifact
+            if artifact_arch == requested_arch:
+                requested = requested or artifact
+            elif artifact_arch == "universal":
+                universal = universal or artifact
+
+            if requested_arch == "universal" and artifact_arch == "arm64-v8a":
+                exact = exact or artifact
+
+        if requested_arch == "universal":
+            # Universal target: arm64 first, then a genuinely universal
+            # artifact. ARMv7-only artifacts are deliberately excluded.
+            return exact or universal
+        return requested or universal
+
+    artifacts = cfg.get("artifacts")
+    if isinstance(artifacts, list):
+        return pick_artifact(artifacts)
 
     # Backward-compatible single-artifact manifest.
     if str(cfg.get("version") or "").strip() != requested_version:
         return None
-    cfg_arch = str(cfg.get("arch") or "").strip().lower()
-    if requested_arch and cfg_arch and cfg_arch != requested_arch:
-        return None
-    return cfg
+
+    cfg_arch = _normalize_arch(cfg.get("arch"))
+    if not requested_arch or not cfg_arch:
+        return cfg
+    if requested_arch == "universal":
+        return cfg if cfg_arch in {"arm64-v8a", "universal"} else None
+    return cfg if cfg_arch in {requested_arch, "universal"} else None
 
 
 def get_download_link(
