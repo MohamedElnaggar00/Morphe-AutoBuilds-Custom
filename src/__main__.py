@@ -298,6 +298,18 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         target["version"]: target for target in source_targets
     }
 
+    def retain_rejected_artifact(path: Path, reason: str) -> None:
+        if os.environ.get("MORPHE_TEST_RETAIN_REJECTED", "").lower() not in {"1", "true", "yes"}:
+            path.unlink(missing_ok=True)
+            return
+        out_dir = Path("test-rejected-artifacts")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        safe_reason = re.sub(r"[^A-Za-z0-9_.-]+", "_", reason)[:80]
+        destination = out_dir / f"{app_name}-{arch}-{safe_reason}-{path.name}"
+        shutil.copy2(path, destination)
+        path.unlink(missing_ok=True)
+        logging.info("🧪 Retained rejected artifact for inspection: %s", destination)
+
     for method in download_methods:
         input_apk, version, candidates = method(app_name, str(cli), str(patches), arch)
         if not input_apk:
@@ -337,7 +349,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                     version,
                     "; ".join(reasons),
                 )
-                input_apk.unlink(missing_ok=True)
+                retain_rejected_artifact(input_apk, "; ".join(reasons))
                 input_apk = None
                 continue
 
