@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - test/apkmirror-variant-selection
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
 
 jobs:
