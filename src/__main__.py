@@ -229,11 +229,13 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
     patch_version = _patch_source_version(source)
 
-    if supported_versions:
+    if supported_versions and os.environ.get("MORPHE_TEST_FORCE_REBUILD", "").lower() not in {"1", "true", "yes"}:
         latest_supported = supported_versions[0]
         if _release_already_has_build(app_name, arch, patch_version, latest_supported):
             print(f"⏭️ Skipping {app_name}: {latest_supported} is already built and published.")
             return None
+    elif supported_versions:
+        print("🧪 Test mode: forcing rebuild even if the same app/patch is already published.")
 
     # Bundle patch sets are tied to the exact split bundle they were
     # checked against. For these apps the authoritative source is APKMirror's
