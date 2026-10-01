@@ -253,7 +253,7 @@ class VersionSelectionTests(unittest.TestCase):
             )
 
             self.assertFalse(valid)
-            self.assertTrue(any("versionCode mismatch" in reason for reason in reasons))
+            self.assertTrue(any("versionCode mismatch" in reason for reason in reasons), reasons)
 
     @patch("src.utils._apk_certificate_digests")
     @patch("src.utils._apk_badging")
@@ -286,7 +286,7 @@ class VersionSelectionTests(unittest.TestCase):
                 path, target, "com.example.app", "arm64-v8a"
             )
 
-            self.assertTrue(valid)
+            self.assertTrue(valid, reasons)
             self.assertEqual(reasons, [])
 
 
