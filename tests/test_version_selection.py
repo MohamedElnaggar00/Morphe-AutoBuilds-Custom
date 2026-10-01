@@ -75,6 +75,35 @@ class VersionSelectionTests(unittest.TestCase):
 
     @patch("src.utils.fetch_json")
     @patch("src.utils.detect_release")
+    def test_source_metadata_uses_exact_release_tag(self, mock_detect_release, mock_fetch_json):
+        mock_detect_release.return_value = {"tag_name": "v1.44.0"}
+        mock_fetch_json.return_value = {
+            "patches": [
+                {
+                    "compatiblePackages": [
+                        {
+                            "packageName": "com.google.android.youtube",
+                            "targets": [
+                                {"version": "21.38.123", "isExperimental": True},
+                                {"version": "21.16.256", "isExperimental": False},
+                            ],
+                        }
+                    ]
+                }
+            ]
+        }
+
+        selected = utils.get_source_supported_targets(
+            "com.google.android.youtube", "morphe"
+        )
+
+        self.assertEqual([target["version"] for target in selected], ["21.16.256"])
+        self.assertEqual(mock_fetch_json.call_count, 1)
+        called_url = mock_fetch_json.call_args.args[0]
+        self.assertIn("/v1.44.0/patches-list.json", called_url)
+
+    @patch("src.utils.fetch_json")
+    @patch("src.utils.detect_release")
     def test_archive_universal_prefers_arm64_artifact_for_exact_version(self):
         cfg = {
             "package": "com.example.app",
@@ -138,35 +167,7 @@ class VersionSelectionTests(unittest.TestCase):
             "https://example.invalid/arm64.apk",
         )
 
-    def test_source_metadata_uses_exact_release_tag(self, mock_detect_release, mock_fetch_json):
-        mock_detect_release.return_value = {"tag_name": "v1.44.0"}
-        mock_fetch_json.return_value = {
-            "patches": [
-                {
-                    "compatiblePackages": [
-                        {
-                            "packageName": "com.google.android.youtube",
-                            "targets": [
-                                {"version": "21.38.123", "isExperimental": True},
-                                {"version": "21.16.256", "isExperimental": False},
-                            ],
-                        }
-                    ]
-                }
-            ]
-        }
 
-        selected = utils.get_source_supported_targets(
-            "com.google.android.youtube", "morphe"
-        )
-
-        self.assertEqual([target["version"] for target in selected], ["21.16.256"])
-        self.assertEqual(mock_fetch_json.call_count, 1)
-        called_url = mock_fetch_json.call_args.args[0]
-        self.assertIn("/v1.44.0/patches-list.json", called_url)
-
-    @patch("src.utils.fetch_json")
-    @patch("src.utils.detect_release")
     def test_source_with_only_experimental_targets_remains_buildable(
         self, mock_detect_release, mock_fetch_json
     ):
