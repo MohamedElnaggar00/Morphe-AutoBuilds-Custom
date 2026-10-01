@@ -310,65 +310,114 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         path.unlink(missing_ok=True)
         logging.info("🧪 Retained rejected artifact for inspection: %s", destination)
 
-    for method in download_methods:
-        input_apk, version, candidates = method(app_name, str(cli), str(patches), arch)
-        if not input_apk:
-            continue
+    # Version-first provider fallback:
+    # When the patch source publishes explicit targets, hold the target version
+    # fixed while every configured provider gets a chance to resolve it. Only
+    # after ALL providers fail for that target do we move to the next source
+    # target. This prevents APKMirror (or another provider) from silently
+    # selecting an older version before the other providers are tried.
+    explicit_target_versions = []
+    if source_targets:
+        explicit_target_versions = [target["version"] for target in source_targets]
+    elif (config_version := (Path("apps") / "apkmirror" / f"{app_name}.json")).exists():
+        try:
+            with config_version.open() as cfg_file:
+                pinned_version = str(json.load(cfg_file).get("version") or "").strip()
+            if pinned_version:
+                explicit_target_versions = [pinned_version]
+        except Exception:
+            pass
 
-        if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"}:
-            logging.warning(
-                f"REJECT provider={method.__name__} artifact={input_apk.name}: "
-                f"bundle-configured app requires a native bundle."
+    provider_attempted = False
+
+    if explicit_target_versions:
+        for target_version in explicit_target_versions:
+            logging.info(
+                "Trying target version %s across all providers before considering an older target.",
+                target_version,
             )
-            input_apk.unlink(missing_ok=True)
-            input_apk = None
-            continue
+            for method in download_methods:
+                provider_attempted = True
+                input_apk, version, candidates = method(
+                    app_name,
+                    str(cli),
+                    str(patches),
+                    arch,
+                    override_version=target_version,
+                )
+                if not input_apk:
+                    continue
 
-        if source_targets:
-            target = source_targets_by_version.get(str(version or "").strip())
-            if target is None:
+                if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"}:
+                    logging.warning(
+                        f"REJECT provider={method.__name__} artifact={input_apk.name}: "
+                        f"bundle-configured app requires a native bundle."
+                    )
+                    input_apk.unlink(missing_ok=True)
+                    input_apk = None
+                    continue
+
+                if source_targets:
+                    target = source_targets_by_version.get(str(version or "").strip())
+                    if target is None:
+                        logging.warning(
+                            f"REJECT provider={method.__name__} artifact={input_apk.name}: "
+                            f"downloaded version {version!r} is not declared by source {source}."
+                        )
+                        input_apk.unlink(missing_ok=True)
+                        input_apk = None
+                        continue
+
+                    is_gplaydl_artifact = method == downloader.download_gplaydl
+                    valid, reasons = utils.validate_source_artifact(
+                        input_apk,
+                        target,
+                        package_name,
+                        arch,
+                        verify_signature=not is_gplaydl_artifact,
+                        verify_sha256=not is_gplaydl_artifact,
+                    )
+                    if not valid:
+                        logging.warning(
+                            "REJECT provider=%s artifact=%s target=%s: %s",
+                            method.__name__, input_apk.name, version, "; ".join(reasons),
+                        )
+                        retain_rejected_artifact(input_apk, "; ".join(reasons))
+                        input_apk = None
+                        continue
+
+                    logging.info(
+                        "ACCEPT provider=%s artifact=%s target=%s: source contract passed.",
+                        method.__name__, input_apk.name, version,
+                    )
+
+                used_method = method
+                break
+
+            if input_apk is not None and used_method and version:
+                break
+
+    if not explicit_target_versions:
+        # Preserve the legacy discovery behavior only when the patch source
+        # does not publish machine-readable targets and no pinned version is
+        # configured. In that case there is no source target ordering to honor.
+        for method in download_methods:
+            provider_attempted = True
+            input_apk, version, candidates = method(app_name, str(cli), str(patches), arch)
+            if not input_apk:
+                continue
+
+            if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"}:
                 logging.warning(
                     f"REJECT provider={method.__name__} artifact={input_apk.name}: "
-                    f"downloaded version {version!r} is not declared by source {source}."
+                    f"bundle-configured app requires a native bundle."
                 )
                 input_apk.unlink(missing_ok=True)
                 input_apk = None
                 continue
 
-            is_gplaydl_artifact = method == downloader.download_gplaydl
-            valid, reasons = utils.validate_source_artifact(
-                input_apk,
-                target,
-                package_name,
-                arch,
-                # gplaydl validates the original signed Google Play base APK
-                # before APKEditor merges the split set. The merged APK is an
-                # intermediate representation, so its original certificate and
-                # exact source SHA-256 must not be re-evaluated here.
-                verify_signature=not is_gplaydl_artifact,
-                verify_sha256=not is_gplaydl_artifact,
-            )
-            if not valid:
-                logging.warning(
-                    "REJECT provider=%s artifact=%s target=%s: %s",
-                    method.__name__,
-                    input_apk.name,
-                    version,
-                    "; ".join(reasons),
-                )
-                retain_rejected_artifact(input_apk, "; ".join(reasons))
-                input_apk = None
-                continue
-
-            logging.info(
-                "ACCEPT provider=%s artifact=%s target=%s: source contract passed.",
-                method.__name__,
-                input_apk.name,
-                version,
-            )
-
-        used_method = method
-        break
+            used_method = method
+            break
 
     if input_apk is None or not used_method or not version:
         logging.error(f"❌ Failed to download APK for {app_name}")
