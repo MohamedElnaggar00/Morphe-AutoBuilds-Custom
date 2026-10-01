@@ -1049,7 +1049,18 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             if not any(a in r for a in ['universal', 'noarch', 'arm64-v8a', 'armeabi-v7a', 'arm64', 'arm']):
                 return False
         elif t_arch not in r:
-            return False
+            # APKMirror may label a universal APK/APKM/APKS variant as
+            # "universal" instead of listing each ABI in the variant row.
+            # Universal artifacts are valid for an ABI-specific build because
+            # they contain the ARM64/ARMv8-A code as applicable. Keep this as
+            # a fallback only: an explicit ABI match remains preferable.
+            universal_or_noarch = re.search(r'\b(?:universal|noarch)\b', r)
+            if not universal_or_noarch:
+                return False
+            logging.info(
+                "APKMirror: accepting universal/noarch variant as fallback for requested ABI %s",
+                t_arch,
+            )
 
         c_dpi = (config.get('dpi') or 'nodpi').lower()
         if c_dpi in ['nodpi', '120-640dpi', 'all', '']:
