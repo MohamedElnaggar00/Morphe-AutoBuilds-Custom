@@ -335,11 +335,18 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                 input_apk = None
                 continue
 
+            is_gplaydl_artifact = method == downloader.download_gplaydl
             valid, reasons = utils.validate_source_artifact(
                 input_apk,
                 target,
                 package_name,
                 arch,
+                # gplaydl validates the original signed Google Play base APK
+                # before APKEditor merges the split set. The merged APK is an
+                # intermediate representation, so its original certificate and
+                # exact source SHA-256 must not be re-evaluated here.
+                verify_signature=not is_gplaydl_artifact,
+                verify_sha256=not is_gplaydl_artifact,
             )
             if not valid:
                 logging.warning(
