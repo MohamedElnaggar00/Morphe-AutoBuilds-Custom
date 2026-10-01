@@ -296,21 +296,28 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         # gets first chance for these two apps, with the public providers kept as
         # a fallback if Google Play cannot serve the requested version.
         if app_name == "messenger":
-            # Google Play remains the first provider because it is the official
-            # distribution channel. If it cannot produce the exact ARM64 target,
-            # the strict Archive.org mirror gets the next chance. The archive
-            # provider independently verifies package/version/versionCode and
-            # Meta's signing certificate before Morphe sees the APK.
+            # Google Play remains first for Messenger. Archive is the next
+            # exact-artifact fallback, followed by the existing public sources.
             download_methods = [
                 downloader.download_gplaydl,
-                downloader.download_archive_messenger,
+                downloader.download_archive,
             ] + public_download_methods
         elif app_name == "facebook":
             download_methods = [downloader.download_gplaydl] + public_download_methods
         else:
-            # Keep the original, proven public download path first for every
-            # other non-bundle app. gplaydl remains a last-resort fallback.
-            download_methods = public_download_methods + [downloader.download_gplaydl]
+            # Keep the existing provider order for all other non-bundle apps,
+            # with Archive inserted as an exact-artifact fallback. A missing
+            # Archive manifest simply makes this provider return None.
+            download_methods = [
+                downloader.download_apkmirror,
+                downloader.download_archive,
+                downloader.download_aptoide,
+                downloader.download_github,
+                downloader.download_uptodown,
+                downloader.download_apkpure,
+                downloader.download_apkcombo,
+                downloader.download_gplaydl,
+            ]
 
     input_apk = None
     version = None
