@@ -1005,12 +1005,16 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             if correct_version_page:
                 break  # Found correct page for this version part
     
-    # If we didn't find the exact version page but found a fallback
-    if not correct_version_page and found_soup:
-        logging.warning(f"Using fallback page for {app_name} {version} (may contain multiple versions)")
-    
-    if not found_soup:
-        logging.error(f"Could not find any release page for {app_name} {version}")
+    # Never use a non-exact release page as a version fallback. The caller
+    # is responsible for trying other providers for this same target first.
+    if not correct_version_page:
+        if found_soup:
+            logging.warning(
+                f"APKMirror found a page while resolving {app_name} {version}, "
+                "but it was not validated as the exact target; refusing it."
+            )
+        else:
+            logging.error(f"Could not find an exact release page for {app_name} {version}")
         return None
     
     # --- VARIANT FINDER (works with both exact pages and fallback pages) ---
