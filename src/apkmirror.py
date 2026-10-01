@@ -780,6 +780,13 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
     # on GitHub-hosted runners.
     api_variants = _get_api_variant_urls(version, config, target_arch)
     for api_variant_url, api_version in api_variants:
+        if _blocked_by_cloudflare:
+            logging.warning(
+                "APKMirror is blocked by Cloudflare for this runner; "
+                "stopping all remaining APKMirror variants and returning control to the next provider."
+            )
+            return None
+
         logging.info(f"✓ APKMirror API variant candidate: {api_variant_url}")
         direct_file_url, readable = _download_from_variant_page(
             api_variant_url,
@@ -788,9 +795,17 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
         )
         if direct_file_url:
             return direct_file_url
+
+        if _blocked_by_cloudflare:
+            logging.warning(
+                "APKMirror Cloudflare block is persistent; abandoning APKMirror "
+                "without trying additional variants."
+            )
+            return None
+
         if not readable:
             logging.warning(
-                "APKMirror API variant was blocked by Cloudflare; trying next candidate."
+                "APKMirror API variant was not readable; trying the next variant."
             )
 
     # --- SECONDARY APPROACH: Direct release URL ---
