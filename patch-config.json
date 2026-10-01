@@ -47,10 +47,6 @@
     {
       "app_name": "excel",
       "source": "rushi-excel"
-    },
-    {
-      "app_name": "acrobat",
-      "source": "hoomans"
     }
   ]
 }
