@@ -102,8 +102,6 @@ class VersionSelectionTests(unittest.TestCase):
         called_url = mock_fetch_json.call_args.args[0]
         self.assertIn("/v1.44.0/patches-list.json", called_url)
 
-    @patch("src.utils.fetch_json")
-    @patch("src.utils.detect_release")
     def test_archive_universal_prefers_arm64_artifact_for_exact_version(self):
         cfg = {
             "package": "com.example.app",
