@@ -152,5 +152,69 @@ class VersionSelectionTests(unittest.TestCase):
         self.assertEqual(selected[0]["version_codes"], [100, 101, 102])
 
 
+    @patch("src.utils.fetch_json")
+    @patch("src.utils.detect_release")
+    def test_source_contract_preserves_arch_codes_and_constraints(
+        self, mock_detect_release, mock_fetch_json
+    ):
+        mock_detect_release.return_value = {"tag_name": "v2.0.0"}
+        mock_fetch_json.return_value = {
+            "patches": [
+                {
+                    "compatiblePackages": [
+                        {
+                            "packageName": "com.example.app",
+                            "apkFileType": "APK",
+                            "signatures": ["AA:BB"],
+                            "targets": [
+                                {
+                                    "version": "2.0.0",
+                                    "versionCodes": {
+                                        "ARM64_V8A": 2002,
+                                        "ARMEABI_V7A": 2001,
+                                    },
+                                    "isExperimental": False,
+                                    "minSdk": 23,
+                                }
+                            ],
+                        }
+                    ]
+                }
+            ]
+        }
+
+        selected = utils.get_source_supported_targets(
+            "com.example.app", "morphe"
+        )
+
+        self.assertEqual(selected[0]["version_codes_by_arch"]["ARM64_V8A"], [2002])
+        self.assertEqual(selected[0]["version_codes_by_arch"]["ARMEABI_V7A"], [2001])
+        self.assertEqual(selected[0]["min_sdk"], 23)
+        self.assertEqual(selected[0]["signatures"], ["aa:bb"])
+        self.assertEqual(selected[0]["apk_file_types"], ["APK"])
+
+    def test_selection_does_not_flatten_arch_specific_codes_into_an_unbounded_contract(self):
+        targets = [
+            {
+                "version": "3.0.0",
+                "version_codes": [3001, 3002],
+                "version_codes_by_arch": {
+                    "ARM64_V8A": [3002],
+                    "ARMEABI_V7A": [3001],
+                },
+                "is_experimental": False,
+            }
+        ]
+
+        selected = utils.select_preferred_patch_targets(targets)
+
+        self.assertEqual(
+            selected[0]["version_codes_by_arch"]["ARM64_V8A"], [3002]
+        )
+        self.assertEqual(
+            selected[0]["version_codes_by_arch"]["ARMEABI_V7A"], [3001]
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
