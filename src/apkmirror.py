@@ -312,7 +312,15 @@ def _get_api_variant_urls(
             arches = {str(x).lower() for x in (item.get("arches") or [])}
             if wanted_arch in ("", "universal", "noarch"):
                 return True
-            return wanted_arch in arches
+            # APKMirror sometimes labels a multi-ABI bundle as "universal"
+            # even though the bundle contains the requested ABI. Prefer an
+            # explicit ABI match, but allow a universal bundle as a secondary
+            # candidate. The final source-contract validation remains
+            # authoritative and rejects an artifact that does not satisfy the
+            # patch source's package/version/signature/hash contract.
+            if wanted_arch in arches:
+                return True
+            return any(value in {"universal", "noarch"} for value in arches)
 
         def dpi_match(item):
             if wanted_dpi in ("", "nodpi", "all", "120-640dpi"):
@@ -346,6 +354,20 @@ def _get_api_variant_urls(
             and arch_match(item)
             and dpi_match(item)
         ]
+
+        def arch_priority(item):
+            arches = {str(x).lower() for x in (item.get("arches") or [])}
+            if wanted_arch in ("", "universal", "noarch"):
+                return 0
+            if wanted_arch in arches:
+                return 0
+            if any(value in {"universal", "noarch"} for value in arches):
+                return 1
+            return 2
+
+        # Preserve exact-ABI preference. Universal bundles are only a fallback
+        # when APKMirror exposes no explicit ABI entry for the requested arch.
+        candidates.sort(key=arch_priority)
 
         out = []
         for item in candidates:
@@ -1049,7 +1071,22 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             if not any(a in r for a in ['universal', 'noarch', 'arm64-v8a', 'armeabi-v7a', 'arm64', 'arm']):
                 return False
         elif t_arch not in r:
-            return False
+            # APKMirror's web table can expose a multi-ABI APKM/APKS as
+            # "universal" even though its bundle contents include the requested
+            # architecture. Do NOT broaden this to arbitrary universal APKs:
+            # only a row explicitly identified as a bundle may use this
+            # secondary match. Exact ABI rows remain preferred because they are
+            # checked first by the caller.
+            universal_bundle = (
+                re.search(r'\\b(?:universal|noarch)\\b', r)
+                and re.search(r'\\bbundle\\b', r)
+            )
+            if not universal_bundle:
+                return False
+            logging.info(
+                "APKMirror: accepting universal bundle as fallback for requested ABI %s",
+                t_arch,
+            )
 
         c_dpi = (config.get('dpi') or 'nodpi').lower()
         if c_dpi in ['nodpi', '120-640dpi', 'all', '']:
