@@ -762,7 +762,20 @@ def validate_source_artifact(
                 "APK" if value in {"APK", "APK_REQUIRED"} else value
                 for value in allowed_types
             }
-            if "ANY" not in normalized_allowed and actual_type not in normalized_allowed:
+
+            # Morphe can consume APKMirror's APKM container when the source
+            # contract otherwise allows an APK. The container format itself
+            # does not relax any package/version/versionCode/minSdk/ABI/DPI/
+            # signature/SHA-256 checks; it only changes how the APK payload is
+            # transported to the patcher.
+            apkm_compatible_with_apk = (
+                actual_type == "APKM" and "APK" in normalized_allowed
+            )
+            if (
+                "ANY" not in normalized_allowed
+                and actual_type not in normalized_allowed
+                and not apkm_compatible_with_apk
+            ):
                 reasons.append(
                     f"artifact type mismatch: actual={actual_type}, source allows={sorted(normalized_allowed)}"
                 )
