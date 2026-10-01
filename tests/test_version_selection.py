@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from src import utils
+from src import archive, utils
 
 
 class VersionSelectionTests(unittest.TestCase):
@@ -75,6 +75,69 @@ class VersionSelectionTests(unittest.TestCase):
 
     @patch("src.utils.fetch_json")
     @patch("src.utils.detect_release")
+    def test_archive_universal_prefers_arm64_artifact_for_exact_version(self):
+        cfg = {
+            "package": "com.example.app",
+            "artifacts": [
+                {
+                    "version": "1.0.0",
+                    "version_code": 1001,
+                    "arch": "armeabi-v7a",
+                    "file_url": "https://example.invalid/v7.apk",
+                },
+                {
+                    "version": "1.0.0",
+                    "version_code": 1002,
+                    "arch": "arm64-v8a",
+                    "file_url": "https://example.invalid/arm64.apk",
+                },
+            ],
+        }
+
+        selected = archive._artifact_config(cfg, "1.0.0", "universal")
+
+        self.assertEqual(selected["arch"], "arm64-v8a")
+        self.assertEqual(selected["version_code"], 1002)
+        self.assertEqual(
+            archive.get_download_link("1.0.0", "example", cfg, arch="universal"),
+            "https://example.invalid/arm64.apk",
+        )
+
+    def test_archive_universal_never_falls_back_to_armv7_only(self):
+        cfg = {
+            "package": "com.example.app",
+            "artifacts": [
+                {
+                    "version": "1.0.0",
+                    "version_code": 1001,
+                    "arch": "armeabi-v7a",
+                    "file_url": "https://example.invalid/v7.apk",
+                }
+            ],
+        }
+
+        self.assertIsNone(archive._artifact_config(cfg, "1.0.0", "universal"))
+        self.assertIsNone(
+            archive.get_download_link("1.0.0", "example", cfg, arch="universal")
+        )
+
+    def test_archive_legacy_arm64_manifest_is_accepted_for_universal(self):
+        cfg = {
+            "package": "com.example.app",
+            "version": "1.0.0",
+            "version_code": 1002,
+            "arch": "arm64-v8a",
+            "file_url": "https://example.invalid/arm64.apk",
+        }
+
+        selected = archive._artifact_config(cfg, "1.0.0", "universal")
+
+        self.assertIs(selected, cfg)
+        self.assertEqual(
+            archive.get_download_link("1.0.0", "example", cfg, arch="universal"),
+            "https://example.invalid/arm64.apk",
+        )
+
     def test_source_metadata_uses_exact_release_tag(self, mock_detect_release, mock_fetch_json):
         mock_detect_release.return_value = {"tag_name": "v1.44.0"}
         mock_fetch_json.return_value = {
