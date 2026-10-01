@@ -2,25 +2,12 @@ name: TEMP - Test Source Contract Build
 
 on:
   workflow_dispatch:
-    inputs:
-      target:
-        description: "Target to build"
-        type: choice
-        required: true
-        default: all
-        options:
-          - all
-          - x/piko-newx/arm64-v8a
-          - tiktok/hushfeed/arm64-v8a
-          - messenger/hushmessenger/arm64-v8a
-
 permissions:
   contents: read
 
 jobs:
   build:
     name: Test ${{ matrix.app_name }}/${{ matrix.source }}/${{ matrix.arch }}
-    if: inputs.target == 'all' || format('{0}/{1}/{2}', matrix.app_name, matrix.source, matrix.arch) == inputs.target
     runs-on: ubuntu-latest
     services:
       trawl:
