@@ -136,8 +136,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v— — Patch v3.45.0
-Patch source: piko-newx — v3.45.0 ([v3.45.0](https://github.com/crimera/piko-newx))
+## X — App v— — Patch v3.47.0
+Patch source: piko-newx — v3.47.0 ([v3.47.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -257,12 +257,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v— — Patch v0.65.0
-Patch source: hushfeed — v0.65.0 ([v0.65.0](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v— — Patch v0.66.0
+Patch source: hushfeed — v0.66.0 ([v0.66.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 39/98 applied</summary>
+<summary>🩹 Patches — 39/102 applied</summary>
 
 - ❌ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -270,6 +270,7 @@ Architecture: arm64-v8a
 - ❌ Allow screenshots and Circle to Search
 - ✅ Disable screen capture detection
 - ❌ Show author region
+- ❌ Keep playing in the background
 - ❌ Block author button
 - ❌ Subtitle tools
 - ✅ Remember clear display
@@ -311,6 +312,7 @@ Architecture: arm64-v8a
 - ❌ Use system font
 - ❌ Fit the video to the screen
 - ❌ Hide video overlays
+- ❌ Change app name
 - ✅ Copy comments without username
 - ✅ Comment publish diagnostics
 - ✅ Comment send fix
@@ -322,6 +324,7 @@ Architecture: arm64-v8a
 - ❌ Feature Gate Recorder
 - ❌ Foldable split comment view
 - ✅ Follow diagnostics
+- ❌ Keep a streak going
 - ❌ Expand activity list
 - ❌ Hide inbox stories
 - ❌ Hide suggested accounts
@@ -361,6 +364,7 @@ Architecture: arm64-v8a
 - ❌ Location access governor
 - ❌ Network request report
 - ❌ Resource and battery governor
+- ❌ Look like the store app
 - ✅ Hide floating promotions
 
 </details>
@@ -453,15 +457,16 @@ Architecture: —
 
 </details>
 
-## Messenger — App v— — Patch v0.6.0
-Patch source: hushmessenger — v0.6.0 ([v0.6.0](https://github.com/SysAdminDoc/HushMessenger))
+## Messenger — App v— — Patch v0.7.0
+Patch source: hushmessenger — v0.7.0 ([v0.7.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 19/27 applied</summary>
+<summary>🩹 Patches — 22/31 applied</summary>
 
 - ❌ Install beside Meta apps
 - ❌ Restore screens on re-signed builds
+- ❌ Material You theme
 - ❌ Hide inbox ads
 - ✅ Hide People You May Know
 - ✅ Hide friend request cards
@@ -483,9 +488,12 @@ Architecture: arm64-v8a
 - ❌ Open web links externally
 - ❌ Allow chat bubbles
 - ✅ Use system emoji
+- ✅ Send photos at original quality
 - ❌ Allow screenshots
 - ❌ Hide read receipts
 - ❌ Keep unsent messages
+- ✅ View stories anonymously
+- ✅ Save any story
 - ✅ Open settings from menu
 
 </details>
