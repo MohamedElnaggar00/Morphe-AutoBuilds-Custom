@@ -1,0 +1,77 @@
+import subprocess
+import tempfile
+import unittest
+from pathlib import Path
+from unittest.mock import patch
+
+from src import apkmirror, utils
+
+
+class SourceContractRuntimeTests(unittest.TestCase):
+    def test_aapt2_badging_parses_version_code_and_min_sdk(self):
+        completed = subprocess.CompletedProcess(
+            args=[],
+            returncode=0,
+            stdout=(
+                "package: name='com.example.app' versionCode='2024701030' "
+                "versionName='47.1.3'\n"
+                "sdkVersion:'23'\n"
+            ),
+            stderr="",
+        )
+
+        with patch("src.utils._find_aapt2", return_value="/fake/aapt2"),              patch("src.utils.subprocess.run", return_value=completed):
+            info = utils._apk_badging(Path("example.apk"))
+
+        self.assertEqual(info["package"], "com.example.app")
+        self.assertEqual(info["version"], "47.1.3")
+        self.assertEqual(info["version_code"], 2024701030)
+        self.assertEqual(info["min_sdk"], 23)
+
+    def test_apkmirror_stops_after_cloudflare_block(self):
+        calls = []
+
+        def blocked_variant(*args, **kwargs):
+            calls.append(args[0])
+            apkmirror._blocked_by_cloudflare = True
+            return None, False
+
+        try:
+            with patch.object(
+                apkmirror,
+                "_get_api_variant_urls",
+                return_value=[
+                    ("https://example.invalid/variant-1", "1.0.0"),
+                    ("https://example.invalid/variant-2", "1.0.0"),
+                ],
+            ), patch.object(
+                apkmirror,
+                "_download_from_variant_page",
+                side_effect=blocked_variant,
+            ), patch.object(
+                apkmirror,
+                "_get_direct_release_page",
+            ) as direct_release:
+                result = apkmirror.get_download_link(
+                    "1.0.0",
+                    "example",
+                    {
+                        "package": "com.example.app",
+                        "type": "APK",
+                        "arch": "arm64-v8a",
+                        "dpi": "nodpi",
+                        "name": "example",
+                        "org": "example",
+                    },
+                    "arm64-v8a",
+                )
+
+            self.assertIsNone(result)
+            self.assertEqual(len(calls), 1)
+            direct_release.assert_not_called()
+        finally:
+            apkmirror._blocked_by_cloudflare = False
+
+
+if __name__ == "__main__":
+    unittest.main()
