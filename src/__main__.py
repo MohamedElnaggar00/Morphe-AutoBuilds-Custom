@@ -288,22 +288,66 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     version = None
     candidates: list[str] = []
     used_method = None
+
+    # The patch source is the compatibility authority. Providers are only
+    # transport fallbacks; they are never allowed to substitute a different
+    # app build that merely happens to patch successfully.
+    source_targets_by_version = {
+        target["version"]: target for target in source_targets
+    }
+
     for method in download_methods:
         input_apk, version, candidates = method(app_name, str(cli), str(patches), arch)
-        if input_apk:
-            # Bundle apps can be APKM/APKS/XAPK depending on the source.
-            # download_platform has already enforced any available Morphe
-            # build-code validation before returning the file.
-            if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"}:
+        if not input_apk:
+            continue
+
+        if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"}:
+            logging.warning(
+                f"REJECT provider={method.__name__} artifact={input_apk.name}: "
+                f"bundle-configured app requires a native bundle."
+            )
+            input_apk.unlink(missing_ok=True)
+            input_apk = None
+            continue
+
+        if source_targets:
+            target = source_targets_by_version.get(str(version or "").strip())
+            if target is None:
                 logging.warning(
-                    f"Rejected non-native bundle input {input_apk.name} for bundle-configured "
-                    f"app {app_name}."
+                    f"REJECT provider={method.__name__} artifact={input_apk.name}: "
+                    f"downloaded version {version!r} is not declared by source {source}."
                 )
                 input_apk.unlink(missing_ok=True)
                 input_apk = None
                 continue
-            used_method = method
-            break
+
+            valid, reasons = utils.validate_source_artifact(
+                input_apk,
+                target,
+                package_name,
+                arch,
+            )
+            if not valid:
+                logging.warning(
+                    "REJECT provider=%s artifact=%s target=%s: %s",
+                    method.__name__,
+                    input_apk.name,
+                    version,
+                    "; ".join(reasons),
+                )
+                input_apk.unlink(missing_ok=True)
+                input_apk = None
+                continue
+
+            logging.info(
+                "ACCEPT provider=%s artifact=%s target=%s: source contract passed.",
+                method.__name__,
+                input_apk.name,
+                version,
+            )
+
+        used_method = method
+        break
 
     if input_apk is None or not used_method or not version:
         logging.error(f"❌ Failed to download APK for {app_name}")
@@ -393,9 +437,11 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
             logging.info("Checking APK integrity...")
             if not utils.check_apk_integrity(input_apk):
-                logging.warning("APK integrity check failed; keeping original input for Morphe")
-            else:
-                logging.info("APK integrity OK; no repair needed")
+                raise RuntimeError(
+                    f"Artifact integrity validation failed for {input_apk.name}; "
+                    "refusing to pass a corrupt APK to Morphe."
+                )
+            logging.info("APK integrity OK; no repair needed")
         else:
             logging.info(f"Preserving native Morphe bundle without modification: {input_apk.name}")
 
