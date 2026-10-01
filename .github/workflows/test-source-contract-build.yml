@@ -104,6 +104,8 @@ jobs:
           SIGNING_KEY_ALIAS: public
           SIGNING_KEYSTORE_PASSWORD: public
           SIGNING_KEY_PASSWORD: public
+          MORPHE_TEST_FORCE_REBUILD: "true"
+          MORPHE_TEST_RETAIN_REJECTED: "true"
         run: |
           set -euo pipefail
           echo "TEST BUILD: $APP_NAME / $SOURCE / $ARCH"
@@ -121,10 +123,13 @@ jobs:
         run: |
           rm -f "${RUNNER_TEMP}/morphe-signing.bks" "${RUNNER_TEMP}/morphe-signing.jks"
 
-      - name: Upload test APK as Actions artifact only
+      - name: Upload test outputs as Actions artifact only
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-apk-${{ matrix.app_name }}-${{ matrix.source }}
-          path: "*.apk"
-          if-no-files-found: error
+          name: test-output-${{ matrix.app_name }}-${{ matrix.source }}
+          path: |
+            *.apk
+            test-rejected-artifacts/
+          if-no-files-found: warn
           retention-days: 1
