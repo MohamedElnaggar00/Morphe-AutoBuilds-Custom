@@ -137,6 +137,38 @@ def _merge_play_splits(apks: list[Path], work_dir: Path, package_name: str) -> P
         logging.warning("Google Play download has no base.apk for %s.", package_name)
         return None
 
+    # The merged APK produced by APKEditor is an intermediate artifact and may
+    # not retain the original Google Play signing certificate or exact SHA-256.
+    # Verify the source contract against the original signed base APK before
+    # merging, so signature/hash checks are performed on the artifact that
+    # actually came from Google Play.
+    source = os.getenv("SOURCE", "")
+    source_targets = utils.get_source_supported_targets(package_name, source)
+    target = next(
+        (item for item in source_targets if item.get("version") == str(_apk_version_name(base) or "")),
+        None,
+    )
+    if target:
+        valid, reasons = utils.validate_source_artifact(
+            base,
+            target,
+            package_name,
+            os.getenv("ARCH", "arm64-v8a"),
+            verify_signature=True,
+            verify_sha256=True,
+        )
+        if not valid:
+            logging.warning(
+                "Rejecting Google Play base APK for %s before merge: %s",
+                package_name,
+                "; ".join(reasons),
+            )
+            return None
+        logging.info(
+            "Google Play base APK passed source identity validation before merge: %s",
+            base.name,
+        )
+
     arm64_splits = [
         p for p in apks
         if "config.arm64_v8a" in p.name.lower()
