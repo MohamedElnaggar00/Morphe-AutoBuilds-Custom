@@ -312,15 +312,7 @@ def _get_api_variant_urls(
             arches = {str(x).lower() for x in (item.get("arches") or [])}
             if wanted_arch in ("", "universal", "noarch"):
                 return True
-            # APKMirror sometimes labels a multi-ABI bundle as "universal"
-            # even though the bundle contains the requested ABI. Prefer an
-            # explicit ABI match, but allow a universal bundle as a secondary
-            # candidate. The final source-contract validation remains
-            # authoritative and rejects an artifact that does not satisfy the
-            # patch source's package/version/signature/hash contract.
-            if wanted_arch in arches:
-                return True
-            return any(value in {"universal", "noarch"} for value in arches)
+            return wanted_arch in arches
 
         def dpi_match(item):
             if wanted_dpi in ("", "nodpi", "all", "120-640dpi"):
@@ -354,20 +346,6 @@ def _get_api_variant_urls(
             and arch_match(item)
             and dpi_match(item)
         ]
-
-        def arch_priority(item):
-            arches = {str(x).lower() for x in (item.get("arches") or [])}
-            if wanted_arch in ("", "universal", "noarch"):
-                return 0
-            if wanted_arch in arches:
-                return 0
-            if any(value in {"universal", "noarch"} for value in arches):
-                return 1
-            return 2
-
-        # Preserve exact-ABI preference. Universal bundles are only a fallback
-        # when APKMirror exposes no explicit ABI entry for the requested arch.
-        candidates.sort(key=arch_priority)
 
         out = []
         for item in candidates:
