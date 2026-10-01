@@ -28,6 +28,48 @@ class SourceContractRuntimeTests(unittest.TestCase):
         self.assertEqual(info["version_code"], 2024701030)
         self.assertEqual(info["min_sdk"], 23)
 
+    def test_aapt2_badging_falls_back_to_apkanalyzer_for_min_sdk(self):
+        calls = []
+
+        def fake_run(command, **kwargs):
+            calls.append(command)
+            if command[0] == "/fake/aapt2":
+                return subprocess.CompletedProcess(
+                    args=command,
+                    returncode=0,
+                    stdout=(
+                        "package: name='com.example.app' versionCode='100' "
+                        "versionName='1.0.0'\n"
+                    ),
+                    stderr="",
+                )
+            if command[0] == "/fake/apkanalyzer":
+                return subprocess.CompletedProcess(
+                    args=command,
+                    returncode=0,
+                    stdout="28\n",
+                    stderr="",
+                )
+            raise AssertionError(f"unexpected command: {command}")
+
+        with patch("src.utils._find_aapt2", return_value="/fake/aapt2"), \
+             patch("src.utils._find_apkanalyzer", return_value="/fake/apkanalyzer"), \
+             patch("src.utils._find_aapt", return_value=None), \
+             patch("src.utils.subprocess.run", side_effect=fake_run):
+            info = utils._apk_badging(Path("example.apk"))
+
+        self.assertEqual(info["package"], "com.example.app")
+        self.assertEqual(info["version"], "1.0.0")
+        self.assertEqual(info["version_code"], 100)
+        self.assertEqual(info["min_sdk"], 28)
+        self.assertEqual(
+            calls,
+            [
+                ["/fake/aapt2", "dump", "badging", "example.apk"],
+                ["/fake/apkanalyzer", "manifest", "min-sdk", "example.apk"],
+            ],
+        )
+
     def test_apkm_is_accepted_when_source_allows_apk(self):
         with tempfile.TemporaryDirectory() as tmp:
             artifact = Path(tmp) / "example.apkm"
