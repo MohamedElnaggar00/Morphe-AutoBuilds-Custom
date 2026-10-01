@@ -73,7 +73,9 @@ def get_download_link(
     expected_version = str(artifact.get("version") or "").strip()
     expected_arch = str(artifact.get("arch") or "").strip().lower()
     package = str(artifact.get("package") or cfg.get("package") or "").strip()
-    direct_url = str(artifact.get("url") or "").strip()
+    direct_url = str(artifact.get("file_url") or "").strip()
+    if not direct_url and str(artifact.get("url") or "").lower().split("?")[0].endswith(".apk"):
+        direct_url = str(artifact.get("url")).strip()
     base_url = str(artifact.get("base_url") or cfg.get("url") or "").rstrip("/")
     filename = str(artifact.get("filename") or "").strip()
 
@@ -119,21 +121,16 @@ def validate_exact_artifact(
     app_name: str,
     arch: str | None = None,
     config: dict | None = None,
+    version: str | None = None,
 ) -> tuple[bool, list[str]]:
     """Validate an Archive artifact against its exact manifest contract."""
     cfg = config or _load_config(app_name)
     if not cfg:
         return False, ["archive exact-artifact config is missing"]
 
-    artifacts = cfg.get("artifacts")
-    if isinstance(artifacts, list):
-        if len(artifacts) != 1:
-            return False, [
-                "archive manifest has multiple artifacts; downloader must pass an exact artifact entry"
-            ]
-        artifact = artifacts[0]
-    else:
-        artifact = cfg
+    artifact = _artifact_config(cfg, str(version or cfg.get("version") or ""), arch)
+    if not artifact:
+        return False, ["archive exact-artifact manifest entry is missing"]
 
     package = str(artifact.get("package") or cfg.get("package") or "").strip()
     version = str(artifact.get("version") or "").strip()
