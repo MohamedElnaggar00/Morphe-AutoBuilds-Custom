@@ -1,0 +1,10 @@
+{
+  "name": "messenger",
+  "package": "com.facebook.orca",
+  "version": "573.0.0.44.88",
+  "version_code": 344611864,
+  "arch": "arm64-v8a",
+  "url": "https://archive.org/download/andrews-apks/apks/com.facebook.orca",
+  "signature_sha256": "e3f9e1e0cf99d0e56a055ba65e241b3399f7cea524326b0cdd6ec1327ed0fdc1",
+  "artifact_type": "APK"
+}
