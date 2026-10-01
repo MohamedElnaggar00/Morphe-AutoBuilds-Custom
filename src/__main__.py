@@ -295,7 +295,17 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         # providers are also frequently blocked by Cloudflare. gplaydl therefore
         # gets first chance for these two apps, with the public providers kept as
         # a fallback if Google Play cannot serve the requested version.
-        if app_name in {"facebook", "messenger"}:
+        if app_name == "messenger":
+            # Google Play remains the first provider because it is the official
+            # distribution channel. If it cannot produce the exact ARM64 target,
+            # the strict Archive.org mirror gets the next chance. The archive
+            # provider independently verifies package/version/versionCode and
+            # Meta's signing certificate before Morphe sees the APK.
+            download_methods = [
+                downloader.download_gplaydl,
+                downloader.download_archive_messenger,
+            ] + public_download_methods
+        elif app_name == "facebook":
             download_methods = [downloader.download_gplaydl] + public_download_methods
         else:
             # Keep the original, proven public download path first for every
