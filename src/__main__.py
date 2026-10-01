@@ -319,14 +319,10 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     explicit_target_versions = []
     if source_targets:
         explicit_target_versions = [target["version"] for target in source_targets]
-    elif (config_version := (Path("apps") / "apkmirror" / f"{app_name}.json")).exists():
-        try:
-            with config_version.open() as cfg_file:
-                pinned_version = str(json.load(cfg_file).get("version") or "").strip()
-            if pinned_version:
-                explicit_target_versions = [pinned_version]
-        except Exception:
-            pass
+    else:
+        pinned_version = str(config.get("version") or "").strip()
+        if pinned_version:
+            explicit_target_versions = [pinned_version]
 
     provider_attempted = False
 
