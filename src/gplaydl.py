@@ -148,6 +148,14 @@ def _merge_play_splits(apks: list[Path], work_dir: Path, package_name: str) -> P
         (item for item in source_targets if item.get("version") == str(_apk_version_name(base) or "")),
         None,
     )
+    if source_targets and target is None:
+        logging.warning(
+            "Rejecting Google Play download for %s: could not map the original "
+            "base APK to a source-declared version target.",
+            package_name,
+        )
+        return None
+
     if target:
         valid, reasons = utils.validate_source_artifact(
             base,
