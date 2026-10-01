@@ -435,17 +435,7 @@ _source_supported_targets_cache = {}
 
 
 def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
-    """Read patch targets for an app from a source patches-list.json.
-
-    For automatic use:
-      - If at least one target is explicitly stable (isExperimental == false),
-        experimental and unknown-status targets are excluded.
-      - If the source has only experimental targets, all of them are retained
-        so experimental-only apps keep the existing build fallback.
-
-    A missing or invalid isExperimental flag is treated as unknown/experimental
-    rather than stable. This prevents unsafe promotion of an unclassified target.
-    """
+    """Read and normalize the exact target contract published by a patch source."""
     if not package_name or not source:
         return []
 
@@ -468,8 +458,6 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
         if not isinstance(entries, list):
             return []
 
-        # Prefer the actual patch repository entry and never treat the CLI
-        # repository as a patches-list source.
         repo_entry = next(
             (
                 e for e in entries
@@ -489,10 +477,6 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
         if not user or not repo:
             return []
 
-        # Resolve the same release selected by download_required(). For
-        # sources using tag=latest, prefer the latest stable release tag rather
-        # than the moving default branch; this prevents an unreleased/dev target
-        # from being selected when the downloaded patch bundle is older.
         refs = []
         try:
             release = detect_release(repo_entry)
@@ -500,12 +484,7 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
             if release_tag:
                 refs.append(release_tag)
         except Exception as exc:
-            logging.debug(
-                "Could not resolve patch release tag for %s/%s: %s",
-                user,
-                repo,
-                exc,
-            )
+            logging.debug("Could not resolve patch release tag for %s/%s: %s", user, repo, exc)
 
         if tag != "latest":
             refs.append(tag)
@@ -531,66 +510,33 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
         if data is None:
             return []
 
-        # A package target is commonly repeated for every patch. Merge the
-        # repeated declarations while retaining status and version-code data.
-        target_sets: list[dict[str, dict]] = []
+        declarations: dict[str, list[dict]] = {}
 
         def walk(node):
             if isinstance(node, dict):
-                if node.get("packageName") == package_name and isinstance(node.get("targets"), list):
-                    versions: dict[str, dict] = {}
+                if (
+                    node.get("packageName") == package_name
+                    and isinstance(node.get("targets"), list)
+                ):
+                    package_signatures = [
+                        str(value).strip().lower()
+                        for value in (node.get("signatures") or [])
+                        if str(value).strip()
+                    ]
+                    apk_file_type = str(node.get("apkFileType") or "").strip().upper()
+
                     for target in node["targets"]:
                         if not isinstance(target, dict) or not target.get("version"):
                             continue
-
                         version = str(target["version"]).strip()
                         if not version:
                             continue
 
-                        raw_codes = target.get("versionCodes")
-                        codes: list[int] = []
-                        values = (
-                            raw_codes.values()
-                            if isinstance(raw_codes, dict)
-                            else raw_codes
-                            if isinstance(raw_codes, list)
-                            else [raw_codes]
-                        )
-                        for value in values:
-                            if isinstance(value, (int, float)) and int(value) > 0:
-                                codes.append(int(value))
-                            elif isinstance(value, str) and value.isdigit():
-                                codes.append(int(value))
-
-                        if not codes:
-                            description = str(target.get("description") or "")
-                            arm64_match = re.search(
-                                r"arm64\s+builds?\s+([^;]+)",
-                                description,
-                                re.IGNORECASE,
-                            )
-                            if arm64_match:
-                                codes.extend(
-                                    int(value)
-                                    for value in re.findall(r"\d+", arm64_match.group(1))
-                                )
-
-                        if version not in versions:
-                            versions[version] = {
-                                "codes": [],
-                                "experimental_flags": set(),
-                            }
-
-                        flag = target.get("isExperimental")
-                        versions[version]["experimental_flags"].add(
-                            flag if isinstance(flag, bool) else None
-                        )
-                        for code in codes:
-                            if code not in versions[version]["codes"]:
-                                versions[version]["codes"].append(code)
-
-                    if versions:
-                        target_sets.append(versions)
+                        item = dict(target)
+                        item["version"] = version
+                        item["signatures"] = package_signatures
+                        item["apk_file_types"] = [apk_file_type] if apk_file_type else []
+                        declarations.setdefault(version, []).append(item)
 
                 for value in node.values():
                     walk(value)
@@ -599,61 +545,17 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
                     walk(value)
 
         walk(data)
-        if not target_sets:
+        if not declarations:
             return []
 
-        common: dict[str, dict] = {
-            version: {
-                "codes": list(meta["codes"]),
-                "experimental_flags": set(meta["experimental_flags"]),
-            }
-            for version, meta in target_sets[0].items()
-        }
+        raw_targets = []
+        for version, items in declarations.items():
+            # Keep each declaration separate so mixed experimental/stable
+            # declarations remain visible to the existing safety policy.
+            for item in items:
+                raw_targets.append(item)
 
-        for current in target_sets[1:]:
-            next_common: dict[str, dict] = {}
-            for version, meta in common.items():
-                if version not in current:
-                    continue
-
-                current_codes = current[version]["codes"]
-                existing_codes = meta["codes"]
-                if existing_codes and current_codes:
-                    shared_codes = [
-                        code for code in existing_codes
-                        if code in set(current_codes)
-                    ]
-                    if not shared_codes:
-                        continue
-                    codes = shared_codes
-                else:
-                    # Preserve the old behavior when only one declaration
-                    # provides exact build codes.
-                    codes = current_codes or existing_codes
-
-                next_common[version] = {
-                    "codes": codes,
-                    "experimental_flags": (
-                        set(meta["experimental_flags"])
-                        | set(current[version]["experimental_flags"])
-                    ),
-                }
-            common = next_common
-
-        merged_targets = [
-            {
-                "version": version,
-                "version_codes": meta["codes"],
-                "is_experimental": (
-                    False
-                    if meta["experimental_flags"] == {False}
-                    else True
-                ),
-            }
-            for version, meta in common.items()
-        ]
-
-        targets = select_preferred_patch_targets(merged_targets)
+        targets = select_preferred_patch_targets(raw_targets)
         _source_supported_targets_cache[cache_key] = list(targets)
         return list(targets)
 
@@ -666,7 +568,6 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
         )
         _source_supported_targets_cache[cache_key] = []
         return []
-
 
 def get_source_supported_versions(package_name: str, source: str) -> list[str]:
     """Return automatic build candidates, preferring stable targets."""
