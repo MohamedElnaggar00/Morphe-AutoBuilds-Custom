@@ -436,8 +436,6 @@ jobs:
 
             notes_file="${RUNNER_TEMP}/${tag}.md"
             {
-              echo "# ${title}"
-              echo
               echo "- **Application:** ${app_name}"
               echo "- **Application version:** ${app_version}"
               echo "- **Patch source:** ${source_name}"
