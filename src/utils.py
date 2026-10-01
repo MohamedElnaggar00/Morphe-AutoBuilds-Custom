@@ -197,65 +197,97 @@ def get_highest_version(versions: list[str]) -> str | None:
     return highest_version
 
 def select_preferred_patch_targets(targets: list[dict]) -> list[dict]:
-    """Select automatic patch targets, preferring explicitly stable versions.
-
-    Targets may be repeated across patches. A version is considered stable only
-    when every declaration explicitly sets isExperimental to false. A missing
-    flag, true flag, or disagreement is treated as experimental/unknown.
-
-    When at least one stable version exists, only stable versions are returned.
-    When none exists, all targets are returned to preserve compatibility with
-    sources that publish experimental versions only.
-    """
+    """Select automatic patch targets and retain every declared source constraint."""
     by_version: dict[str, dict] = {}
 
     for target in targets or []:
         if not isinstance(target, dict):
             continue
-
         version = str(target.get("version") or "").strip()
         if not version:
             continue
 
-        entry = by_version.setdefault(
-            version,
-            {
-                "version_codes": [],
-                "experimental_flags": set(),
-            },
-        )
+        entry = by_version.setdefault(version, {
+            "version_codes": [],
+            "version_codes_by_arch": {},
+            "experimental_flags": set(),
+            "min_sdks": set(),
+            "signatures": set(),
+            "apk_file_types": set(),
+            "sha256": set(),
+            "abis": set(),
+            "dpis": set(),
+        })
 
         flag = target.get("is_experimental")
         if flag is None and "isExperimental" in target:
             flag = target.get("isExperimental")
-        entry["experimental_flags"].add(
-            flag if isinstance(flag, bool) else None
-        )
+        entry["experimental_flags"].add(flag if isinstance(flag, bool) else None)
 
-        codes = target.get("version_codes")
-        if codes is None:
-            codes = target.get("versionCodes")
+        raw_codes = target.get("version_codes")
+        if raw_codes is None:
+            raw_codes = target.get("versionCodes")
+        if isinstance(raw_codes, dict):
+            for arch_name, value in raw_codes.items():
+                values = value if isinstance(value, list) else [value]
+                for item in values:
+                    if isinstance(item, (int, float)) and int(item) > 0:
+                        code = int(item)
+                    elif isinstance(item, str) and item.isdigit():
+                        code = int(item)
+                    else:
+                        continue
+                    arch_key = str(arch_name).upper()
+                    entry["version_codes_by_arch"].setdefault(arch_key, [])
+                    if code not in entry["version_codes_by_arch"][arch_key]:
+                        entry["version_codes_by_arch"][arch_key].append(code)
+                    if code not in entry["version_codes"]:
+                        entry["version_codes"].append(code)
+        else:
+            values = raw_codes if isinstance(raw_codes, list) else [raw_codes]
+            for value in values:
+                if isinstance(value, (int, float)) and int(value) > 0:
+                    code = int(value)
+                elif isinstance(value, str) and value.isdigit():
+                    code = int(value)
+                else:
+                    continue
+                if code not in entry["version_codes"]:
+                    entry["version_codes"].append(code)
 
-        values = (
-            codes.values()
-            if isinstance(codes, dict)
-            else codes
-            if isinstance(codes, list)
-            else [codes]
-        )
-        for value in values:
-            if isinstance(value, (int, float)) and int(value) > 0:
-                code = int(value)
-            elif isinstance(value, str) and value.isdigit():
-                code = int(value)
-            else:
-                continue
-            if code not in entry["version_codes"]:
-                entry["version_codes"].append(code)
+        min_sdk = target.get("min_sdk")
+        if min_sdk is None:
+            min_sdk = target.get("minSdk")
+        if isinstance(min_sdk, (int, float)) and int(min_sdk) > 0:
+            entry["min_sdks"].add(int(min_sdk))
+
+        for value in target.get("signatures") or []:
+            value = str(value).strip().lower()
+            if value:
+                entry["signatures"].add(value)
+
+        for value in target.get("apk_file_types") or target.get("apkFileTypes") or []:
+            value = str(value).strip().upper()
+            if value:
+                entry["apk_file_types"].add(value)
+
+        for value in target.get("sha256") or target.get("sha256s") or []:
+            value = str(value).strip().lower()
+            if value:
+                entry["sha256"].add(value)
+
+        for value in target.get("abis") or target.get("abi") or []:
+            value = str(value).strip().lower()
+            if value:
+                entry["abis"].add(value)
+
+        for value in target.get("dpis") or target.get("dpi") or []:
+            value = str(value).strip().lower()
+            if value:
+                entry["dpis"].add(value)
 
     stable_versions = {
-        version
-        for version, entry in by_version.items()
+        version for version, entry in by_version.items()
         if entry["experimental_flags"] == {False}
     }
     selected_versions = stable_versions if stable_versions else set(by_version)
@@ -263,18 +295,31 @@ def select_preferred_patch_targets(targets: list[dict]) -> list[dict]:
     selected = []
     for version in selected_versions:
         entry = by_version[version]
-        selected.append(
-            {
-                "version": version,
-                "version_codes": sorted(set(entry["version_codes"])),
-                "is_experimental": version not in stable_versions,
+        item = {
+            "version": version,
+            "version_codes": sorted(set(entry["version_codes"])),
+            "is_experimental": version not in stable_versions,
+        }
+        if entry["version_codes_by_arch"]:
+            item["version_codes_by_arch"] = {
+                arch: sorted(set(codes))
+                for arch, codes in entry["version_codes_by_arch"].items()
             }
-        )
+        if entry["min_sdks"]:
+            item["min_sdk"] = max(entry["min_sdks"])
+        if entry["signatures"]:
+            item["signatures"] = sorted(entry["signatures"])
+        if entry["apk_file_types"]:
+            item["apk_file_types"] = sorted(entry["apk_file_types"])
+        if entry["sha256"]:
+            item["sha256"] = sorted(entry["sha256"])
+        if entry["abis"]:
+            item["abis"] = sorted(entry["abis"])
+        if entry["dpis"]:
+            item["dpis"] = sorted(entry["dpis"])
+        selected.append(item)
 
-    selected.sort(
-        key=lambda target: normalize_version(target["version"]),
-        reverse=True,
-    )
+    selected.sort(key=lambda target: normalize_version(target["version"]), reverse=True)
     return selected
 
 def get_supported_versions(package_name: str, cli: str, patches: str) -> list[str]:
