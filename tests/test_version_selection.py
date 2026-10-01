@@ -235,6 +235,8 @@ class VersionSelectionTests(unittest.TestCase):
         mock_certs.return_value = {"aabb"}
         with tempfile.NamedTemporaryFile(suffix=".apk") as handle:
             path = Path(handle.name)
+            handle.write(b"test-artifact")
+            handle.flush()
             target = {
                 "version": "2.0.0",
                 "version_codes": [2001, 2002],
