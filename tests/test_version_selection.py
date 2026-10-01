@@ -1,4 +1,6 @@
+import tempfile
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 from src import utils
@@ -214,6 +216,78 @@ class VersionSelectionTests(unittest.TestCase):
         self.assertEqual(
             selected[0]["version_codes_by_arch"]["ARMEABI_V7A"], [3001]
         )
+
+
+    @patch("src.utils._apk_certificate_digests")
+    @patch("src.utils._apk_badging")
+    @patch("src.utils._artifact_base_apk")
+    @patch("src.utils.check_apk_integrity")
+    def test_source_artifact_validation_enforces_arch_specific_build_code(
+        self, mock_integrity, mock_base, mock_badging, mock_certs
+    ):
+        mock_integrity.return_value = True
+        mock_badging.return_value = {
+            "package": "com.example.app",
+            "version": "2.0.0",
+            "version_code": 2001,
+            "min_sdk": 23,
+        }
+        mock_certs.return_value = {"aabb"}
+        with tempfile.NamedTemporaryFile(suffix=".apk") as handle:
+            path = Path(handle.name)
+            target = {
+                "version": "2.0.0",
+                "version_codes": [2001, 2002],
+                "version_codes_by_arch": {
+                    "ARM64_V8A": [2002],
+                    "ARMEABI_V7A": [2001],
+                },
+                "min_sdk": 23,
+                "signatures": ["aabb"],
+                "apk_file_types": ["APK"],
+            }
+            mock_base.return_value = (path, None)
+
+            valid, reasons = utils.validate_source_artifact(
+                path, target, "com.example.app", "arm64-v8a"
+            )
+
+            self.assertFalse(valid)
+            self.assertTrue(any("versionCode mismatch" in reason for reason in reasons))
+
+    @patch("src.utils._apk_certificate_digests")
+    @patch("src.utils._apk_badging")
+    @patch("src.utils._artifact_base_apk")
+    @patch("src.utils.check_apk_integrity")
+    def test_source_artifact_validation_accepts_matching_contract(
+        self, mock_integrity, mock_base, mock_badging, mock_certs
+    ):
+        mock_integrity.return_value = True
+        mock_badging.return_value = {
+            "package": "com.example.app",
+            "version": "2.0.0",
+            "version_code": 2002,
+            "min_sdk": 23,
+        }
+        mock_certs.return_value = {"aabb"}
+        with tempfile.NamedTemporaryFile(suffix=".apk") as handle:
+            path = Path(handle.name)
+            target = {
+                "version": "2.0.0",
+                "version_codes": [2001, 2002],
+                "version_codes_by_arch": {"ARM64_V8A": [2002]},
+                "min_sdk": 23,
+                "signatures": ["aabb"],
+                "apk_file_types": ["APK"],
+            }
+            mock_base.return_value = (path, None)
+
+            valid, reasons = utils.validate_source_artifact(
+                path, target, "com.example.app", "arm64-v8a"
+            )
+
+            self.assertTrue(valid)
+            self.assertEqual(reasons, [])
 
 
 if __name__ == "__main__":
