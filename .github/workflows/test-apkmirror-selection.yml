@@ -1,0 +1,31 @@
+name: Test APKMirror Variant Selection
+
+on:
+  push:
+    branches:
+      - test/apkmirror-variant-selection
+  workflow_dispatch:
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Compile APKMirror modules and tests
+        run: |
+          python -m py_compile src/apkmirror.py src/downloader.py src/utils.py src/__main__.py tests/test_apkmirror_selection.py tests/test_version_selection.py
+
+      - name: Run Regression Tests
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v
