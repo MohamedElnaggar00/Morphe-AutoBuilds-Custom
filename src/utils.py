@@ -651,8 +651,8 @@ def _apk_badging(path: Path) -> dict:
     text = result.stdout
     package = re.search(r"package: name='([^']+)'", text)
     version_name = re.search(r"versionName='([^']+)'", text)
-    version_code = re.search(r"versionCode='(\\d+)'", text)
-    min_sdk = re.search(r"sdkVersion:'(\\d+)'", text)
+    version_code = re.search(r"versionCode='(\d+)'", text)
+    min_sdk = re.search(r"sdkVersion:'(\d+)'", text)
     return {
         "package": package.group(1) if package else None,
         "version": version_name.group(1) if version_name else None,
@@ -671,13 +671,13 @@ def _apk_certificate_digests(path: Path) -> set[str]:
         text=True,
         check=False,
     )
-    output = (result.stdout or "") + "\\n" + (result.stderr or "")
+    output = (result.stdout or "") + "\n" + (result.stderr or "")
     if result.returncode != 0 and "certificate SHA-256 digest" not in output:
         raise RuntimeError("apksigner could not read APK certificates")
     return {
         match.group(1).replace(":", "").lower()
         for match in re.finditer(
-            r"certificate SHA-256 digest:\\s*([0-9a-fA-F:]+)",
+            r"certificate SHA-256 digest:\s*([0-9a-fA-F:]+)",
             output,
             re.IGNORECASE,
         )
