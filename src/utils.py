@@ -227,6 +227,24 @@ def select_preferred_patch_targets(targets: list[dict]) -> list[dict]:
             flag = target.get("isExperimental")
         entry["experimental_flags"].add(flag if isinstance(flag, bool) else None)
 
+        raw_codes_by_arch = target.get("version_codes_by_arch")
+        if isinstance(raw_codes_by_arch, dict):
+            for arch_name, values in raw_codes_by_arch.items():
+                values = values if isinstance(values, list) else [values]
+                for item in values:
+                    if isinstance(item, (int, float)) and int(item) > 0:
+                        code = int(item)
+                    elif isinstance(item, str) and item.isdigit():
+                        code = int(item)
+                    else:
+                        continue
+                    arch_key = str(arch_name).upper()
+                    entry["version_codes_by_arch"].setdefault(arch_key, [])
+                    if code not in entry["version_codes_by_arch"][arch_key]:
+                        entry["version_codes_by_arch"][arch_key].append(code)
+                    if code not in entry["version_codes"]:
+                        entry["version_codes"].append(code)
+
         raw_codes = target.get("version_codes")
         if raw_codes is None:
             raw_codes = target.get("versionCodes")
