@@ -362,7 +362,7 @@ def download_archive(
     try:
         filepath = download_resource(link)
         valid, reasons = archive.validate_exact_artifact(
-            filepath, app_name, arch=arch, config=cfg
+            filepath, app_name, arch=arch, config=cfg, version=override_version
         )
         if not valid:
             logging.warning(
