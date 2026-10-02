@@ -37,6 +37,19 @@ APP_NAMES = {
     "camscanner": "CamScanner",
 }
 
+
+def load_registry() -> dict:
+    path = ROOT / "config" / "morphe-config.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def app_display_name(app: str, registry: dict) -> str:
+    value = registry.get("apps", {}).get(app, {}).get("display_name")
+    return str(value).strip() if value else APP_NAMES.get(app, app.title())
+
 WORK = ROOT / ".readme-cache"
 WORK.mkdir(exist_ok=True)
 
@@ -189,6 +202,7 @@ def resolve_app_version(app: str, source: str, cli: Path, patches: Path) -> str:
 
 def main():
     config = json.loads((ROOT / "patch-config.json").read_text(encoding="utf-8"))
+    registry = load_registry()
     arch = {
         (x["app_name"], x["source"]): ", ".join(x.get("arches", []))
         for x in json.loads((ROOT / "arch-config.json").read_text(encoding="utf-8"))
@@ -207,8 +221,12 @@ def main():
         "# Morphe AutoBuilds",
         "",
         "## 🔄 Update Schedule",
-        "- Automatic updates daily at 6:17 AM UTC",
+        "- Automatic updates daily at 9:17 AM Africa/Cairo time",
         "- Manual updates available via workflow dispatch",
+        "",
+        "## ⚙️ Configuration",
+        "Edit [config/morphe-config.json](config/morphe-config.json) to add apps, sources, build entries, or patch selections.",
+        "Generated runtime files are synchronized by the **Sync Configuration** workflow.",
         "",
     ]
     failures = []
@@ -216,7 +234,7 @@ def main():
     for item in config.get("patch_list", []):
         app = item["app_name"]
         source = item["source"]
-        display = APP_NAMES.get(app, app.title())
+        display = app_display_name(app, registry)
         try:
             owner, repo = source_repo(source)
             release = latest_release(owner, repo)
