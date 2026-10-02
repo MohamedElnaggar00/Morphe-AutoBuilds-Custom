@@ -61,6 +61,41 @@ def require_app_source(data: dict, app_name: str, source: str) -> None:
         fail(f"unknown source {source!r}")
 
 
+
+def add_app(data: dict, args: argparse.Namespace) -> None:
+    app_name = args.app_name.strip()
+    display_name = args.display_name.strip()
+    package_name = args.package_name.strip()
+    provider = args.provider.strip().lower()
+    provider_ref = args.provider_ref.strip()
+    source = args.source.strip()
+    architecture = args.architecture.strip()
+    provider_type = args.provider_type.strip()
+    dpi = args.dpi.strip()
+    if not app_name or not display_name or not package_name:
+        fail("add-app requires app_name, display_name, and package_name")
+    if app_name in data.get("apps", {}):
+        fail(f"app {app_name!r} already exists")
+    if provider not in {"apkmirror", "apkpure", "uptodown", "aptoide"}:
+        fail(f"unsupported provider {provider!r}")
+    if not provider_ref:
+        fail("provider-ref must not be empty")
+    if source not in data.get("sources", {}):
+        fail(f"unknown source {source!r}")
+    if architecture not in {"arm64-v8a", "armeabi-v7a", "x86_64", "x86", "universal"}:
+        fail(f"unsupported architecture {architecture!r}")
+    if provider == "apkmirror":
+        parts = provider_ref.split("/", 1)
+        if len(parts) != 2 or not all(parts):
+            fail("APKMirror provider-ref must be org/name")
+        org, name = parts
+        cfg = {"org": org, "name": name, "type": provider_type or "APK", "arch": architecture, "dpi": dpi or "nodpi", "package": package_name, "version": ""}
+    else:
+        cfg = {"name": provider_ref, "package": package_name, "version": ""}
+    data.setdefault("apps", {})[app_name] = {"display_name": display_name, "providers": {provider: cfg}}
+    data.setdefault("builds", []).append({"app_name": app_name, "source": source, "arches": [architecture], "enabled": True})
+
+
 def get_or_create_build(data: dict, app_name: str, source: str) -> dict:
     require_app_source(data, app_name, source)
     build = find_build(data, app_name, source)
@@ -94,6 +129,10 @@ def patch_rules(build: dict) -> dict:
 
 
 def edit(data: dict, args: argparse.Namespace) -> None:
+    if args.operation == "add-app":
+        add_app(data, args)
+        return
+
     if args.operation in {
         "enable-build",
         "disable-build",
@@ -174,6 +213,7 @@ def main() -> None:
         "--operation",
         required=True,
         choices=[
+            "add-app",
             "enable-build",
             "disable-build",
             "set-arches",
@@ -185,6 +225,13 @@ def main() -> None:
         ],
     )
     parser.add_argument("--app-name", required=True)
+    parser.add_argument("--display-name", default="")
+    parser.add_argument("--package-name", default="")
+    parser.add_argument("--provider", default="apkmirror")
+    parser.add_argument("--provider-ref", default="")
+    parser.add_argument("--architecture", default="arm64-v8a")
+    parser.add_argument("--provider-type", default="")
+    parser.add_argument("--dpi", default="")
     parser.add_argument("--source", required=True)
     parser.add_argument(
         "--value",
