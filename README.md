@@ -140,7 +140,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v— — Patch v3.48.0
+## X — App v12.29.1-prod.01 — Patch v3.48.0
 Patch source: piko-newx — v3.48.0 ([v3.48.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
@@ -196,7 +196,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Gboard — App v— — Patch v3.11.0
+## Gboard — App v18.0.3.954559732-release-arm64-v8a — Patch v3.11.0
 Patch source: jasonwu1994 — v3.11.0 ([v3.11.0](https://github.com/jasonwu1994/Gboard-patches))
 Architecture: arm64-v8a
 
@@ -261,7 +261,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v— — Patch v0.66.0
+## TikTok — App v47.1.4 — Patch v0.66.0
 Patch source: hushfeed — v0.66.0 ([v0.66.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
@@ -373,7 +373,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok (Metra) — App v— — Patch v0.8.0
+## TikTok (Metra) — App v46.2.3 — Patch v0.8.0
 Patch source: metra — v0.8.0 ([v0.8.0](https://github.com/icysymmetra/tiktok-patches-for-morphe))
 Architecture: arm64-v8a
 
@@ -502,7 +502,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v— — Patch v0.6.0
+## Facebook — App v580.0.0.51.74 — Patch v0.6.0
 Patch source: hushfacebook — v0.6.0 ([v0.6.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
