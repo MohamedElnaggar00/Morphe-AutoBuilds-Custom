@@ -169,8 +169,12 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     is_morphe = False
     is_revanced = False
 
-    # Check file contents to determine source type
+    # Check file contents to determine source type. The shared universal
+    # bundle is also an .mpp file, so never let that helper bundle change the
+    # detection of the primary app/source toolchain.
     for file in download_files:
+        if file.name.lower().startswith("morphe-universal-"):
+            continue
         if "morphe-cli" in file.name.lower():
             is_morphe = True
             break
@@ -181,6 +185,8 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     # If not detected by CLI name, check patch file extension
     if not is_morphe and not is_revanced:
         for file in download_files:
+            if file.name.lower().startswith("morphe-universal-"):
+                continue
             if file.suffix == ".mpp":
                 is_morphe = True
                 break
