@@ -128,7 +128,7 @@ on:
           - "piko-newx"
           - "rushi-excel"
           # END GENERATED SOURCE OPTIONS
-        default: morphe
+        default: __AUTO__
 
       patch_action:
         description: "Patch edit: add = force enable, exclude = exception/disable, reset = return to Morphe default"
