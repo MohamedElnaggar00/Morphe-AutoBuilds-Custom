@@ -98,9 +98,11 @@ def get_download_link(version: str, app_name: str, config: Dict) -> Optional[str
             except (KeyError, TypeError):
                 continue
 
-    # Fallback to latest trusted version of THIS package if specific version not found
+    # Provider fallback must not replace an explicitly requested target.
+    # The caller will try the next provider for the same version before it
+    # considers an older patch-source target.
     pinned = (config.get("version") or "").strip()
-    if not vercode and not pinned and items:
+    if not vercode and not pinned and not config.get("_strict_version") and items:
         try:
             vercode = items[0]["file"]["vercode"]
             logging.info(f"Using nearest Aptoide version {items[0]['file']['vername']} for {package}")

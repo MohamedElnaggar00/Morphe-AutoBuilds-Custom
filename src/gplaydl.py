@@ -108,6 +108,20 @@ def _download_apkeditor(output_dir: Path) -> Path | None:
     return None
 
 
+def _native_abis(path: Path) -> set[str]:
+    """Return native-library ABIs present in an APK, or an empty set."""
+    try:
+        with zipfile.ZipFile(path) as archive:
+            abis: set[str] = set()
+            for name in archive.namelist():
+                match = re.match(r"lib/([^/]+)/[^/]+$", name)
+                if match:
+                    abis.add(match.group(1))
+            return abis
+    except (OSError, zipfile.BadZipFile):
+        return set()
+
+
 def _merge_play_splits(apks: list[Path], work_dir: Path, package_name: str) -> Path | None:
     """
     Merge the Google Play base APK + compatible config splits into one
@@ -137,6 +151,51 @@ def _merge_play_splits(apks: list[Path], work_dir: Path, package_name: str) -> P
         logging.warning("Google Play download has no base.apk for %s.", package_name)
         return None
 
+    # The merged APK produced by APKEditor is an intermediate artifact and may
+    # not retain the original Google Play signing certificate or exact SHA-256.
+    # Verify the source contract against the original signed base APK before
+    # merging, so signature/hash checks are performed on the artifact that
+    # actually came from Google Play.
+    source = os.getenv("SOURCE", "")
+    source_targets = utils.get_source_supported_targets(package_name, source)
+    target = next(
+        (item for item in source_targets if item.get("version") == str(_apk_version_name(base) or "")),
+        None,
+    )
+    if source_targets and target is None:
+        logging.warning(
+            "Rejecting Google Play download for %s: could not map the original "
+            "base APK to a source-declared version target.",
+            package_name,
+        )
+        return None
+
+    if target:
+        valid, reasons = utils.validate_source_artifact(
+            base,
+            target,
+            package_name,
+            os.getenv("ARCH", "arm64-v8a"),
+            verify_signature=True,
+            verify_sha256=True,
+            # Google Play App Bundles arrive as a signed base APK plus compatible
+            # split APKs. This path merges them into a standalone APK immediately
+            # afterward. Permit that packaging transition for this Google Play
+            # path only; all other providers keep the declared artifact contract.
+            allow_merged_play_apk=True,
+        )
+        if not valid:
+            logging.warning(
+                "Rejecting Google Play base APK for %s before merge: %s",
+                package_name,
+                "; ".join(reasons),
+            )
+            return None
+        logging.info(
+            "Google Play base APK passed source identity validation before merge: %s",
+            base.name,
+        )
+
     arm64_splits = [
         p for p in apks
         if "config.arm64_v8a" in p.name.lower()
@@ -156,23 +215,25 @@ def _merge_play_splits(apks: list[Path], work_dir: Path, package_name: str) -> P
     # delivered as config splits. In that case the base APK is already the
     # arm64 component and must NOT be rejected just because no
     # config.arm64_v8a file was returned.
-    base_has_arm64 = False
-    try:
-        with zipfile.ZipFile(base) as archive:
-            base_has_arm64 = any(
-                name.startswith("lib/arm64-v8a/") and not name.endswith("/")
-                for name in archive.namelist()
-            )
-    except (OSError, zipfile.BadZipFile) as exc:
-        logging.warning("Could not inspect base APK ABI for %s: %s", package_name, exc)
+    base_abis = _native_abis(base)
+    all_native_abis = set(base_abis)
+    for path in apks:
+        if path != base:
+            all_native_abis.update(_native_abis(path))
 
-    if not arm64_splits and not base_has_arm64:
+    # Some Play-delivered apps contain no native libraries at all. That is
+    # still valid for an arm64 build; an absent ABI is not an incompatible ABI.
+    # If native code exists, however, an arm64 component must be present.
+    if all_native_abis and "arm64-v8a" not in all_native_abis and not arm64_splits:
         logging.warning(
-            "Google Play returned neither an arm64-v8a split nor arm64 native "
-            "libraries in the base APK for %s; refusing an incompatible build.",
+            "Google Play returned native libraries but no arm64-v8a component for %s "
+            "(ABIs: %s); refusing an incompatible build.",
             package_name,
+            ", ".join(sorted(all_native_abis)),
         )
         return None
+
+    base_has_arm64 = "arm64-v8a" in base_abis
 
     if arm64_splits:
         logging.info(
@@ -266,10 +327,14 @@ def _merge_play_splits(apks: list[Path], work_dir: Path, package_name: str) -> P
                 if n.startswith(("lib/x86/", "lib/x86_64/", "lib/armeabi-v7a/"))
                 and not n.endswith("/")
             ]
-            if not arm64_libs:
+            merged_has_native = any(
+                n.startswith("lib/") and not n.endswith("/")
+                for n in names
+            )
+            if merged_has_native and not arm64_libs:
                 logging.warning(
-                    "Merged Google Play APK has no lib/arm64-v8a native libraries; "
-                    "refusing it as an arm64 build."
+                    "Merged Google Play APK contains native libraries but no "
+                    "lib/arm64-v8a libraries; refusing it as an arm64 build."
                 )
                 return None
             if non_arm64_libs:

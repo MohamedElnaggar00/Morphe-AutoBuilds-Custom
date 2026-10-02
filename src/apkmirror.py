@@ -709,6 +709,34 @@ def find_release_page_from_main(version: str, config: dict, build_number: str = 
         logging.debug(f"Error scraping main page for release URL: {e}")
         return None
 
+def _normalize_release_lookup_version(version: str, target_arch: str) -> str:
+    """Normalize Morphe's variant-qualified version for APKMirror release lookup.
+
+    Some patch sources declare an APK variant as the compatible version, e.g.
+    "18.0.3.954559732-release-arm64-v8a". APKMirror uses that full string for
+    the variant identity, but its release page/API identifies the release as
+    "18.0.3.954559732". Passing the variant-qualified value into the release
+    resolver makes it construct a non-existent release URL and can also trigger
+    a false API release-mismatch error.
+
+    Only remove the exact architecture suffix for the requested architecture;
+    do not strip other release channels such as beta/lite.
+    """
+    value = str(version or "").strip()
+    arch = str(target_arch or "").strip()
+    if not value or not arch:
+        return value
+
+    suffix = rf"-release-{re.escape(arch)}$"
+    normalized = re.sub(suffix, "", value, flags=re.IGNORECASE)
+    if normalized != value:
+        logging.info(
+            "APKMirror normalized variant version %s -> release version %s",
+            value,
+            normalized,
+        )
+    return normalized
+
 def get_download_link(version: str, app_name: str, config: dict, arch: str = None) -> str:
     global _blocked_by_cloudflare
     _blocked_by_cloudflare = False
@@ -717,6 +745,7 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
         return None
         
     target_arch = arch if (arch and arch != "universal") else config.get('arch', 'universal')
+    version = _normalize_release_lookup_version(version, target_arch)
     
     criteria = [config['type'], target_arch, config['dpi']]
     
@@ -751,6 +780,13 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
     # on GitHub-hosted runners.
     api_variants = _get_api_variant_urls(version, config, target_arch)
     for api_variant_url, api_version in api_variants:
+        if _blocked_by_cloudflare:
+            logging.warning(
+                "APKMirror is blocked by Cloudflare for this runner; "
+                "stopping all remaining APKMirror variants and returning control to the next provider."
+            )
+            return None
+
         logging.info(f"✓ APKMirror API variant candidate: {api_variant_url}")
         direct_file_url, readable = _download_from_variant_page(
             api_variant_url,
@@ -759,9 +795,17 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
         )
         if direct_file_url:
             return direct_file_url
+
+        if _blocked_by_cloudflare:
+            logging.warning(
+                "APKMirror Cloudflare block is persistent; abandoning APKMirror "
+                "without trying additional variants."
+            )
+            return None
+
         if not readable:
             logging.warning(
-                "APKMirror API variant was blocked by Cloudflare; trying next candidate."
+                "APKMirror API variant was not readable; trying the next variant."
             )
 
     # --- SECONDARY APPROACH: Direct release URL ---
@@ -961,12 +1005,16 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             if correct_version_page:
                 break  # Found correct page for this version part
     
-    # If we didn't find the exact version page but found a fallback
-    if not correct_version_page and found_soup:
-        logging.warning(f"Using fallback page for {app_name} {version} (may contain multiple versions)")
-    
-    if not found_soup:
-        logging.error(f"Could not find any release page for {app_name} {version}")
+    # Never use a non-exact release page as a version fallback. The caller
+    # is responsible for trying other providers for this same target first.
+    if not correct_version_page:
+        if found_soup:
+            logging.warning(
+                f"APKMirror found a page while resolving {app_name} {version}, "
+                "but it was not validated as the exact target; refusing it."
+            )
+        else:
+            logging.error(f"Could not find an exact release page for {app_name} {version}")
         return None
     
     # --- VARIANT FINDER (works with both exact pages and fallback pages) ---
@@ -1005,7 +1053,18 @@ def get_download_link(version: str, app_name: str, config: dict, arch: str = Non
             if not any(a in r for a in ['universal', 'noarch', 'arm64-v8a', 'armeabi-v7a', 'arm64', 'arm']):
                 return False
         elif t_arch not in r:
-            return False
+            # APKMirror may label a universal APK/APKM/APKS variant as
+            # "universal" instead of listing each ABI in the variant row.
+            # Universal artifacts are valid for an ABI-specific build because
+            # they contain the ARM64/ARMv8-A code as applicable. Keep this as
+            # a fallback only: an explicit ABI match remains preferable.
+            universal_or_noarch = re.search(r'\b(?:universal|noarch)\b', r)
+            if not universal_or_noarch:
+                return False
+            logging.info(
+                "APKMirror: accepting universal/noarch variant as fallback for requested ABI %s",
+                t_arch,
+            )
 
         c_dpi = (config.get('dpi') or 'nodpi').lower()
         if c_dpi in ['nodpi', '120-640dpi', 'all', '']:

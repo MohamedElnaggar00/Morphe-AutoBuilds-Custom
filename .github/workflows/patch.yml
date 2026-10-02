@@ -12,7 +12,8 @@ on:
         required: false
         default: false
   schedule:
-    - cron: '17 6 * * *'  # Daily at 6:17 AM UTC
+    - cron: '0 6 * * *'
+      timezone: "UTC"  # Daily at 6:00 AM UTC
 
 jobs:
   download-tools:
@@ -82,7 +83,17 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
+          python -m pip install --upgrade gplaydl
+          echo "Installed gplaydl version: $(python -c 'import importlib.metadata as m; print(m.version("gplaydl"))')"
           pip install requests beautifulsoup4
+
+      - name: Validate Release Planner Syntax
+        run: |
+          python -m py_compile scripts/check_release_updates.py scripts/check_app_updates.py
+
+      - name: Run Version Selection Regression Tests
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v
 
       - name: Run Incremental Update Check
         id: check
@@ -91,7 +102,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           FORCE_FULL_REBUILD: ${{ inputs.force_full_rebuild || 'false' }}
         run: |
-          python scripts/check_app_updates.py
+          python scripts/check_release_updates.py
 
       - name: Show Plan Summary
         run: |
@@ -106,8 +117,7 @@ jobs:
           name: build-plan
           path: |
             build_matrix.json
-            carry_over.json
-            new_manifest.json
+            release_plan.json
           if-no-files-found: warn
           retention-days: 1
 
@@ -137,6 +147,7 @@ jobs:
   update-readme:
     name: Update README
     needs: check-updates
+    if: always()
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -157,7 +168,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install requests
+          pip install requests curl-cffi PyGithub
 
       - name: Refresh README from patch sources
         env:
@@ -345,253 +356,131 @@ jobs:
           path: build_records/
           if-no-files-found: ignore
 
-  create-single-release:
-    name: Publish New Release
+  create-app-releases:
+    name: Publish Independent App Releases
     needs: [check-updates, build-apps]
     runs-on: ubuntu-latest
     if: always() && needs.check-updates.outputs.has_updates == 'true'
     permissions:
       contents: write
-    env:
-      # true  = after publishing, delete APKs that a newer build superseded and
-      #         delete old releases that become empty because of it.
-      # false = keep every release and every APK forever.
-      PRUNE_OLD_RELEASES: "true"
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Download Build Plan
-        uses: actions/download-artifact@v4
-        with:
-          name: build-plan
-          path: ./build-plan
-        continue-on-error: true
-
-      - name: Download All APK Artifacts
+      - name: Download Built APK Artifacts
         uses: actions/download-artifact@v4
         with:
           path: ./all-apks
           pattern: apk-*
+          merge-multiple: false
 
-      - name: Download All Build Records
+      - name: Download Build Records
         uses: actions/download-artifact@v4
         with:
           path: ./all-records
           pattern: build-records-*
-        continue-on-error: true
+          merge-multiple: false
 
-      - name: Check if Any APKs Were Built
-        id: check-apks
-        run: |
-          built_count=$(find ./all-apks -name "*.apk" 2>/dev/null | wc -l)
-          echo "Built APKs: $built_count"
-
-          if [ "$built_count" -eq 0 ]; then
-            echo "❌ No rebuilt APKs available"
-            echo "skip_release=true" >> $GITHUB_OUTPUT
-          else
-            echo "✅ $built_count rebuilt APK(s) ready for release"
-            echo "skip_release=false" >> $GITHUB_OUTPUT
-          fi
-      
-      - name: Collect All APKs
-        if: steps.check-apks.outputs.skip_release == 'false'
-        run: |
-          mkdir -p ./release-apks
-          echo "📦 Collecting rebuilt APKs..."
-          find ./all-apks -name "*.apk" -exec cp -f {} ./release-apks/ \; 2>/dev/null || true
-
-          echo "📁 APKs ready for release:"
-          ls -la ./release-apks/
-
-          final_count=$(ls -1 ./release-apks/*.apk 2>/dev/null | wc -l || echo "0")
-          echo "📊 Total APKs: $final_count"
-
-      - name: Build Final Manifest
-        if: steps.check-apks.outputs.skip_release == 'false'
-        run: |
-          echo "🧾 Building manifest.json from build-plan + build records..."
-          # The new_manifest.json (post-plan baseline) lives in the build-plan artifact
-          if [ -f ./build-plan/new_manifest.json ]; then
-            cp ./build-plan/new_manifest.json ./new_manifest.json
-          elif [ -f manifest.json ]; then
-            # Last-resort baseline: keep the previous manifest instead of
-            # replacing it with an empty/incomplete one.
-            cp manifest.json ./new_manifest.json
-          fi
-          # Flatten all per-build records into one directory
-          mkdir -p build_records
-          if [ -d ./all-records ]; then
-            find ./all-records -name "*.json" -exec cp {} build_records/ \; 2>/dev/null || true
-          fi
-          python scripts/merge_manifest.py || {
-            echo "⚠️ merge_manifest.py failed; preserving the planning baseline."
-            if [ -f ./new_manifest.json ]; then
-              cp ./new_manifest.json ./manifest.json
-            fi
-          }
-          if [ -f manifest.json ]; then
-            echo "✅ manifest.json built:"
-            jq '.entries | length' manifest.json || true
-            cp manifest.json ./release-apks/manifest.json
-          fi
-
-      - name: Validate GitHub Auth
-        if: steps.check-apks.outputs.skip_release == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python scripts/validate_github_auth.py
-
-      - name: Compute Release Tag
-        if: steps.check-apks.outputs.skip_release == 'false'
-        id: tag
-        run: |
-          # Unique tag per run: every run that rebuilt something publishes a
-          # NEW release instead of updating an old one in place. This is what
-          # makes Obtainium (and any other GitHub-release tracker) notice it.
-          TAG="v$(date -u +'%Y.%m.%d')-${GITHUB_RUN_NUMBER}"
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "title=Morphe APKs - $(date -u +'%Y-%m-%d %H:%M') UTC" >> "$GITHUB_OUTPUT"
-          echo "🏷️  Release tag: $TAG"
-
-      - name: Generate Release Notes
-        if: steps.check-apks.outputs.skip_release == 'false'
-        run: |
-          echo "📝 Generating release notes..."
-
-          {
-            echo "# Morphe APKs - Auto Built"
-            echo ""
-            echo "## 📱 Apps in this release"
-            echo ""
-            for apk in ./release-apks/*.apk; do
-              [ -f "$apk" ] || continue
-              filename=$(basename "$apk")
-              patch_version=$(printf '%s\n' "$filename" | sed -nE 's/.*-patch-v(.+)-app-v.*/\1/p')
-              app_version=$(printf '%s\n' "$filename" | sed -nE 's/.*-app-v(.+)\.apk$/\1/p')
-              if [ -n "$patch_version" ]; then
-                echo "- $filename — Patches v$patch_version, App v$app_version"
-              else
-                echo "- $filename"
-              fi
-            done
-            echo ""
-            echo "> Only apps that were rebuilt in this run are attached here."
-            echo "> The latest build of every other app stays in the earlier release it was built in."
-            echo ""
-            echo "---"
-            echo ""
-            echo "## ⚙️ Build Information"
-            echo "- **Checked daily at 6:17 AM UTC**; a new release is published only when a new patches version (or app version) is found"
-            echo "- **arm64-v8a builds only**"
-            echo ""
-            echo "## ⚠️ Disclaimer"
-            echo "These APKs are built automatically. Use at your own risk."
-          } > release_notes.md
-
-          cat release_notes.md
-
-      - name: Publish New Release
-        if: steps.check-apks.outputs.skip_release == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+      - name: Collect Built APKs
         run: |
           set -euo pipefail
+          mkdir -p ./release-apks
+          find ./all-apks -type f -name "*.apk" -exec cp -f {} ./release-apks/ \;
 
-          TAG="${{ steps.tag.outputs.tag }}"
-          TITLE="${{ steps.tag.outputs.title }}"
-
-          mapfile -t APKS < <(find ./release-apks -maxdepth 1 -type f -name "*.apk" | sort)
-          if [ "${#APKS[@]}" -eq 0 ]; then
-            echo "❌ No APKs found to release"
+          count=$(find ./release-apks -maxdepth 1 -type f -name "*.apk" | wc -l)
+          echo "Built APKs ready for independent releases: $count"
+          if [ "$count" -eq 0 ]; then
+            echo "::error::No APKs were produced by the build jobs."
             exit 1
           fi
+          ls -lh ./release-apks
 
-          ASSETS=( "${APKS[@]}" )
-          if [ -f ./release-apks/manifest.json ]; then
-            ASSETS+=( ./release-apks/manifest.json )
-          fi
+      - name: Publish One Release Per App and Patch Source
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          published=0
 
-          echo "🚀 Publishing ${#APKS[@]} rebuilt APK(s) as release $TAG..."
+          while IFS= read -r record; do
 
-          if gh release view "$TAG" >/dev/null 2>&1; then
-            # Only happens when a failed run is re-run: the tag is already taken
-            # by the partial release of the previous attempt, so finish it.
-            echo "♻️ Release $TAG already exists; uploading assets into it"
-            gh release upload "$TAG" "${ASSETS[@]}" --clobber
-            gh release edit "$TAG" --title "$TITLE" --notes-file release_notes.md --latest
-          else
-            # --latest matters: the next run reads manifest.json from the release
-            # GitHub flags as "latest", so the newest build must carry that flag.
-            gh release create "$TAG" "${ASSETS[@]}" \
-              --title "$TITLE" \
-              --notes-file release_notes.md \
-              --target "$GITHUB_SHA" \
-              --latest
-          fi
+            filename="$(jq -r '.apk // empty' "$record")"
+            app_name="$(jq -r '.app_name // empty' "$record")"
+            source_name="$(jq -r '.source // empty' "$record")"
+            arch="$(jq -r '.arch // empty' "$record")"
 
-          echo "🔎 Verifying every rebuilt APK is attached to the release..."
-          gh release view "$TAG" --json assets --jq '.assets[].name' > published_assets.txt
-
-          missing=0
-          for asset in "${APKS[@]}"; do
-            filename=$(basename "$asset")
-            if grep -Fxq "$filename" published_assets.txt; then
-              echo "✅ Published: $filename"
-              continue
+            if [ -z "$filename" ] || [ -z "$app_name" ] || [ -z "$source_name" ] || [ -z "$arch" ]; then
+              echo "::error::Incomplete build record: $record"
+              exit 1
             fi
-            echo "⚠️ Missing after upload: $filename — retrying"
-            gh release upload "$TAG" "$asset" --clobber
-            gh release view "$TAG" --json assets --jq '.assets[].name' > published_assets.txt
-            if grep -Fxq "$filename" published_assets.txt; then
-              echo "✅ Recovered: $filename"
+
+            apk="./release-apks/$filename"
+            if [ ! -f "$apk" ]; then
+              echo "::error::APK referenced by $record was not found: $filename"
+              exit 1
+            fi
+
+            patch_version="$(printf '%s\n' "$filename" | sed -nE 's/.*-patch-v(.+)-app-v(.+)\.apk$/\1/p')"
+            app_version="$(printf '%s\n' "$filename" | sed -nE 's/.*-patch-v(.+)-app-v(.+)\.apk$/\2/p')"
+
+            if [ -z "$patch_version" ] || [ -z "$app_version" ]; then
+              echo "::error::Could not extract patch/app versions from $filename"
+              exit 1
+            fi
+
+            title="${app_name} v${app_version} — Patch v${patch_version} — ${source_name} — ${arch}"
+
+            safe_app="$(printf '%s' "$app_name" | tr -cs 'A-Za-z0-9._-' '-')"
+            safe_patch="$(printf '%s' "$patch_version" | tr -cs 'A-Za-z0-9._-' '-')"
+            safe_app_version="$(printf '%s' "$app_version" | tr -cs 'A-Za-z0-9._-' '-')"
+            safe_source="$(printf '%s' "$source_name" | tr -cs 'A-Za-z0-9._-' '-')"
+            tag="build-${safe_app}-v${safe_app_version}-patch-v${safe_patch}-${safe_source}-${GITHUB_RUN_NUMBER}"
+
+            notes_file="${RUNNER_TEMP}/${tag}.md"
+            {
+              echo "- **Application:** ${app_name}"
+              echo "- **Application version:** ${app_version}"
+              echo "- **Patch source:** ${source_name}"
+              echo "- **Patch version:** ${patch_version}"
+              echo "- **Architecture:** ${arch}"
+              echo "- **APK:** ${filename}"
+              echo
+              echo "This release contains only this app/source build."
+            } > "$notes_file"
+
+            if gh release view "$tag" --repo "$GH_REPO" >/dev/null 2>&1; then
+              gh release upload "$tag" "$apk" --clobber --repo "$GH_REPO"
+              gh release edit "$tag" --repo "$GH_REPO" --title "$title" --notes-file "$notes_file"
             else
-              echo "❌ Still missing after retry: $filename"
-              missing=1
+              gh release create "$tag" "$apk" \
+                --repo "$GH_REPO" \
+                --title "$title" \
+                --notes-file "$notes_file" \
+                --target "$GITHUB_SHA"
             fi
-          done
 
-          if [ "$missing" -ne 0 ]; then
-            echo "❌ One or more rebuilt APKs could not be verified in release $TAG."
-            exit 1
-          fi
+            if gh release view "$tag" --repo "$GH_REPO" --json assets --jq '.assets[].name' | grep -Fxq "$filename"; then
+              echo "Published and verified: $filename"
+              published=$((published + 1))
+            else
+              echo "::error::Release $tag was created but $filename is missing."
+              exit 1
+            fi
+          done < <(find ./all-records -type f -name "*.json" -print)
 
-          echo "✅ All rebuilt APKs are confirmed in release $TAG."
+          echo "Independent releases published: $published"
 
-      - name: Prune Superseded APKs and Empty Releases
-        if: steps.check-apks.outputs.skip_release == 'false' && env.PRUNE_OLD_RELEASES == 'true'
+      - name: Show Published Releases
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
-          # Runs only after the new release was published and verified.
-          # Non-fatal: a prune problem must never fail a successful build.
-          python scripts/prune_releases.py --protect-tag "${{ steps.tag.outputs.tag }}" \
-            || echo "⚠️ prune_releases.py failed; old releases left untouched"
-
-      - name: Display Release URL
-        if: steps.check-apks.outputs.skip_release == 'false'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          TAG="${{ steps.tag.outputs.tag }}"
-          echo "🔗 Release URL: $(gh release view "$TAG" --json url --jq .url)"
-          echo ""
-          echo "📦 Direct Download Links:"
-          for apk in ./release-apks/*.apk; do
-            filename=$(basename "$apk")
-            echo "- $filename: https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${filename}"
-          done
+          gh release list --repo "$GH_REPO" --limit 30
 
   cleanup:
     name: Cleanup Workflow Runs
-    needs: [build-apps, create-single-release]
+    needs: [build-apps, create-app-releases]
     runs-on: ubuntu-latest
     if: always()
     permissions:

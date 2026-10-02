@@ -43,6 +43,22 @@ def _configured_package(app_name: str) -> str | None:
     return None
 
 
+def _configured_version(app_name: str) -> str:
+    """Return an explicitly pinned app version from the existing app config."""
+    for platform in ("apkmirror", "aptoide", "uptodown", "apkpure", "apkcombo", "github"):
+        path = Path("apps") / platform / f"{app_name}.json"
+        if not path.exists():
+            continue
+        try:
+            with path.open() as cfg:
+                version = str(json.load(cfg).get("version") or "").strip()
+            if version:
+                return version
+        except Exception:
+            continue
+    return ""
+
+
 def _patch_source_version(source: str) -> str:
     """Return the exact published patch-source version used by this build."""
     source_path = Path("sources") / f"{source}.json"
@@ -215,27 +231,27 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     logging.info(f"✅ Using CLI: {cli.name}")
     logging.info(f"✅ Using patches: {patches.name}")
 
-    # Determine the highest Morphe-supported version before downloading the
-    # application. This lets us compare against an already-published Release
-    # and skip redundant Facebook/other app rebuilds.
+    # Resolve the exact automatic target policy before the APK download.
+    # Stable targets are preferred over experimental ones by the shared
+    # source-target resolver, so the skip check and downloader use the same
+    # app-version decision.
     package_name = _configured_package(app_name) or app_name
-    source_codes = utils.get_source_supported_version_codes(package_name, source)
+    source_targets = utils.get_source_supported_targets(package_name, source)
     supported_versions = (
-        list(source_codes)
-        if source_codes
+        [target["version"] for target in source_targets]
+        if source_targets
         else utils.get_supported_versions(package_name, str(cli), str(patches))
     )
 
-    # The utility above normally resolves the package internally in the
-    # downloader. For the skip check, use the same configured app version
-    # returned by Morphe only when it is available.
     patch_version = _patch_source_version(source)
 
-    if supported_versions:
+    if supported_versions and os.environ.get("MORPHE_TEST_FORCE_REBUILD", "").lower() not in {"1", "true", "yes"}:
         latest_supported = supported_versions[0]
         if _release_already_has_build(app_name, arch, patch_version, latest_supported):
             print(f"⏭️ Skipping {app_name}: {latest_supported} is already built and published.")
             return None
+    elif supported_versions:
+        print("🧪 Test mode: forcing rebuild even if the same app/patch is already published.")
 
     # Bundle patch sets are tied to the exact split bundle they were
     # checked against. For these apps the authoritative source is APKMirror's
@@ -279,31 +295,161 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         # providers are also frequently blocked by Cloudflare. gplaydl therefore
         # gets first chance for these two apps, with the public providers kept as
         # a fallback if Google Play cannot serve the requested version.
-        if app_name in {"facebook", "messenger"}:
+        if app_name == "messenger":
+            # Google Play remains first for Messenger. Archive is the next
+            # exact-artifact fallback, followed by the existing public sources.
+            download_methods = [
+                downloader.download_gplaydl,
+                downloader.download_archive,
+            ] + public_download_methods
+        elif app_name == "facebook":
             download_methods = [downloader.download_gplaydl] + public_download_methods
         else:
-            # Keep the original, proven public download path first for every
-            # other non-bundle app. gplaydl remains a last-resort fallback.
-            download_methods = public_download_methods + [downloader.download_gplaydl]
+            # Keep the existing provider order for all other non-bundle apps,
+            # with Archive inserted as an exact-artifact fallback. A missing
+            # Archive manifest simply makes this provider return None.
+            download_methods = [
+                downloader.download_apkmirror,
+                downloader.download_archive,
+                downloader.download_aptoide,
+                downloader.download_github,
+                downloader.download_uptodown,
+                downloader.download_apkpure,
+                downloader.download_apkcombo,
+                downloader.download_gplaydl,
+            ]
 
     input_apk = None
     version = None
     candidates: list[str] = []
     used_method = None
-    for method in download_methods:
-        input_apk, version, candidates = method(app_name, str(cli), str(patches), arch)
-        if input_apk:
-            # Bundle apps can be APKM/APKS/XAPK depending on the source.
-            # download_platform has already enforced any available Morphe
-            # build-code validation before returning the file.
+
+    # The patch source is the compatibility authority. Providers are only
+    # transport fallbacks; they are never allowed to substitute a different
+    # app build that merely happens to patch successfully.
+    source_targets_by_version = {
+        target["version"]: target for target in source_targets
+    }
+
+    def retain_rejected_artifact(path: Path, reason: str) -> None:
+        if os.environ.get("MORPHE_TEST_RETAIN_REJECTED", "").lower() not in {"1", "true", "yes"}:
+            path.unlink(missing_ok=True)
+            return
+        out_dir = Path("test-rejected-artifacts")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        safe_reason = re.sub(r"[^A-Za-z0-9_.-]+", "_", reason)[:80]
+        destination = out_dir / f"{app_name}-{arch}-{safe_reason}-{path.name}"
+        shutil.copy2(path, destination)
+        path.unlink(missing_ok=True)
+        logging.info("🧪 Retained rejected artifact for inspection: %s", destination)
+
+    # Version-first provider fallback:
+    # When the patch source publishes explicit targets, hold the target version
+    # fixed while every configured provider gets a chance to resolve it. Only
+    # after ALL providers fail for that target do we move to the next source
+    # target. This prevents APKMirror (or another provider) from silently
+    # selecting an older version before the other providers are tried.
+    explicit_target_versions = []
+    if source_targets:
+        explicit_target_versions = [target["version"] for target in source_targets]
+    else:
+        pinned_version = _configured_version(app_name)
+        if pinned_version:
+            explicit_target_versions = [pinned_version]
+
+    provider_attempted = False
+
+    if explicit_target_versions:
+        for target_version in explicit_target_versions:
+            logging.info(
+                "Trying target version %s across all providers before considering an older target.",
+                target_version,
+            )
+            for method in download_methods:
+                provider_attempted = True
+                input_apk, version, candidates = method(
+                    app_name,
+                    str(cli),
+                    str(patches),
+                    arch,
+                    override_version=target_version,
+                )
+                if not input_apk:
+                    continue
+
+                if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"}:
+                    logging.warning(
+                        f"REJECT provider={method.__name__} artifact={input_apk.name}: "
+                        f"bundle-configured app requires a native bundle."
+                    )
+                    input_apk.unlink(missing_ok=True)
+                    input_apk = None
+                    continue
+
+                if source_targets:
+                    target = source_targets_by_version.get(str(version or "").strip())
+                    if target is None:
+                        logging.warning(
+                            f"REJECT provider={method.__name__} artifact={input_apk.name}: "
+                            f"downloaded version {version!r} is not declared by source {source}."
+                        )
+                        input_apk.unlink(missing_ok=True)
+                        input_apk = None
+                        continue
+
+                    is_gplaydl_artifact = method == downloader.download_gplaydl
+                    valid, reasons = utils.validate_source_artifact(
+                        input_apk,
+                        target,
+                        package_name,
+                        arch,
+                        verify_signature=not is_gplaydl_artifact,
+                        verify_sha256=not is_gplaydl_artifact,
+                        # USB Hotspot's source contract currently declares XAPK,
+                        # but Google Play serves its App Bundle as base + config
+                        # APK splits. gplaydl merges those splits into one APK.
+                        # Keep this exception narrowly scoped to that provider/app.
+                        allow_merged_play_apk=(is_gplaydl_artifact and app_name == "usbhotspot"),
+                    )
+                    if not valid:
+                        logging.warning(
+                            "REJECT provider=%s artifact=%s target=%s: %s",
+                            method.__name__, input_apk.name, version, "; ".join(reasons),
+                        )
+                        retain_rejected_artifact(input_apk, "; ".join(reasons))
+                        input_apk = None
+                        continue
+
+                    logging.info(
+                        "ACCEPT provider=%s artifact=%s target=%s: source contract passed.",
+                        method.__name__, input_apk.name, version,
+                    )
+
+                used_method = method
+                break
+
+            if input_apk is not None and used_method and version:
+                break
+
+    if not explicit_target_versions:
+        # Preserve the legacy discovery behavior only when the patch source
+        # does not publish machine-readable targets and no pinned version is
+        # configured. In that case there is no source target ordering to honor.
+        for method in download_methods:
+            provider_attempted = True
+            input_apk, version, candidates = method(app_name, str(cli), str(patches), arch)
+            if not input_apk:
+                continue
+
             if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"}:
                 logging.warning(
-                    f"Rejected non-native bundle input {input_apk.name} for bundle-configured "
-                    f"app {app_name}."
+                    f"REJECT provider={method.__name__} artifact={input_apk.name}: "
+                    f"bundle-configured app requires a native bundle."
                 )
                 input_apk.unlink(missing_ok=True)
                 input_apk = None
                 continue
+
             used_method = method
             break
 
@@ -395,9 +541,11 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
             logging.info("Checking APK integrity...")
             if not utils.check_apk_integrity(input_apk):
-                logging.warning("APK integrity check failed; keeping original input for Morphe")
-            else:
-                logging.info("APK integrity OK; no repair needed")
+                raise RuntimeError(
+                    f"Artifact integrity validation failed for {input_apk.name}; "
+                    "refusing to pass a corrupt APK to Morphe."
+                )
+            logging.info("APK integrity OK; no repair needed")
         else:
             logging.info(f"Preserving native Morphe bundle without modification: {input_apk.name}")
 
@@ -414,9 +562,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                     *exclude_patches, *include_patches, *patch_options,
                     *([ "--force" ] if (
                         version not in (
-                            list(utils.get_source_supported_version_codes(
-                                _configured_package(app_name) or app_name, source
-                            ))
+                            [target["version"] for target in source_targets]
                             or utils.get_supported_versions(
                                 _configured_package(app_name) or app_name,
                                 str(cli), str(patches)

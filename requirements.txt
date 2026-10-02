@@ -3,4 +3,4 @@ PyGithub
 beautifulsoup4
 curl-cffi
 requests
-gplaydl==4.2.1
+gplaydl

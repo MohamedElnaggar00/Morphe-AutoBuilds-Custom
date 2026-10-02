@@ -1,0 +1,14 @@
+name: test schedule
+
+on:
+  schedule:
+    - cron: '40 15 * * *' # 6:45 PM in Egypt
+      timezone: "UTC"
+  workflow_dispatch:
+
+jobs:
+  test-schedule:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Test schedule
+        run: echo "Test schedule workflow triggered successfully."

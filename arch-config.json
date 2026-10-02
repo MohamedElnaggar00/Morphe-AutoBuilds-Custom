@@ -35,13 +35,6 @@
     ]
   },
   {
-    "app_name": "adobe-acrobat",
-    "source": "hoomans",
-    "arches": [
-      "arm64-v8a"
-    ]
-  },
-  {
     "app_name": "tiktok",
     "source": "hushfeed",
     "arches": [
@@ -79,6 +72,13 @@
   {
     "app_name": "excel",
     "source": "rushi-excel",
+    "arches": [
+      "arm64-v8a"
+    ]
+  },
+  {
+    "app_name": "usbhotspot",
+    "source": "rushi-usbhotspot",
     "arches": [
       "arm64-v8a"
     ]

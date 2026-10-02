@@ -15,6 +15,7 @@ from src import (
     github,
     apkcombo,
     gplaydl,
+    archive,
 )
 
 def download_resource(url: str, name: str = None) -> Path:
@@ -251,118 +252,47 @@ def download_platform(
         elif 'arch' not in config or not config['arch']:
             config['arch'] = arch or "universal"
 
+        # When the caller is trying a specific patch-source target, providers
+        # must resolve that exact version only. This prevents a provider from
+        # silently substituting its own latest/nearest version before the
+        # caller has given the other providers a chance to serve the same target.
+        config['_strict_version'] = bool(override_version)
+
         platform_module = globals()[platform]
 
         # Candidate versions (highest -> lowest):
-        # - A pinned config version remains authoritative.
         # - An explicit retry override remains authoritative for that retry.
-        # - Otherwise start with Morphe/patch-compatible versions.
-        # - Then append latest versions discovered independently from public
-        #   store fallbacks. This preserves the original multi-source behavior
-        #   when APKMirror itself is unavailable to the GitHub runner.
+        # - A pinned config version remains authoritative.
+        # - Otherwise use the patch source's declared targets. When the source
+        #   declares stable targets, experimental/unknown targets are excluded.
+        #   When it declares only experimental targets, they remain as a
+        #   compatibility fallback.
+        # - Only when the source exposes no machine-readable target metadata do
+        #   we fall back to CLI/store discovery.
         pinned = (config.get("version") or "").strip()
+        source_targets = utils.get_source_supported_targets(
+            config["package"], os.getenv("SOURCE", "")
+        )
+
         if override_version:
             candidates = [override_version]
         elif pinned:
             candidates = [pinned]
+        elif source_targets:
+            candidates = [target["version"] for target in source_targets]
         else:
-            source_codes = utils.get_source_supported_version_codes(
-                config["package"], os.getenv("SOURCE", "")
-            )
-            candidates = (
-                list(source_codes)
-                if source_codes
-                else utils.get_supported_versions(config["package"], cli, patches)
-            )
+            candidates = utils.get_supported_versions(config["package"], cli, patches)
 
-            # Never replace a source-declared version with a newer store
-            # version. Public providers are only fallbacks for downloading that
-            # exact compatible version.
-            if not source_codes:
-                try:
-                    latest = platform_module.get_latest_version(app_name, config)
-                    if latest and latest not in candidates:
-                        candidates.append(latest)
-                except Exception as e:
-                    logging.debug(
-                        f"Could not get latest version for {app_name} on {platform}: {e}"
-                    )
-            logging.info(f"Version candidates for {app_name} on {platform}: {candidates}")
-
-        # Facebook and Messenger must use the original provider flow without
-        # APKMirror-specific bundle/build-code validation.
-        expected_codes = (
-            {}
-            if app_name in {"facebook", "messenger"}
-            else (
-                get_supported_version_codes(config["package"], cli, patches)
-                if str(config.get("type", "APK")).upper() == "BUNDLE"
-                else {}
-            )
-        )
-
-        def bundle_version_code(filepath: Path) -> int | None:
-            if filepath.suffix.lower() not in {".apkm", ".apks", ".xapk", ".zip"}:
-                return None
-            import shutil
-            import zipfile
-            temp_base = filepath.with_name(f".{filepath.stem}-base.apk")
             try:
-                candidates_aapt = (
-                    sorted(
-                        Path(os.environ.get("ANDROID_HOME", "")).glob("build-tools/*/aapt2"),
-                        reverse=True,
-                    )
-                    if os.environ.get("ANDROID_HOME")
-                    else []
+                latest = platform_module.get_latest_version(app_name, config)
+                if latest and latest not in candidates:
+                    candidates.append(latest)
+            except Exception as e:
+                logging.debug(
+                    f"Could not get latest version for {app_name} on {platform}: {e}"
                 )
-                if not candidates_aapt:
-                    return None
-                aapt2 = candidates_aapt[0]
 
-                with zipfile.ZipFile(filepath) as archive:
-                    apk_members = [
-                        name for name in archive.namelist()
-                        if name.lower().endswith(".apk") and not name.endswith("/")
-                    ]
-                    if not apk_members:
-                        return None
-
-                    # Prefer canonical base.apk. XAPK/APKS downloads from other
-                    # stores may use an app-specific filename, so inspect APK
-                    # members until the configured package is found.
-                    preferred = sorted(
-                        apk_members,
-                        key=lambda name: (
-                            0 if name.lower().split("/")[-1] == "base.apk" else 1,
-                            name,
-                        ),
-                    )
-                    expected_package = str(config.get("package") or "")
-                    for member in preferred:
-                        try:
-                            with archive.open(member) as src, temp_base.open("wb") as dst:
-                                shutil.copyfileobj(src, dst)
-                            out = subprocess.run(
-                                [str(aapt2), "dump", "badging", str(temp_base)],
-                                capture_output=True,
-                                text=True,
-                                check=False,
-                            ).stdout
-                            package_match = re.search(r"package: name='([^']+)'", out)
-                            code_match = re.search(r"versionCode='(\d+)'", out)
-                            if not code_match:
-                                continue
-                            if expected_package and package_match and package_match.group(1) != expected_package:
-                                continue
-                            return int(code_match.group(1))
-                        finally:
-                            temp_base.unlink(missing_ok=True)
-            except Exception as exc:
-                logging.debug("Could not inspect bundle versionCode for %s: %s", filepath, exc)
-                return None
-            finally:
-                temp_base.unlink(missing_ok=True)
+        logging.info(f"Version candidates for {app_name} on {platform}: {candidates}")
 
         last_error: Exception | None = None
         for version in candidates:
@@ -370,59 +300,16 @@ def download_platform(
                 continue
             download_link = platform_module.get_download_link(version, app_name, config)
             if not download_link:
-                last_error = ValueError(f"No download link found for {app_name} version {version}")
+                last_error = ValueError(
+                    f"No download link found for {app_name} version {version}"
+                )
                 continue
+
             try:
                 filepath = download_resource(download_link)
 
-                # Some APKMirror releases contain multiple builds with the same
-                # version name. Enforce an explicit artifact versionCode when the
-                # app config declares one, before allowing the file into patching.
-                expected_version_code = (
-                    ""
-                    if app_name in {"facebook", "messenger"}
-                    else str(config.get("expected_version_code") or "").strip()
-                )
-                required_codes = expected_codes.get(version, [])
-                if expected_version_code or required_codes:
-                    actual_code = bundle_version_code(filepath)
-                    if actual_code is None:
-                        expected_label = expected_version_code or str(required_codes)
-                        logging.warning(
-                            f"Rejected {filepath.name}: could not verify versionCode; expected {expected_label}"
-                        )
-                        filepath.unlink(missing_ok=True)
-                        last_error = ValueError(
-                            f"Could not verify build code for {app_name} {version}; expected {expected_label}"
-                        )
-                        continue
-
-                    if expected_version_code and actual_code != int(expected_version_code):
-                        logging.warning(
-                            f"Rejected {filepath.name}: versionCode {actual_code} != required {expected_version_code}"
-                        )
-                        filepath.unlink(missing_ok=True)
-                        last_error = ValueError(
-                            f"Wrong build code for {app_name} {version}: {actual_code} "
-                            f"(required {expected_version_code})"
-                        )
-                        continue
-
-                    if required_codes and actual_code not in required_codes:
-                        logging.warning(
-                            f"Rejected {filepath.name}: versionCode {actual_code} is not declared for {version}; "
-                            f"expected {required_codes}"
-                        )
-                        filepath.unlink(missing_ok=True)
-                        last_error = ValueError(
-                            f"Wrong build code for {app_name} {version}: {actual_code} "
-                            f"(expected {required_codes})"
-                        )
-                        continue
-
                 min_size_mb = config.get("min_size_mb")
                 if min_size_mb is not None:
-                    min_size_bytes = float(min_size_mb) * 1024 * 1024
                     actual_size_mb = filepath.stat().st_size / (1024 * 1024)
                     if actual_size_mb <= float(min_size_mb):
                         logging.warning(
@@ -431,8 +318,7 @@ def download_platform(
                         )
                         filepath.unlink(missing_ok=True)
                         last_error = ValueError(
-                            f"Artifact for {app_name} is too small: "
-                            f"{actual_size_mb:.2f} MB"
+                            f"Artifact for {app_name} is too small: {actual_size_mb:.2f} MB"
                         )
                         continue
 
@@ -447,7 +333,59 @@ def download_platform(
         logging.error(f"Unexpected error: {e}")
         return None, None, []
 
-# Update the specific download functions
+def download_archive(
+    app_name: str,
+    cli: str,
+    patches: str,
+    arch: str = None,
+    override_version: str = None,
+) -> tuple[Path | None, str | None, list[str]]:
+    """Download an exact Archive.org artifact declared in the app manifest."""
+    if not override_version:
+        logging.info("Archive provider skipped for %s: no exact target version.", app_name)
+        return None, None, []
+
+    cfg_path = Path("apps") / "archive" / f"{app_name}.json"
+    if not cfg_path.exists():
+        return None, None, []
+
+    try:
+        with cfg_path.open(encoding="utf-8") as fh:
+            cfg = json.load(fh)
+    except Exception as exc:
+        logging.warning("Could not read Archive config for %s: %s", app_name, exc)
+        return None, None, []
+
+    link = archive.get_download_link(override_version, app_name, cfg, arch=arch)
+    if not link:
+        return None, None, []
+
+    try:
+        filepath = download_resource(link)
+        valid, reasons = archive.validate_exact_artifact(
+            filepath, app_name, arch=arch, config=cfg, version=override_version
+        )
+        if not valid:
+            logging.warning(
+                "Archive exact-artifact rejected for %s: %s",
+                app_name, "; ".join(reasons),
+            )
+            filepath.unlink(missing_ok=True)
+            return None, None, []
+
+        logging.info(
+            "Archive exact-artifact passed its manifest validation: %s",
+            filepath.name,
+        )
+        return filepath, str(override_version), [str(override_version)]
+    except Exception as exc:
+        logging.warning(
+            "Archive exact-artifact download failed for %s: %s",
+            app_name, exc,
+        )
+        return None, None, []
+
+
 def download_gplaydl(
     app_name: str,
     cli: str,

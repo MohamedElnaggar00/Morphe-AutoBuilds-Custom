@@ -1,9 +1,12 @@
 import json
+import hashlib
 import os
 import re
 import shutil
 import time
 import logging
+import tempfile
+import zipfile
 from typing import List, Optional
 from github.GithubException import BadCredentialsException
 from src import gh
@@ -196,6 +199,157 @@ def get_highest_version(versions: list[str]) -> str | None:
             highest_version = v
     return highest_version
 
+def select_preferred_patch_targets(targets: list[dict]) -> list[dict]:
+    """Select automatic patch targets and retain every declared source constraint."""
+    by_version: dict[str, dict] = {}
+
+    for target in targets or []:
+        if not isinstance(target, dict):
+            continue
+        version = str(target.get("version") or "").strip()
+        if not version:
+            continue
+
+        entry = by_version.setdefault(version, {
+            "version_codes": [],
+            "version_codes_by_arch": {},
+            "experimental_flags": set(),
+            "min_sdks": set(),
+            "signatures": set(),
+            "apk_file_types": set(),
+            "sha256": set(),
+            "abis": set(),
+            "dpis": set(),
+        })
+
+        flag = target.get("is_experimental")
+        if flag is None and "isExperimental" in target:
+            flag = target.get("isExperimental")
+        entry["experimental_flags"].add(flag if isinstance(flag, bool) else None)
+
+        raw_codes_by_arch = target.get("version_codes_by_arch")
+        if isinstance(raw_codes_by_arch, dict):
+            for arch_name, values in raw_codes_by_arch.items():
+                values = values if isinstance(values, list) else [values]
+                for item in values:
+                    if isinstance(item, (int, float)) and int(item) > 0:
+                        code = int(item)
+                    elif isinstance(item, str) and item.isdigit():
+                        code = int(item)
+                    else:
+                        continue
+                    arch_key = str(arch_name).upper()
+                    entry["version_codes_by_arch"].setdefault(arch_key, [])
+                    if code not in entry["version_codes_by_arch"][arch_key]:
+                        entry["version_codes_by_arch"][arch_key].append(code)
+                    if code not in entry["version_codes"]:
+                        entry["version_codes"].append(code)
+
+        raw_codes = target.get("version_codes")
+        if raw_codes is None:
+            raw_codes = target.get("versionCodes")
+        if isinstance(raw_codes, dict):
+            for arch_name, value in raw_codes.items():
+                values = value if isinstance(value, list) else [value]
+                for item in values:
+                    if isinstance(item, (int, float)) and int(item) > 0:
+                        code = int(item)
+                    elif isinstance(item, str) and item.isdigit():
+                        code = int(item)
+                    else:
+                        continue
+                    arch_key = str(arch_name).upper()
+                    entry["version_codes_by_arch"].setdefault(arch_key, [])
+                    if code not in entry["version_codes_by_arch"][arch_key]:
+                        entry["version_codes_by_arch"][arch_key].append(code)
+                    if code not in entry["version_codes"]:
+                        entry["version_codes"].append(code)
+        else:
+            values = raw_codes if isinstance(raw_codes, list) else [raw_codes]
+            for value in values:
+                if isinstance(value, (int, float)) and int(value) > 0:
+                    code = int(value)
+                elif isinstance(value, str) and value.isdigit():
+                    code = int(value)
+                else:
+                    continue
+                if code not in entry["version_codes"]:
+                    entry["version_codes"].append(code)
+
+        min_sdk = target.get("min_sdk")
+        if min_sdk is None:
+            min_sdk = target.get("minSdk")
+        if isinstance(min_sdk, (int, float)) and int(min_sdk) > 0:
+            entry["min_sdks"].add(int(min_sdk))
+
+        def metadata_values(value):
+            if value is None:
+                return []
+            return value if isinstance(value, (list, tuple, set)) else [value]
+
+        for value in metadata_values(target.get("signatures")):
+            value = str(value).strip().lower()
+            if value:
+                entry["signatures"].add(value)
+
+        for value in metadata_values(
+            target.get("apk_file_types") or target.get("apkFileTypes")
+        ):
+            value = str(value).strip().upper()
+            if value:
+                entry["apk_file_types"].add(value)
+
+        for value in metadata_values(target.get("sha256") or target.get("sha256s")):
+            value = str(value).strip().lower()
+            if value:
+                entry["sha256"].add(value)
+
+        for value in metadata_values(target.get("abis") or target.get("abi")):
+            value = str(value).strip().lower()
+            if value:
+                entry["abis"].add(value)
+
+        for value in metadata_values(target.get("dpis") or target.get("dpi")):
+            value = str(value).strip().lower()
+            if value:
+                entry["dpis"].add(value)
+
+    stable_versions = {
+        version for version, entry in by_version.items()
+        if entry["experimental_flags"] == {False}
+    }
+    selected_versions = stable_versions if stable_versions else set(by_version)
+
+    selected = []
+    for version in selected_versions:
+        entry = by_version[version]
+        item = {
+            "version": version,
+            "version_codes": sorted(set(entry["version_codes"])),
+            "is_experimental": version not in stable_versions,
+        }
+        if entry["version_codes_by_arch"]:
+            item["version_codes_by_arch"] = {
+                arch: sorted(set(codes))
+                for arch, codes in entry["version_codes_by_arch"].items()
+            }
+        if entry["min_sdks"]:
+            item["min_sdk"] = max(entry["min_sdks"])
+        if entry["signatures"]:
+            item["signatures"] = sorted(entry["signatures"])
+        if entry["apk_file_types"]:
+            item["apk_file_types"] = sorted(entry["apk_file_types"])
+        if entry["sha256"]:
+            item["sha256"] = sorted(entry["sha256"])
+        if entry["abis"]:
+            item["abis"] = sorted(entry["abis"])
+        if entry["dpis"]:
+            item["dpis"] = sorted(entry["dpis"])
+        selected.append(item)
+
+    selected.sort(key=lambda target: normalize_version(target["version"]), reverse=True)
+    return selected
+
 def get_supported_versions(package_name: str, cli: str, patches: str) -> list[str]:
     # Morphe CLI and ReVanced CLI have different list-versions syntax
     cli_name = Path(cli).name.lower()
@@ -303,83 +457,115 @@ def get_supported_versions(package_name: str, cli: str, patches: str) -> list[st
     return versions
 
 
-def get_source_supported_version_codes(package_name: str, source: str) -> dict[str, list[int]]:
-    """Read app versions/versionCodes directly from a patch source."""
-    if not source:
-        return {}
+# Cache patch-target metadata because one automatic build can traverse
+# several download providers for the same app/source.
+_source_supported_targets_cache = {}
+
+
+def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
+    """Read and normalize the exact target contract published by a patch source."""
+    if not package_name or not source:
+        return []
+
+    cache_key = (package_name, source)
+    if cache_key in _source_supported_targets_cache:
+        return list(_source_supported_targets_cache[cache_key])
+
     try:
         source_path = Path("sources") / f"{source}.json"
         if not source_path.exists():
-            return {}
-        with source_path.open() as fh:
+            for candidate in Path("sources").glob("*.json"):
+                if candidate.stem.lower() == source.lower():
+                    source_path = candidate
+                    break
+        if not source_path.exists():
+            return []
+
+        with source_path.open(encoding="utf-8") as fh:
             entries = json.load(fh)
+        if not isinstance(entries, list):
+            return []
+
         repo_entry = next(
-            (e for e in entries[1:] if isinstance(e, dict) and e.get("repo")
-             and str(e.get("repo")).lower() != "morphe-cli"
-             and str(e.get("provider", "github")).lower() == "github"),
+            (
+                e for e in entries
+                if isinstance(e, dict)
+                and e.get("repo")
+                and str(e.get("repo")).lower() != "morphe-cli"
+                and str(e.get("provider", "github")).lower() == "github"
+            ),
             None,
         )
         if not repo_entry:
-            return {}
-        user, repo = str(repo_entry["user"]).strip(), str(repo_entry["repo"]).strip()
+            return []
+
+        user = str(repo_entry.get("user") or "").strip()
+        repo = str(repo_entry.get("repo") or "").strip()
         tag = str(repo_entry.get("tag") or "latest").strip()
-        refs = [tag] if tag != "latest" else ["main", "master"]
+        if not user or not repo:
+            return []
+
+        refs = []
+        try:
+            release = detect_release(repo_entry)
+            release_tag = str(release.get("tag_name") or "").strip()
+            if release_tag:
+                refs.append(release_tag)
+        except Exception as exc:
+            logging.debug("Could not resolve patch release tag for %s/%s: %s", user, repo, exc)
+
+        if tag != "latest":
+            refs.append(tag)
+        else:
+            refs.extend(["main", "master"])
+
         data = None
+        seen_refs = set()
         for ref in refs:
+            if not ref or ref in seen_refs:
+                continue
+            seen_refs.add(ref)
             try:
-                data = fetch_json(
+                candidate = fetch_json(
                     f"https://raw.githubusercontent.com/{user}/{repo}/{quote(ref, safe='')}/patches-list.json"
                 )
-                if isinstance(data, list):
+                if isinstance(candidate, (list, dict)):
+                    data = candidate
                     break
             except Exception:
                 continue
-        if not isinstance(data, (list, dict)):
-            return {}
 
-        target_sets = []
+        if data is None:
+            return []
+
+        declarations: dict[str, list[dict]] = {}
+
         def walk(node):
             if isinstance(node, dict):
-                if node.get("packageName") == package_name and isinstance(node.get("targets"), list):
-                    versions = {}
+                if (
+                    node.get("packageName") == package_name
+                    and isinstance(node.get("targets"), list)
+                ):
+                    package_signatures = [
+                        str(value).strip().lower()
+                        for value in (node.get("signatures") or [])
+                        if str(value).strip()
+                    ]
+                    apk_file_type = str(node.get("apkFileType") or "").strip().upper()
+
                     for target in node["targets"]:
                         if not isinstance(target, dict) or not target.get("version"):
                             continue
-                        version = str(target["version"])
-                        raw_codes = target.get("versionCodes")
-                        codes = []
-                        values = raw_codes.values() if isinstance(raw_codes, dict) else (
-                            raw_codes if isinstance(raw_codes, list) else [raw_codes]
-                        )
-                        for value in values:
-                            if isinstance(value, (int, float)) and int(value) > 0:
-                                codes.append(int(value))
-                            elif isinstance(value, str) and value.isdigit():
-                                codes.append(int(value))
+                        version = str(target["version"]).strip()
+                        if not version:
+                            continue
 
-                        # Some patch sources, including HushMessenger, publish
-                        # their supported build codes in the target description
-                        # while leaving versionCodes null. Treat that published
-                        # build list as authoritative metadata.
-                        if not codes:
-                            description = str(target.get("description") or "")
-                            arm64_match = re.search(
-                                r"arm64\s+builds?\s+([^;]+)",
-                                description,
-                                re.IGNORECASE,
-                            )
-                            if arm64_match:
-                                codes.extend(
-                                    int(value)
-                                    for value in re.findall(r"\d+", arm64_match.group(1))
-                                )
+                        item = dict(target)
+                        item["version"] = version
+                        item["signatures"] = package_signatures
+                        item["apk_file_types"] = [apk_file_type] if apk_file_type else []
+                        declarations.setdefault(version, []).append(item)
 
-                        versions.setdefault(version, [])
-                        for code in codes:
-                            if code not in versions[version]:
-                                versions[version].append(code)
-                    if versions:
-                        target_sets.append(versions)
                 for value in node.values():
                     walk(value)
             elif isinstance(node, list):
@@ -387,30 +573,348 @@ def get_source_supported_version_codes(package_name: str, source: str) -> dict[s
                     walk(value)
 
         walk(data)
-        if not target_sets:
-            return {}
-        common = dict(target_sets[0])
-        for current in target_sets[1:]:
-            next_common = {}
-            for version, codes in common.items():
-                if version not in current:
-                    continue
-                current_codes = current[version]
-                if codes and current_codes:
-                    shared_codes = [code for code in codes if code in set(current_codes)]
-                    if not shared_codes:
-                        continue
-                    next_common[version] = shared_codes
-                else:
-                    # If one target declares only the version and the other
-                    # declares exact build codes, preserve the exact codes.
-                    next_common[version] = current_codes or codes
-            common = next_common
-        return dict(sorted(common.items(), key=lambda item: normalize_version(item[0]), reverse=True))
-    except Exception as exc:
-        logging.debug("Patch source metadata lookup failed for %s/%s: %s", source, package_name, exc)
-        return {}
+        if not declarations:
+            return []
 
+        raw_targets = []
+        for version, items in declarations.items():
+            # Keep each declaration separate so mixed experimental/stable
+            # declarations remain visible to the existing safety policy.
+            for item in items:
+                raw_targets.append(item)
+
+        targets = select_preferred_patch_targets(raw_targets)
+        _source_supported_targets_cache[cache_key] = list(targets)
+        return list(targets)
+
+    except Exception as exc:
+        logging.debug(
+            "Patch source target lookup failed for %s/%s: %s",
+            source,
+            package_name,
+            exc,
+        )
+        _source_supported_targets_cache[cache_key] = []
+        return []
+
+def _find_aapt2() -> str | None:
+    candidates = []
+    for root in (
+        os.environ.get("ANDROID_HOME"),
+        os.environ.get("ANDROID_SDK_ROOT"),
+        "/usr/local/lib/android/sdk",
+    ):
+        if root:
+            candidates.extend(sorted(Path(root).glob("build-tools/*/aapt2"), reverse=True))
+    return str(candidates[0]) if candidates else shutil.which("aapt2")
+
+
+def _find_apkanalyzer() -> str | None:
+    candidates = []
+    for root in (
+        os.environ.get("ANDROID_HOME"),
+        os.environ.get("ANDROID_SDK_ROOT"),
+        "/usr/local/lib/android/sdk",
+    ):
+        if not root:
+            continue
+        candidates.extend(sorted(
+            Path(root).glob("cmdline-tools/*/bin/apkanalyzer"),
+            reverse=True,
+        ))
+    return str(candidates[0]) if candidates else shutil.which("apkanalyzer")
+
+
+def _find_aapt() -> str | None:
+    candidates = []
+    for root in (
+        os.environ.get("ANDROID_HOME"),
+        os.environ.get("ANDROID_SDK_ROOT"),
+        "/usr/local/lib/android/sdk",
+    ):
+        if root:
+            candidates.extend(sorted(Path(root).glob("build-tools/*/aapt"), reverse=True))
+    return str(candidates[0]) if candidates else shutil.which("aapt")
+
+
+def _artifact_base_apk(path: Path) -> tuple[Path, Path | None]:
+    """Return (APK to inspect, temporary extracted APK if one was needed)."""
+    if path.suffix.lower() not in {".apkm", ".apks", ".xapk", ".zip"}:
+        return path, None
+
+    with zipfile.ZipFile(path) as archive:
+        members = [
+            name for name in archive.namelist()
+            if name.lower().endswith(".apk") and not name.endswith("/")
+        ]
+        if not members:
+            raise ValueError("Bundle contains no APK members")
+
+        members.sort(key=lambda name: (
+            0 if Path(name).name.lower() == "base.apk" else 1,
+            name,
+        ))
+        fd, temp_name = tempfile.mkstemp(prefix="morphe-contract-", suffix=".apk")
+        os.close(fd)
+        temp_path = Path(temp_name)
+        with archive.open(members[0]) as src, temp_path.open("wb") as dst:
+            shutil.copyfileobj(src, dst)
+        return temp_path, temp_path
+
+
+def _apk_badging(path: Path) -> dict:
+    aapt2 = _find_aapt2()
+    if not aapt2:
+        raise RuntimeError("aapt2 is required for source-contract validation")
+    result = subprocess.run(
+        [aapt2, "dump", "badging", str(path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"aapt2 failed for {path.name}: {(result.stdout or result.stderr).strip()[-1000:]}"
+        )
+    text = result.stdout
+    package = re.search(r"package: name='([^']+)'", text)
+    version_name = re.search(r"versionName='([^']+)'", text)
+    version_code = re.search(r"versionCode='(\d+)'", text)
+    min_sdk = re.search(r"sdkVersion:'(\d+)'", text)
+
+    parsed_min_sdk = int(min_sdk.group(1)) if min_sdk else None
+
+    # Some APKs expose package/version/versionCode through aapt2 but omit
+    # sdkVersion from the badging output. Recover the minimum API level from
+    # the binary AndroidManifest.xml with the SDK's APK Analyzer instead of
+    # guessing or trusting provider metadata.
+    if parsed_min_sdk is None:
+        apkanalyzer = _find_apkanalyzer()
+        if apkanalyzer:
+            result = subprocess.run(
+                [apkanalyzer, "manifest", "min-sdk", str(path)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0:
+                match = re.search(r"\b(\d+)\b", (result.stdout or "").strip())
+                if match:
+                    parsed_min_sdk = int(match.group(1))
+
+    # Older Android SDK installations may not have apkanalyzer. Fall back to
+    # the legacy aapt badging parser while remaining strict if neither tool
+    # can verify the value.
+    if parsed_min_sdk is None:
+        aapt = _find_aapt()
+        if aapt:
+            result = subprocess.run(
+                [aapt, "dump", "badging", str(path)],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            if result.returncode == 0:
+                fallback_match = re.search(
+                    r"sdkVersion:'(\d+)'",
+                    result.stdout or "",
+                )
+                if fallback_match:
+                    parsed_min_sdk = int(fallback_match.group(1))
+
+    return {
+        "package": package.group(1) if package else None,
+        "version": version_name.group(1) if version_name else None,
+        "version_code": int(version_code.group(1)) if version_code else None,
+        "min_sdk": parsed_min_sdk,
+    }
+
+
+def _apk_certificate_digests(path: Path) -> set[str]:
+    apksigner = find_apksigner()
+    if not apksigner:
+        raise RuntimeError("apksigner is required when the source declares signatures")
+    result = subprocess.run(
+        [apksigner, "verify", "--print-certs", str(path)],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    output = (result.stdout or "") + "\n" + (result.stderr or "")
+    if result.returncode != 0 and "certificate SHA-256 digest" not in output:
+        raise RuntimeError("apksigner could not read APK certificates")
+    return {
+        match.group(1).replace(":", "").lower()
+        for match in re.finditer(
+            r"certificate SHA-256 digest:\s*([0-9a-fA-F:]+)",
+            output,
+            re.IGNORECASE,
+        )
+    }
+
+
+def validate_source_artifact(
+    path: Path,
+    target: dict,
+    package_name: str,
+    arch: str = "universal",
+    verify_signature: bool = True,
+    verify_sha256: bool = True,
+    allow_merged_play_apk: bool = False,
+) -> tuple[bool, list[str]]:
+    """Validate an artifact against the patch source's declared target contract.
+
+    A declared constraint is mandatory. If the source does not declare it,
+    validation does not invent one. Provider fallback must pass this function
+    before Morphe is allowed to patch the artifact.
+    """
+    reasons: list[str] = []
+    temp_path = None
+    try:
+        if not path.exists() or path.stat().st_size == 0:
+            return False, ["artifact is missing or empty"]
+
+        if not check_apk_integrity(path) and path.suffix.lower() not in {".apkm", ".apks", ".xapk", ".zip"}:
+            reasons.append("standalone APK is not a valid ZIP archive")
+            return False, reasons
+
+        apk_path, temp_path = _artifact_base_apk(path)
+        info = _apk_badging(apk_path)
+
+        if info["package"] != package_name:
+            reasons.append(
+                f"package mismatch: actual={info['package']!r}, expected={package_name!r}"
+            )
+
+        expected_version = str(target.get("version") or "").strip()
+        if expected_version and info["version"] != expected_version:
+            reasons.append(
+                f"version mismatch: actual={info['version']!r}, expected={expected_version!r}"
+            )
+
+        expected_by_arch = target.get("version_codes_by_arch") or {}
+        arch_key = {
+            "arm64-v8a": "ARM64_V8A",
+            "armeabi-v7a": "ARMEABI_V7A",
+            "x86_64": "X86_64",
+            "x86": "X86",
+        }.get((arch or "").lower())
+
+        if arch_key and expected_by_arch.get(arch_key):
+            expected_codes = expected_by_arch[arch_key]
+        else:
+            expected_codes = target.get("version_codes") or []
+
+        if expected_codes:
+            if info["version_code"] not in expected_codes:
+                reasons.append(
+                    f"versionCode mismatch: actual={info['version_code']}, expected={expected_codes}"
+                )
+
+        min_sdk = target.get("min_sdk")
+        if min_sdk is not None and info["min_sdk"] is not None and info["min_sdk"] < int(min_sdk):
+            reasons.append(
+                f"minSdk mismatch: actual={info['min_sdk']}, required>={int(min_sdk)}"
+            )
+        elif min_sdk is not None and info["min_sdk"] is None:
+            reasons.append("minSdk could not be verified")
+
+        allowed_types = {str(v).upper() for v in (target.get("apk_file_types") or [])}
+        if allowed_types:
+            suffix = path.suffix.lower()
+            actual_type = (
+                "APKM" if suffix == ".apkm"
+                else "APKS" if suffix == ".apks"
+                else "XAPK" if suffix == ".xapk"
+                else "APK"
+            )
+            normalized_allowed = set()
+            for value in allowed_types:
+                if value in {"APK", "APK_REQUIRED"}:
+                    normalized_allowed.add("APK")
+                elif value in {"XAPK", "XAPK_REQUIRED"}:
+                    normalized_allowed.add("XAPK")
+                elif value:
+                    normalized_allowed.add(value)
+
+            # Morphe can consume a standalone APK or supported split-bundle
+            # containers. The source's file-type declaration therefore describes
+            # the packaging requirement, not a filename extension requirement:
+            #   APK / APK_REQUIRED  -> APK, APKM, APKS, or XAPK are usable.
+            #   XAPK / XAPK_REQUIRED -> a split bundle is required; APKM/APKS/XAPK
+            #                                are all valid Morphe input containers.
+            # This never relaxes package/version/versionCode/minSdk/ABI/DPI/
+            # signature/SHA-256 validation.
+            bundle_types = {"APKM", "APKS", "XAPK"}
+            type_compatible = (
+                "ANY" in normalized_allowed
+                or actual_type in normalized_allowed
+                or ("APK" in normalized_allowed and actual_type in {"APK", *bundle_types})
+                or ("XAPK" in normalized_allowed and actual_type in bundle_types)
+                # Google Play App Bundles are downloaded as split APKs and
+                # merged by gplaydl/APKEditor into a standalone APK. This is
+                # intentionally opt-in so a source that requires XAPK does
+                # not generally start accepting arbitrary APKs.
+                or (allow_merged_play_apk and actual_type == "APK" and "XAPK" in normalized_allowed)
+            )
+            if not type_compatible:
+                reasons.append(
+                    f"artifact type mismatch: actual={actual_type}, source allows={sorted(normalized_allowed)}"
+                )
+
+        signatures = {str(v).replace(":", "").lower() for v in (target.get("signatures") or [])}
+        if signatures and verify_signature:
+            actual_signatures = _apk_certificate_digests(apk_path)
+            if not actual_signatures:
+                reasons.append("source declares signatures but artifact certificate could not be verified")
+            elif not actual_signatures.intersection(signatures):
+                reasons.append(
+                    f"signature mismatch: actual={sorted(actual_signatures)}, expected one of={sorted(signatures)}"
+                )
+
+        hashes = {str(v).replace(":", "").lower() for v in (target.get("sha256") or [])}
+        if hashes and verify_sha256:
+            candidates = {hashlib.sha256(path.read_bytes()).hexdigest()}
+            if apk_path != path:
+                candidates.add(hashlib.sha256(apk_path.read_bytes()).hexdigest())
+            if not candidates.intersection(hashes):
+                reasons.append(
+                    f"SHA-256 mismatch: actual={sorted(candidates)}, expected one of={sorted(hashes)}"
+                )
+
+        return not reasons, reasons
+    except Exception as exc:
+        reasons.append(f"contract validation error: {exc}")
+        return False, reasons
+    finally:
+        if temp_path:
+            temp_path.unlink(missing_ok=True)
+
+
+def get_source_supported_versions(package_name: str, source: str) -> list[str]:
+    """Return automatic build candidates, preferring stable targets."""
+    return [
+        target["version"]
+        for target in get_source_supported_targets(package_name, source)
+    ]
+
+
+def get_source_recommended_version(package_name: str, source: str) -> str:
+    """Return the highest explicitly stable target, or empty when none exists."""
+    stable = [
+        target["version"]
+        for target in get_source_supported_targets(package_name, source)
+        if target.get("is_experimental") is False
+    ]
+    return get_highest_version(stable) or ""
+
+
+def get_source_supported_version_codes(package_name: str, source: str) -> dict[str, list[int]]:
+    """Return version codes for automatic candidates, preferring stable targets."""
+    return {
+        target["version"]: target["version_codes"]
+        for target in get_source_supported_targets(package_name, source)
+    }
 
 def get_supported_version(package_name: str, cli: str, patches: str) -> Optional[str]:
     """Backwards compatible helper: returns the highest compatible version, if any."""

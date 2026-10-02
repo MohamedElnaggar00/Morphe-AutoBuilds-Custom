@@ -4,16 +4,17 @@
 - Automatic updates daily at 6:17 AM UTC
 - Manual updates available via workflow dispatch
 
-## YouTube — App v— — Patch v1.44.0
-Patch source: morphe — v1.44.0 ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
+## YouTube — App v— — Patch v1.45.0
+Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 84/88 applied</summary>
+<summary>🩹 Patches — 90/96 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
+- ❌ Spoof signature
 - ✅ Disable Play Store updates
 - ✅ Hide ads
 - ✅ Channel search
@@ -24,18 +25,20 @@ Architecture: arm64-v8a
 - ✅ Downloads
 - ✅ Disable haptic feedback
 - ✅ Loop video
+- ✅ Picture-in-picture button
 - ✅ Play all
 - ✅ Reload video
 - ✅ Save to Watch later
 - ✅ Seekbar
 - ✅ Swipe controls
-- ✅ Custom branding
+- ❌ Custom branding
 - ✅ Change header
 - ✅ Hide video action buttons
 - ✅ Navigation bar
 - ✅ Hide player overlay buttons
 - ✅ Captions
 - ✅ Disable layout updates
+- ✅ Disable auto feed refresh
 - ✅ Add to queue
 - ✅ Change form factor
 - ✅ Ambient mode
@@ -56,6 +59,7 @@ Architecture: arm64-v8a
 - ✅ Open channel of live avatar
 - ✅ Miniplayer
 - ✅ Override YouTube Music buttons
+- ✅ Restore original titles
 - ✅ Playback in feeds
 - ✅ Mute button
 - ✅ Disable fullscreen gestures
@@ -63,16 +67,19 @@ Architecture: arm64-v8a
 - ✅ Force fullscreen landscape
 - ✅ Fullscreen video scale
 - ✅ Open videos fullscreen
+- ✅ Player icon style
 - ✅ Custom player overlay opacity
 - ✅ Disable playlist autoplay
 - ✅ Return YouTube Dislike
 - ✅ Disable scrolling speed limit
 - ✅ Open system share sheet
 - ✅ Shorts autoplay
+- ✅ Shorts icon style
 - ✅ Disable Shorts resuming on startup
 - ✅ Open Shorts in regular player
 - ✅ SponsorBlock
 - ✅ Change start page
+- ✅ Hide status bar
 - ✅ Theme
 - ✅ Alternative thumbnails
 - ✅ Bypass image region restrictions
@@ -94,6 +101,7 @@ Architecture: arm64-v8a
 - ✅ Spoof device dimensions
 - ✅ Disable DRC audio
 - ✅ Force original audio
+- ✅ Playback buffer
 - ✅ Disable video codecs
 - ✅ Remember live stream playback position
 - ✅ Video quality
@@ -102,16 +110,17 @@ Architecture: arm64-v8a
 
 </details>
 
-## Reddit — App v— — Patch v1.44.0
-Patch source: morphe — v1.44.0 ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
+## Reddit — App v— — Patch v1.45.0
+Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 18/24 applied</summary>
+<summary>🩹 Patches — 17/24 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
+- ❌ Spoof signature
 - ❌ Disable Play Store updates
 - ✅ Hide ads
 - ✅ Custom font
@@ -128,7 +137,6 @@ Architecture: arm64-v8a
 - ✅ Hide Trending shelves
 - ✅ Show view count
 - ✅ App icon
-- ✅ Spoof signature
 - ✅ Start as guest
 - ✅ Open links directly
 - ✅ Open links externally
@@ -136,8 +144,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v— — Patch v3.45.0
-Patch source: piko-newx — v3.45.0 ([v3.45.0](https://github.com/crimera/piko-newx))
+## X — App v— — Patch v3.48.0
+Patch source: piko-newx — v3.48.0 ([v3.48.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -244,8 +252,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v— — Patch v1.37.0
-Patch source: hxreborn — v1.37.0 ([v1.37.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v— — Patch v1.39.0
+Patch source: hxreborn — v1.39.0 ([v1.39.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -257,23 +265,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Adobe-Acrobat — App v— — Patch v1.53.0
-Patch source: hoomans — v1.53.0 ([v1.53.0](https://github.com/arandomhooman/hoomans-morphe-patches))
+## TikTok — App v— — Patch v0.66.0
+Patch source: hushfeed — v0.66.0 ([v0.66.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 1/1 applied</summary>
-
-- ✅ Unlock Pro
-
-</details>
-
-## TikTok — App v— — Patch v0.65.0
-Patch source: hushfeed — v0.65.0 ([v0.65.0](https://github.com/SysAdminDoc/hushfeed))
-Architecture: arm64-v8a
-
-<details>
-<summary>🩹 Patches — 39/98 applied</summary>
+<summary>🩹 Patches — 39/102 applied</summary>
 
 - ❌ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -281,6 +278,7 @@ Architecture: arm64-v8a
 - ❌ Allow screenshots and Circle to Search
 - ✅ Disable screen capture detection
 - ❌ Show author region
+- ❌ Keep playing in the background
 - ❌ Block author button
 - ❌ Subtitle tools
 - ✅ Remember clear display
@@ -322,6 +320,7 @@ Architecture: arm64-v8a
 - ❌ Use system font
 - ❌ Fit the video to the screen
 - ❌ Hide video overlays
+- ❌ Change app name
 - ✅ Copy comments without username
 - ✅ Comment publish diagnostics
 - ✅ Comment send fix
@@ -333,6 +332,7 @@ Architecture: arm64-v8a
 - ❌ Feature Gate Recorder
 - ❌ Foldable split comment view
 - ✅ Follow diagnostics
+- ❌ Keep a streak going
 - ❌ Expand activity list
 - ❌ Hide inbox stories
 - ❌ Hide suggested accounts
@@ -372,6 +372,7 @@ Architecture: arm64-v8a
 - ❌ Location access governor
 - ❌ Network request report
 - ❌ Resource and battery governor
+- ❌ Look like the store app
 - ✅ Hide floating promotions
 
 </details>
@@ -464,15 +465,16 @@ Architecture: —
 
 </details>
 
-## Messenger — App v— — Patch v0.6.0
-Patch source: hushmessenger — v0.6.0 ([v0.6.0](https://github.com/SysAdminDoc/HushMessenger))
+## Messenger — App v— — Patch v0.8.0
+Patch source: hushmessenger — v0.8.0 ([v0.8.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 19/27 applied</summary>
+<summary>🩹 Patches — 22/31 applied</summary>
 
 - ❌ Install beside Meta apps
 - ❌ Restore screens on re-signed builds
+- ❌ Material You theme
 - ❌ Hide inbox ads
 - ✅ Hide People You May Know
 - ✅ Hide friend request cards
@@ -494,20 +496,24 @@ Architecture: arm64-v8a
 - ❌ Open web links externally
 - ❌ Allow chat bubbles
 - ✅ Use system emoji
+- ✅ Send photos at original quality
 - ❌ Allow screenshots
 - ❌ Hide read receipts
 - ❌ Keep unsent messages
+- ✅ View stories anonymously
+- ✅ Save any story
 - ✅ Open settings from menu
 
 </details>
 
-## Facebook — App v— — Patch v0.5.0
-Patch source: hushfacebook — v0.5.0 ([v0.5.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v— — Patch v0.6.0
+Patch source: hushfacebook — v0.6.0 ([v0.6.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 36/51 applied</summary>
+<summary>🩹 Patches — 47/59 applied</summary>
 
+- ✅ Hide affiliate product links
 - ✅ Disable Audience Network
 - ✅ Block background ad prefetch
 - ✅ Hide sponsored Marketplace listings
@@ -527,6 +533,10 @@ Architecture: arm64-v8a
 - ✅ Download any video
 - ❌ Use the phone's emoji
 - ✅ Hide AI-detected posts
+- ✅ Hide the Feeds header
+- ✅ Hide Meta AI questions under posts
+- ✅ Keep post dates
+- ✅ Hide post prompts
 - ✅ Hide Reels in the feed
 - ✅ Block background-return feed refresh
 - ✅ Hide Stories tray
@@ -545,14 +555,17 @@ Architecture: arm64-v8a
 - ✅ Restore screens on re-signed builds
 - ✅ Hushfacebook settings
 - ✅ Sanitize sharing links
+- ✅ Start on x86 devices
+- ✅ Tab bar at the bottom
 - ✅ Marketplace only
-- ❌ Hide the Reels tab
+- ✅ Hide the Reels tab
 - ✅ Hide the Reels tab dot
 - ❌ Open on a chosen tab
 - ✅ Block promotional notifications
 - ✅ Clean up Reels
-- ❌ Turn off double tap to like
-- ❌ Hold a reel for 2x
+- ✅ Turn off double tap to like
+- ✅ Hold a reel for 2x
+- ✅ Hide reel interest prompts
 - ❌ Don't send reel watch history
 - ✅ Hide Meta AI in search
 - ❌ Stop Story auto-advance
@@ -577,5 +590,23 @@ Architecture: arm64-v8a
 - ❌ GmsCore support (MicroG)
 - ❌ Spoof install source
 - ❌ Spoof app signature
+
+</details>
+
+## Usbhotspot — App v— — Patch v1.22.0
+Patch source: rushi-usbhotspot — v1.22.0 ([v1.22.0](https://github.com/rushiranpise/morphe-patches))
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 1/8 applied</summary>
+
+- ❌ Disable PairIP license check
+- ❌ Provide Original app certificate
+- ❌ Spoof Widevine / DRM level
+- ❌ Fix Firebase after re-signing
+- ❌ GmsCore support (MicroG)
+- ❌ Spoof install source
+- ❌ Spoof app signature
+- ✅ Unlock Pro
 
 </details>
