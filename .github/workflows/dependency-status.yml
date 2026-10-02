@@ -10,7 +10,6 @@ on:
       - "requirements.txt"
       - "sources/**"
       - "scripts/check_dependency_updates.py"
-      - "scripts/prepare_build_tools.py"
       - ".github/workflows/dependency-status.yml"
   schedule:
     - cron: '30 9 * * 1'
