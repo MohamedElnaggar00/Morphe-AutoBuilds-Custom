@@ -3,7 +3,6 @@ name: Schedule Trigger Test
 on:
   schedule:
     - cron: "*/5 * * * *"
-      timezone: "Africa/Cairo"
 
 jobs:
   test-schedule:
