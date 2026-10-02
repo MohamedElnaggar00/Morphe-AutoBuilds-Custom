@@ -57,7 +57,25 @@ def validate(data: dict) -> None:
             error(f"source {source_name!r}: entries must contain name + repository")
         if not isinstance(entries[0], dict) or not str(entries[0].get("name") or "").strip():
             error(f"source {source_name!r}: first entry must contain name")
-        if not any(isinstance(e, dict) and str(e.get("repo") or "").strip() for e in entries[1:]):
+        has_repository = False
+        for entry in entries[1:]:
+            if not isinstance(entry, dict):
+                continue
+            provider = str(entry.get("provider") or "").strip().lower()
+            if provider == "gitlab":
+                if not str(entry.get("project") or "").strip():
+                    error(f"source {source_name!r}: gitlab entry must contain project")
+                has_repository = True
+            elif provider in {"github", "codeberg"}:
+                if not str(entry.get("user") or "").strip() or not str(entry.get("repo") or "").strip():
+                    error(f"source {source_name!r}: {provider} entry must contain user + repo")
+                has_repository = True
+            elif entry.get("repo"):
+                # Backward-compatible implicit GitHub entry used by existing sources.
+                if not str(entry.get("user") or "").strip():
+                    error(f"source {source_name!r}: GitHub repository entry must contain user")
+                has_repository = True
+        if not has_repository:
             error(f"source {source_name!r}: no repository entry")
 
     seen = set()
