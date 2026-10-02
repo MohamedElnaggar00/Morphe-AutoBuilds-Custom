@@ -8,7 +8,7 @@
 Edit [config/morphe-config.json](config/morphe-config.json) to add apps, sources, build entries, or patch selections.
 Generated runtime files are synchronized by the **Sync Configuration** workflow.
 
-## YouTube — App v— — Patch v1.44.0
+## YouTube — App v21.16.256 — Patch v1.44.0
 Patch source: morphe — v1.44.0 ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
@@ -106,7 +106,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Reddit — App v— — Patch v1.44.0
+## Reddit — App v2026.14.0 — Patch v1.44.0
 Patch source: morphe — v1.44.0 ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
@@ -248,7 +248,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v— — Patch v1.38.0
+## vpnify — App v2.3.0 — Patch v1.38.0
 Patch source: hxreborn — v1.38.0 ([v1.38.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
@@ -341,11 +341,11 @@ Architecture: arm64-v8a
 - ❌ Drop the animated image cache
 - ❌ Skip update checks
 - ❌ Skip the splash ad
+- ❌ Remove LIVE extras
 - ❌ Remove creation tools
 - ❌ Block P2P video relay
 - ❌ Remove content credential and card scanner assets
 - ❌ Remove unused language packs
-- ❌ Remove LIVE extras
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
@@ -425,7 +425,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## CamScanner — App v— — Patch v1.46.0
+## CamScanner — App v7.20.0.2606230000 — Patch v1.46.0
 Patch source: hoodles — v1.46.0 ([v1.46.0](https://github.com/hoo-dles/morphe-patches))
 Architecture: arm64-v8a
 
@@ -442,7 +442,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — App v— — Patch v1.4.4
+## Messenger — App v573.0.0.44.88 — Patch v1.4.4
 Patch source: devanced — v1.4.4 ([v1.4.4](https://github.com/RookieEnough/De-Vanced))
 Architecture: —
 
@@ -461,7 +461,7 @@ Architecture: —
 
 </details>
 
-## Messenger — App v— — Patch v0.8.0
+## Messenger — App v580.0.0.49.91 — Patch v0.8.0
 Patch source: hushmessenger — v0.8.0 ([v0.8.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
@@ -571,7 +571,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Excel — App v— — Patch v1.22.0
+## Excel — App v16.0.20228.20090 — Patch v1.22.0
 Patch source: rushi-excel — v1.22.0 ([v1.22.0](https://github.com/rushiranpise/morphe-patches))
 Architecture: arm64-v8a
 
