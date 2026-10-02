@@ -8,6 +8,72 @@
 Edit [config/morphe-config.json](config/morphe-config.json) to add apps, sources, build entries, or patch selections.
 Generated runtime files are synchronized by the **Sync Configuration** workflow.
 
+## 🛠️ Manage Configuration
+
+Use **Actions → Manage Configuration → Run workflow** to change the repository configuration without editing JSON files manually. The workflow has four operations:
+
+### 1. Add Application
+
+Use this when adding a new app for the first time. Select **add-app**, then fill these fields:
+
+| Field | What to enter | Example |
+|---|---|---|
+| **Application** | Keep **__NEW_APP__** | <code>__NEW_APP__</code> |
+| **New application ID** | Lowercase app ID; letters, numbers, and hyphens only | <code>truecaller</code> |
+| **Display name** | Human-readable app name | <code>Truecaller</code> |
+| **Package name** | Android package name | <code>com.truecaller</code> |
+| **Provider** | Store/source used to obtain the original app | <code>apkmirror</code> |
+| **Provider reference** | For APKMirror use <code>org/name</code>; for other providers use the provider's app name | <code>truecaller/truecaller</code> |
+| **Provider type** | <code>APK</code> for a standalone APK, <code>BUNDLE</code> for a native split bundle such as APKM | <code>BUNDLE</code> |
+| **DPI** | APKMirror DPI when required; normally <code>nodpi</code> | <code>nodpi</code> |
+| **Architecture** | Target build architecture | <code>arm64-v8a</code> |
+| **Patch Source URL** | GitHub/GitLab patch repository URL, or a Morphe add-source link | <code>https://morphe.software/add-source?gitlab=Paresh-Maheshwari/paresh-patches</code> |
+
+The patch source is read during registration and the source's package-specific Morphe default patch selection is materialized into <code>patches/&lt;app&gt;-&lt;source&gt;.txt</code>. You do not need to manually enter individual patches when adding the app.
+
+**Example — Truecaller:** set Application to <code>__NEW_APP__</code>, New application ID to <code>truecaller</code>, Display name to <code>Truecaller</code>, Package name to <code>com.truecaller</code>, choose the correct original-app provider, set the correct provider reference and artifact type, choose <code>arm64-v8a</code>, and enter the Truecaller patch-source URL.
+
+### 2. Edit Patch Selection
+
+Use this to change the patches used for an app that is already configured. The patch choices are read from the committed <code>patches/</code> directory.
+
+| Field | What to enter |
+|---|---|
+| **Application** | Select the existing app you want to change |
+| **Source** | Select the patch source used by that app; use <code>__AUTO__</code> when the app has only one build/source entry |
+| **Patch Action** | <code>add</code> = force-enable, <code>exclude</code> = disable/exception, <code>reset</code> = remove the override and return to the source default |
+| **Patch** | Select the exact patch from the dropdown. Each item is shown as <code>app / source — patch</code> |
+
+The workflow verifies that the selected patch belongs to the selected application/source before changing the configuration.
+
+### 3. Delete Application
+
+Use this to completely remove an application from the build configuration.
+
+| Field | What to enter |
+|---|---|
+| **Application** | Select the app to delete |
+| **Confirm delete** | Must be enabled (<code>true</code>) |
+
+Deletion removes the app and all of its build entries. A shared patch source is not deleted automatically because another app may still use it. Generated runtime files are synchronized after the change.
+
+### 4. Enable / Disable Application
+
+Use **set-app-status** to control whether an application's configured build entries participate in automatic builds.
+
+| Field | What to enter |
+|---|---|
+| **Application** | Select the existing app |
+| **Status** | <code>enabled</code> or <code>disabled</code> |
+
+For an app with multiple patch sources/build entries, the status is applied to all of that app's build entries.
+
+### Important Notes
+
+- **Manage Configuration changes configuration only. It does not build APKs.** After a configuration change is committed, the normal **Auto Build and Release Morphe** workflow handles building and publishing according to the existing build logic.
+- Patch selections are maintained in <code>patches/</code>. The GUI dropdown is generated from those committed files, so only patches already represented there can be selected in **Edit Patch Selection**.
+- When no patch override is needed, keep the app/source at the Morphe default selection. Use **reset** to remove an explicit override.
+
 ## YouTube — App v21.16.256 — Patch v1.45.0
 Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
