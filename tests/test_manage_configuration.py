@@ -75,6 +75,38 @@ class ManageConfigurationTests(unittest.TestCase):
         self.assertEqual(build["source"], "paresh-patches")
         self.assertNotIn("patches", build)
 
+    @patch.object(
+        manage_config,
+        "latest_morphe_cli_jar",
+    )
+    @patch.object(manage_config.subprocess, "run")
+    def test_fetch_default_patch_selection_parses_morphe_cli_output(self, run_mock, jar_mock):
+        with tempfile.TemporaryDirectory() as tmp:
+            jar = Path(tmp) / "morphe-cli.jar"
+            jar.write_bytes(b"jar")
+            jar_mock.return_value = jar
+            run_mock.return_value = SimpleNamespace(
+                returncode=0,
+                stdout=(
+                    "Name: Patch A\nEnabled: true\n"
+                    "Name: Patch B\nEnabled: false\n"
+                    "Name: Patch C\nEnabled: true\n"
+                ),
+                stderr="",
+            )
+            enabled, disabled = manage_config.fetch_default_patch_selection(
+                "com.example.app",
+                "https://github.com/example/patches",
+            )
+            self.assertEqual(enabled, ["Patch A", "Patch C"])
+            self.assertEqual(disabled, ["Patch B"])
+            run_mock.assert_called_once()
+            command = run_mock.call_args.args[0]
+            self.assertIn("--patches", command)
+            self.assertIn("https://github.com/example/patches", command)
+            self.assertIn("--filter-package-name", command)
+            self.assertIn("com.example.app", command)
+
     def test_add_app_reuses_same_source(self):
         data = self.base_data()
         data["sources"]["paresh-patches"] = {
