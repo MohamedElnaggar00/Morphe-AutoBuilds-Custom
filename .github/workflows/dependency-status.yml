@@ -32,9 +32,9 @@ jobs:
           python-version: "3.11"
 
       - name: Install Requests
-        run: python -m pip install requests
+        run: python -m pip install --upgrade requests
 
       - name: Check Current Versions
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: python scripts/check_dependency_updates.py
+        run: python scripts/prepare_build_tools.py --check-only
