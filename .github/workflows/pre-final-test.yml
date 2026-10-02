@@ -36,6 +36,15 @@ jobs:
         run: |
           python -m unittest discover -s tests -p "test_*.py" -v
 
+      - name: Run Incremental Planner
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          python scripts/check_release_updates.py
+
+
   prepare-matrix:
     name: Prepare Full Build Matrix
     runs-on: ubuntu-latest
