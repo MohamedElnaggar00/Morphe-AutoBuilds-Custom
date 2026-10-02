@@ -12,8 +12,8 @@ on:
         required: false
         default: false
   schedule:
-    - cron: '19 9 * * *'
-      timezone: "Africa/Cairo"  # Daily at 9:19 AM Egypt time
+    - cron: '45 15 * * *'
+      timezone: "Africa/Cairo"  # Daily at 3:45 PM Egypt time
 
 jobs:
   download-tools:
