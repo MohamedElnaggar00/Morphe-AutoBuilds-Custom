@@ -668,15 +668,24 @@ jobs:
                   f"(Patch v{parsed['patch_version']})"
               )
 
-              subprocess.run(
+              result = subprocess.run(
                   [
                       "gh", "release", "delete", tag,
                       "--repo", repo,
                       "--cleanup-tag",
                       "--yes",
                   ],
-                  check=True,
+                  capture_output=True,
+                  text=True,
               )
+
+              if result.returncode != 0:
+                  print(
+                      f"WARNING: failed to delete release tag '{tag}' "
+                      f"(Patch v{parsed['patch_version']}): "
+                      f"{result.stderr.strip() or result.stdout.strip()}"
+                  )
+                  continue
 
               deleted += 1
 
