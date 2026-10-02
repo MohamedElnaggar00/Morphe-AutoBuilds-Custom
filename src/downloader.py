@@ -77,6 +77,33 @@ def download_required(source: str) -> tuple[list[Path], str]:
             elif "morphe-cli" in entry_name and asset_name.lower().endswith(".jar"):
                 downloaded_files.append(download_resource(asset_url))
 
+    # Every non-"morphe" source gets one additional, centrally maintained
+    # universal patch bundle from MorpheApp/morphe-patches. The build step
+    # enables ONLY the requested universal patch ("Disable Play Store updates")
+    # from this bundle; app-specific patches remain owned by the configured
+    # source. The native "morphe" source already uses this exact bundle, so do
+    # not download it twice there.
+    if name.lower() != "morphe":
+        try:
+            universal_release = utils.detect_github_release("MorpheApp", "morphe-patches", "latest")
+            for asset in universal_release.get("assets", []):
+                asset_name = str(asset.get("name") or "")
+                if asset_name.lower().endswith(".mpp") and not asset_name.lower().endswith(".asc"):
+                    universal_name = f"morphe-universal-{asset_name}"
+                    downloaded_files.append(
+                        download_resource(asset["browser_download_url"], name=universal_name)
+                    )
+                    logging.info(
+                        "Downloaded Morphe universal patch bundle: %s", universal_name
+                    )
+                    break
+        except Exception as exc:
+            logging.warning(
+                "Could not download Morphe universal patch bundle for %s: %s",
+                name,
+                exc,
+            )
+
     return downloaded_files, name
 
 def download_from_bundle(bundle_info: dict) -> tuple[list[Path], str]:
