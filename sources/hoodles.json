@@ -1,5 +1,15 @@
 [
-  {"name":"hoodles"},
-  {"user":"MorpheApp","repo":"morphe-cli","tag":"latest"},
-  {"user":"hoo-dles","repo":"morphe-patches","tag":"latest"}
+  {
+    "name": "hoodles"
+  },
+  {
+    "user": "MorpheApp",
+    "repo": "morphe-cli",
+    "tag": "latest"
+  },
+  {
+    "user": "hoo-dles",
+    "repo": "morphe-patches",
+    "tag": "latest"
+  }
 ]

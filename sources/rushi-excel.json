@@ -1,5 +1,15 @@
 [
-  {"name":"rushi-excel"},
-  {"user":"MorpheApp","repo":"morphe-cli","tag":"latest"},
-  {"user":"rushiranpise","repo":"morphe-patches","tag":"latest"}
+  {
+    "name": "rushi-excel"
+  },
+  {
+    "user": "MorpheApp",
+    "repo": "morphe-cli",
+    "tag": "latest"
+  },
+  {
+    "user": "rushiranpise",
+    "repo": "morphe-patches",
+    "tag": "latest"
+  }
 ]
