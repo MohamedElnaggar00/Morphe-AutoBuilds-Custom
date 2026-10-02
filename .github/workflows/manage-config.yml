@@ -1,0 +1,83 @@
+name: Manage Configuration
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      operation:
+        description: "Configuration operation"
+        required: true
+        type: choice
+        options:
+          - enable-build
+          - disable-build
+          - set-arches
+          - add-enable-patch
+          - remove-enable-patch
+          - add-disable-patch
+          - remove-disable-patch
+          - clear-patches
+        default: enable-build
+      app_name:
+        description: "Existing application ID from config/morphe-config.json"
+        required: true
+        type: string
+      source:
+        description: "Existing patch source ID from config/morphe-config.json"
+        required: true
+        type: string
+      value:
+        description: "Architectures (comma-separated) or one patch name, depending on the operation"
+        required: false
+        type: string
+        default: ""
+
+permissions:
+  contents: write
+
+concurrency:
+  group: morphe-config-management
+  cancel-in-progress: false
+
+jobs:
+  manage:
+    name: Apply Configuration Change
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Apply Change and Synchronize
+        run: |
+          python scripts/manage_config.py \
+            --operation "${{ inputs.operation }}" \
+            --app-name "${{ inputs.app_name }}" \
+            --source "${{ inputs.source }}" \
+            --value "${{ inputs.value }}"
+
+      - name: Show Changes
+        run: |
+          git status --short
+          git diff -- config/morphe-config.json patch-config.json arch-config.json apps sources patches
+
+      - name: Commit and Push
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          if git diff --quiet -- config/morphe-config.json patch-config.json arch-config.json apps sources patches; then
+            echo "No configuration changes were necessary."
+            exit 0
+          fi
+
+          git add config/morphe-config.json patch-config.json arch-config.json apps sources patches
+          git commit -m "chore: manage repository configuration"
+          git push origin "HEAD:$GITHUB_REF_NAME"
