@@ -108,7 +108,7 @@ jobs:
 
   build-all:
     name: Build ${{ matrix.app_name }} / ${{ matrix.source }} / ${{ matrix.arch }}
-    if: github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[full-test]')
     needs: prepare-matrix
     runs-on: ubuntu-latest
     services:
