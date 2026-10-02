@@ -205,10 +205,17 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         
         if not cli:
             cli = utils.find_file(download_files, suffix=".jar")
-        patches = utils.find_file(download_files, contains="patches", suffix=".mpp")
-        if not patches:
-            # Fallback to any .mpp file
-            patches = utils.find_file(download_files, suffix=".mpp")
+        # The configured source MPP is the primary patch bundle. Non-"morphe"
+        # sources also carry a separately downloaded universal Morphe bundle.
+        mpp_files = [f for f in download_files if f.suffix.lower() == ".mpp"]
+        patches = next(
+            (f for f in mpp_files if not f.name.lower().startswith("morphe-universal-")),
+            None,
+        )
+        universal_patches = next(
+            (f for f in mpp_files if f.name.lower().startswith("morphe-universal-")),
+            None,
+        )
     else:
         # Find ReVanced files
         cli = utils.find_file(download_files, contains="revanced-cli", suffix=".jar")
@@ -559,7 +566,9 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                 morphe_cmd = [
                     "java", "-jar", str(cli),
                     "patch", "--patches", str(patches),
-                    *exclude_patches, *include_patches, *patch_options,
+                    *exclude_patches,
+                    *include_patches,
+                    *patch_options,
                     *([ "--force" ] if (
                         version not in (
                             [target["version"] for target in source_targets]
@@ -569,6 +578,14 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                             )
                         )
                     ) else []),
+                    # For the native "morphe" source, the primary bundle is
+                    # already MorpheApp/morphe-patches, so enable the universal
+                    # patch directly there. For every other Morphe source,
+                    # append the shared universal bundle and enable ONLY this
+                    # requested universal patch from it.
+                    *(["-e", "Disable Play Store updates"] if source == "morphe" else []),
+                    *(["--patches", str(universal_patches), "-e", "Disable Play Store updates"]
+                      if universal_patches else []),
                     "--out", str(output_apk), str(input_apk)
                 ]
                 utils.run_process(morphe_cmd, capture=True, stream=True)
