@@ -248,9 +248,6 @@ jobs:
             exit 1
           fi
 
-          # The supplied signing key is BKS. The original Morphe-AutoBuilds
-          # workflow signs with a JKS file, so convert the same key material
-          # to JKS at runtime instead of committing the private key.
           sudo apt-get update
           sudo apt-get install -y libbcprov-java
 
@@ -308,8 +305,6 @@ jobs:
 
           python -m src
 
-          # An APK that is already published in some release is a normal skip,
-          # not a failed build. Only a real build with no output should fail.
           apk_count=$(find . -maxdepth 1 -type f -name "*.apk" | wc -l)
           echo "Produced APKs: $apk_count"
           if [ "$apk_count" -eq 0 ]; then
@@ -333,10 +328,8 @@ jobs:
           SOURCE: ${{ matrix.source }}
         run: |
           mkdir -p build_records
-          # Record every produced APK so manifest can map (app, source, arch) -> filename
           for apk in *.apk; do
             [ -e "$apk" ] || continue
-            # record_build.py now detects arch from filename automatically
             APK_PATH="$apk" python scripts/record_build.py || true
           done
           echo "Records produced:"
@@ -469,6 +462,185 @@ jobs:
           done < <(find ./all-records -type f -name "*.json" -print)
 
           echo "Independent releases published: $published"
+
+      - name: Cleanup Old Automatic Releases
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          import sys
+          from collections import defaultdict
+          from datetime import datetime, timezone
+
+          repo = os.environ["GH_REPO"]
+
+          def gh_json(args):
+              result = subprocess.run(
+                  ["gh", *args, "--repo", repo],
+                  check=True,
+                  capture_output=True,
+                  text=True,
+              )
+              return json.loads(result.stdout)
+
+          def is_automatic_release(release):
+              tag = (release.get("tagName") or "").strip()
+              name = (release.get("name") or "").strip()
+              # Automatic releases created by this workflow always use the
+              # build-... tag and include the structured app/source/arch title.
+              return (
+                  tag.startswith("build-")
+                  and " — Patch v" in name
+                  and " — " in name
+              )
+
+          def parse_identity(release):
+              name = release["name"]
+              # Expected:
+              # app vAPP — Patch vPATCH — source — arch
+              parts = [p.strip() for p in name.split(" — ")]
+              if len(parts) != 4:
+                  return None
+
+              app_part, patch_part, source_name, arch = parts
+
+              if not app_part.startswith("") or not patch_part.startswith("Patch v"):
+                  return None
+
+              app_split = app_part.rsplit(" v", 1)
+              if len(app_split) != 2:
+                  return None
+
+              app_name = app_split[0].strip()
+              app_version = app_split[1].strip()
+              patch_version = patch_part[len("Patch v"):].strip()
+
+              if not app_name or not app_version or not patch_version or not source_name or not arch:
+                  return None
+
+              return (app_name, source_name, arch)
+
+          def parse_time(value):
+              if not value:
+                  return datetime.min.replace(tzinfo=timezone.utc)
+              try:
+                  return datetime.fromisoformat(value.replace("Z", "+00:00"))
+              except Exception:
+                  return datetime.min.replace(tzinfo=timezone.utc)
+
+          releases = []
+          page = 1
+
+          while True:
+              result = subprocess.run(
+                  [
+                      "gh", "api",
+                      f"repos/{repo}/releases",
+                      "-f", f"per_page=100",
+                      "-f", f"page={page}",
+                      "--paginate",
+                  ],
+                  capture_output=True,
+                  text=True,
+              )
+
+              if result.returncode != 0:
+                  print(result.stderr, file=sys.stderr)
+                  sys.exit(result.returncode)
+
+              # gh api --paginate may concatenate JSON arrays. Using one page
+              # at a time keeps parsing deterministic.
+              try:
+                  data = json.loads(result.stdout)
+              except json.JSONDecodeError:
+                  print("Could not parse GitHub releases response.", file=sys.stderr)
+                  sys.exit(1)
+
+              if not data:
+                  break
+
+              releases.extend(data)
+
+              if len(data) < 100:
+                  break
+
+              page += 1
+
+          groups = defaultdict(list)
+
+          for release in releases:
+              if release.get("draft"):
+                  continue
+
+              if not is_automatic_release(release):
+                  continue
+
+              identity = parse_identity(release)
+              if identity is None:
+                  print(f"SKIP: unable to determine release identity: {release.get('name')}")
+                  continue
+
+              groups[identity].append(release)
+
+          to_delete = []
+
+          for identity, items in groups.items():
+              # Sort newest first. We retain exactly TWO releases per identity:
+              # the newest build and the one immediately preceding it.
+              items.sort(
+                  key=lambda r: (
+                      parse_time(r.get("publishedAt")),
+                      parse_time(r.get("createdAt")),
+                      r.get("databaseId") or 0,
+                  ),
+                  reverse=True,
+              )
+
+              keep = items[:2]
+              delete = items[2:]
+
+              app_name, source_name, arch = identity
+              print(
+                  f"{app_name}/{source_name}/{arch}: "
+                  f"total={len(items)} keep={len(keep)} delete={len(delete)}"
+              )
+
+              for release in delete:
+                  to_delete.append((identity, release))
+
+          deleted = 0
+
+          for identity, release in to_delete:
+              tag = (release.get("tagName") or "").strip()
+              if not tag:
+                  continue
+
+              print(
+                  f"Deleting old automatic release: "
+                  f"{release.get('name')} [{tag}]"
+              )
+
+              # delete_tag=true removes both the GitHub Release and its tag.
+              subprocess.run(
+                  [
+                      "gh", "release", "delete", tag,
+                      "--repo", repo,
+                      "--cleanup-tag",
+                      "--yes",
+                  ],
+                  check=True,
+              )
+              deleted += 1
+
+          print(f"Old automatic releases deleted: {deleted}")
+          PY
 
       - name: Show Published Releases
         env:
