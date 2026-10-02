@@ -25,8 +25,12 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python -m pip install -r requirements.txt
-          python -m pip install requests beautifulsoup4
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade -r requirements.txt
+
+      - name: Update and Verify Build Tools
+        run: |
+          python scripts/prepare_build_tools.py --install
 
       - name: Compile Python Sources
         run: |
@@ -135,8 +139,12 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install -r requirements.txt
-          pip install requests beautifulsoup4
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade -r requirements.txt
+
+      - name: Update and Verify Build Tools
+        run: |
+          python scripts/prepare_build_tools.py --install
 
       - name: Setup Java 21
         uses: actions/setup-java@v4
