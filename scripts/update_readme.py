@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import check_app_updates as legacy
+from src import utils as builder_utils
 
 API = "https://api.github.com"
 TOKEN = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
@@ -183,18 +184,21 @@ def md_escape(value: str) -> str:
 
 
 def resolve_app_version(app: str, source: str, cli: Path, patches: Path) -> str:
-    """Resolve the highest version actually supported by the current patch bundle."""
-    version = legacy.fetch_recommended_version(app, source).strip()
+    """Resolve the exact stable source target using the same policy as the builder."""
+    package = app_package(app)
+    try:
+        version = builder_utils.get_source_recommended_version(package, source).strip()
+    except Exception:
+        version = ""
+
     if version:
         return version
 
-    try:
-        package = app_package(app)
-        supported = legacy.get_supported_versions(package, str(cli), str(patches))
-        if supported:
-            return supported[0]
-    except Exception:
-        pass
+    # Preserve a safe fallback for sources that do not publish a readable
+    # patches-list to the builder's source-contract helper.
+    version = legacy.fetch_recommended_version(app, source).strip()
+    if version:
+        return version
 
     # Do not display a potentially unsupported store version in README.
     return "—"
