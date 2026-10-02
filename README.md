@@ -596,3 +596,18 @@ Architecture: arm64-v8a
 - ❌ Spoof app signature
 
 </details>
+
+## Truecaller — App v— — Patch v1.45.0
+Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 0/5 applied</summary>
+
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ❌ Disable Play Store updates
+
+</details>
