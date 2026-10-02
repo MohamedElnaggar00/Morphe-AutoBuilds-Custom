@@ -16,7 +16,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: morphe-readme-refresh
+  group: morphe-config-readme-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
