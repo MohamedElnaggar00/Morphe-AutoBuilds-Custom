@@ -111,8 +111,11 @@ def local_rules(app_name: str, source: str) -> tuple[set[str], set[str]]:
     return enabled, disabled
 
 
-def run_cli(cli: Path, patches: Path, args: list[str]) -> str:
-    cmd = ["java", "-jar", str(cli), *args, "--patches", str(patches)]
+def run_cli(cli: Path, patches: Path | list[Path], args: list[str]) -> str:
+    patch_list = [patches] if isinstance(patches, Path) else list(patches)
+    cmd = ["java", "-jar", str(cli), *args]
+    for patch in patch_list:
+        cmd += ["--patches", str(patch)]
     result = subprocess.run(cmd, cwd=WORK, text=True, capture_output=True)
     if result.returncode != 0:
         raise RuntimeError(result.stdout + "\n" + result.stderr)
@@ -203,6 +206,16 @@ def main():
     if not cli.exists():
         download_asset(cli_release, ".jar", cli)
 
+    # The same Morphe patch repository is also the shared universal source used
+    # by the builder for every non-"morphe" app/source. Keep one cached MPP for
+    # README generation so the generated patch list reflects the actual build
+    # inputs. Only the Disable Play Store updates patch is force-enabled from
+    # this universal bundle by the builder.
+    universal_release = latest_release("MorpheApp", "morphe-patches")
+    universal_mpp = WORK / f"morphe-universal-{universal_release['tag_name'].lstrip('v')}.mpp"
+    if not universal_mpp.exists():
+        download_asset(universal_release, ".mpp", universal_mpp)
+
     sections = [
         "# Morphe AutoBuilds",
         "",
@@ -225,9 +238,13 @@ def main():
                 download_asset(release, ".mpp", mpp)
 
             package = app_package(app)
+            patch_inputs = [mpp]
+            if source != "morphe":
+                patch_inputs.append(universal_mpp)
+
             patch_output = run_cli(
                 cli,
-                mpp,
+                patch_inputs,
                 [
                     "list-patches",
                     "--with-descriptions=false",
@@ -241,9 +258,15 @@ def main():
 
             enabled_rules, disabled_rules = local_rules(app, source)
             final_rows = []
+            forced_universal = {"disable play store updates"}
             for name, default_enabled in rows:
                 key = normalize_patch_name(name)
-                if key in disabled_rules:
+                if key in forced_universal:
+                    # This patch is explicitly enabled by the builder for every
+                    # application, regardless of the app-specific bundle's
+                    # default state.
+                    applied = True
+                elif key in disabled_rules:
                     applied = False
                 elif key in enabled_rules:
                     applied = True
