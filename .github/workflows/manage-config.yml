@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: "Configuration action: 1) Add application + patch source  2) Edit patch selection  3) Delete application  4) Enable/disable application"
+        description: "1) Add application + patch source  2) Edit patch selection  3) Delete application  4) Enable/disable application"
         required: true
         type: choice
         options:
@@ -17,6 +17,12 @@ on:
           - set-app-status
         default: add-app
 
+      app_name:
+        description: "Existing application. For add-app choose __NEW_APP__ and fill New application ID."
+        required: true
+        type: choice
+        options:
+          # BEGIN GENERATED APP OPTIONS
           - "__NEW_APP__"
           - "camscanner"
           - "dwg-fastview"
@@ -31,10 +37,8 @@ on:
           - "vpnify"
           - "x"
           - "youtube"
-          BEGIN GENERATED APP OPTIONS
+          # END GENERATED APP OPTIONS
         default: __NEW_APP__
-          END GENERATED APP OPTIONS
-undefined
 
       new_app_name:
         description: "New application ID (add-app only), e.g. truecaller"
@@ -66,7 +70,7 @@ undefined
         default: apkmirror
 
       provider_ref:
-        description: "Provider reference. APKMirror uses org/name; other providers use their app name."
+        description: "Provider reference: APKMirror uses org/name; other providers use their app name."
         required: false
         type: string
         default: ""
@@ -99,11 +103,17 @@ undefined
         default: arm64-v8a
 
       patch_source_url:
-        description: "Morphe patch source URL (add-app only): GitHub/GitLab repo or https://morphe.software/add-source?github=... / ?gitlab=..."
+        description: "Morphe patch source URL (add-app): GitHub/GitLab repository or Morphe add-source deep link"
         required: false
         type: string
         default: ""
 
+      source:
+        description: "Patch source for edit-patches. __AUTO__ works when the selected app has one build/source entry."
+        required: false
+        type: choice
+        options:
+          # BEGIN GENERATED SOURCE OPTIONS
           - "__AUTO__"
           - "devanced"
           - "hoodles"
@@ -117,13 +127,11 @@ undefined
           - "morphe"
           - "piko-newx"
           - "rushi-excel"
-          BEGIN GENERATED SOURCE OPTIONS
+          # END GENERATED SOURCE OPTIONS
         default: morphe
-          END GENERATED SOURCE OPTIONS
-undefined
 
       patch_action:
-        description: "Patch edit: add=force enable, exclude=exception/disable, reset=return to Morphe default"
+        description: "Patch edit: add = force enable, exclude = exception/disable, reset = return to Morphe default"
         required: false
         type: choice
         options:
@@ -132,6 +140,12 @@ undefined
           - reset
         default: add
 
+      patch:
+        description: "Patch from the committed patches/ directory. The option includes application/source to prevent cross-app edits."
+        required: false
+        type: choice
+        options:
+          # BEGIN GENERATED PATCH OPTIONS
           - "__NONE__"
           - "camscanner / hoodles — Disable telemetry"
           - "camscanner / hoodles — Enable Premium"
@@ -331,10 +345,8 @@ undefined
           - "youtube / morphe — Wide search bar"
           - "youtube / morphe — Network proxy"
           - "youtube / morphe — Custom Branding"
-          BEGIN GENERATED PATCH OPTIONS
+          # END GENERATED PATCH OPTIONS
         default: __NONE__
-          END GENERATED PATCH OPTIONS
-undefined
 
       status:
         description: "Application build state (set-app-status only)"
@@ -392,7 +404,6 @@ jobs:
           CONFIG_CONFIRM_DELETE: ${{ inputs.confirm_delete }}
         run: |
           set -euo pipefail
-
           args=(
             --operation "$CONFIG_OPERATION"
             --app-name "$CONFIG_APP_NAME"
@@ -410,11 +421,7 @@ jobs:
             --patch "$CONFIG_PATCH"
             --status "$CONFIG_STATUS"
           )
-
-          if [ "$CONFIG_CONFIRM_DELETE" = "true" ]; then
-            args+=(--confirm-delete)
-          fi
-
+          if [ "$CONFIG_CONFIRM_DELETE" = "true" ]; then args+=(--confirm-delete); fi
           python scripts/manage_config.py "${args[@]}"
 
       - name: Show Configuration Changes
@@ -433,12 +440,10 @@ jobs:
           set -euo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           if git diff --quiet -- config/morphe-config.json patch-config.json arch-config.json apps sources patches .github/workflows/manage-config.yml; then
             echo "No configuration changes were necessary."
             exit 0
           fi
-
           git add config/morphe-config.json patch-config.json arch-config.json apps sources patches .github/workflows/manage-config.yml
           git commit -m "chore: manage repository configuration"
           git push origin "HEAD:$GITHUB_REF_NAME"
