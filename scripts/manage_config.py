@@ -497,7 +497,7 @@ def set_app_status(data: dict, args: argparse.Namespace) -> None:
 
 
 def option_line(value: str) -> str:
-    return "          - " + json.dumps(value, ensure_ascii=False)
+    return "- " + json.dumps(value, ensure_ascii=False)
 
 
 def generated_app_options(data: dict) -> str:
