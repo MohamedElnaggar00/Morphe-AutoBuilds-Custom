@@ -5,8 +5,37 @@ env:
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - pre-final-test
 
 jobs:
+  static-tests:
+    name: Static Regression Tests
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install -r requirements.txt
+          python -m pip install requests beautifulsoup4
+
+      - name: Compile Python Sources
+        run: |
+          python -m py_compile src/*.py scripts/*.py tests/*.py
+
+      - name: Run Unit Tests
+        run: |
+          python -m unittest discover -s tests -p "test_*.py" -v
+
   prepare-matrix:
     name: Prepare Full Build Matrix
     runs-on: ubuntu-latest
@@ -66,6 +95,7 @@ jobs:
 
   build-all:
     name: Build ${{ matrix.app_name }} / ${{ matrix.source }} / ${{ matrix.arch }}
+    if: github.event_name == 'workflow_dispatch'
     needs: prepare-matrix
     runs-on: ubuntu-latest
     services:
