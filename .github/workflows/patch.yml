@@ -72,6 +72,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Synchronize Configuration
+        run: python scripts/sync_config.py
 
       - name: Validate GitHub Auth
         env:
@@ -157,6 +159,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Synchronize Configuration
+        run: python scripts/sync_config.py
 
       - name: Setup Java 21
         uses: actions/setup-java@v4
@@ -210,6 +214,14 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Synchronize Configuration
+        run: python scripts/sync_config.py
 
       - name: Restore Cached Tools
         uses: actions/cache@v4
