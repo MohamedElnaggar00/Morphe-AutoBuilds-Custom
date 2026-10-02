@@ -311,16 +311,18 @@ def main():
                 "",
             ]
 
-    if failures:
-        print("README refresh failed:")
-        for failure in failures:
-            print(" -", failure)
-        raise SystemExit(1)
-
+    # Always write the README, even when one app/source cannot be inspected.
+    # A single incompatible MPP must not prevent the other applications from
+    # having their README entries refreshed.
     (ROOT / "README.md").write_text(
         "\n".join(sections).rstrip() + "\n",
         encoding="utf-8",
     )
+
+    if failures:
+        print("README refresh completed with warnings:")
+        for failure in failures:
+            print(" -", failure)
 
 
 if __name__ == "__main__":
