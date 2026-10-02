@@ -5,6 +5,12 @@ env:
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "requirements.txt"
+      - "sources/**"
+      - "scripts/check_dependency_updates.py"
+      - ".github/workflows/dependency-status.yml"
   schedule:
     - cron: '30 9 * * 1'
       timezone: "Africa/Cairo"
