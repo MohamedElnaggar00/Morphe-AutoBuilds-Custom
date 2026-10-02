@@ -57,6 +57,13 @@
   },
   {
     "app_name": "messenger",
+    "source": "devanced",
+    "arches": [
+      "arm64-v8a"
+    ]
+  },
+  {
+    "app_name": "messenger",
     "source": "hushmessenger",
     "arches": [
       "arm64-v8a"
