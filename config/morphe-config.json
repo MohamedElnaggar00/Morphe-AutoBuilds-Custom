@@ -670,7 +670,10 @@
     },
     {
       "app_name": "messenger",
-      "source": "devanced"
+      "source": "devanced",
+      "arches": [
+        "arm64-v8a"
+      ]
     },
     {
       "app_name": "messenger",
