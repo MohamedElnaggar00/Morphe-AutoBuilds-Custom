@@ -350,10 +350,10 @@ Architecture: arm64-v8a
 - ❌ Skip update checks
 - ❌ Skip the splash ad
 - ❌ Remove creation tools
-- ❌ Block P2P video relay
 - ❌ Remove content credential and card scanner assets
 - ❌ Remove unused language packs
 - ❌ Remove LIVE extras
+- ❌ Block P2P video relay
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
