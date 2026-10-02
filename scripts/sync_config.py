@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Generate the existing runtime configuration from config/morphe-config.json."""
+
+# Keep this path covered by the temporary pre-final integration trigger.
 from __future__ import annotations
 
 import json
