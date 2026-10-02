@@ -173,8 +173,13 @@ def main() -> int:
         current = installed_gplaydl()
 
     if not current:
-        raise RuntimeError("gplaydl is not installed")
-    if version_key(current) < version_key(latest):
+        if args.install:
+            raise RuntimeError("gplaydl installation did not complete")
+        print(
+            "gplaydl is not installed in this check-only environment; "
+            "latest stable availability was verified above."
+        )
+    elif version_key(current) < version_key(latest):
         raise RuntimeError(
             f"gplaydl installation is stale: installed {current}, latest {latest}"
         )
