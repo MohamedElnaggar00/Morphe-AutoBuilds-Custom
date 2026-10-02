@@ -241,6 +241,14 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         logging.error(f"Available files: {[f.name for f in download_files]}")
         return None
 
+    if is_morphe and source != "morphe" and not universal_patches:
+        logging.error(
+            "❌ Required Morphe universal patch bundle is missing; refusing to build "
+            f"{app_name} without Disable Play Store updates."
+        )
+        logging.error(f"Available files: {[f.name for f in download_files]}")
+        return None
+
     logging.info(f"✅ Using CLI: {cli.name}")
     logging.info(f"✅ Using patches: {patches.name}")
 
