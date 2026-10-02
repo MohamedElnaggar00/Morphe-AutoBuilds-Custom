@@ -115,13 +115,13 @@ Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 17/24 applied</summary>
+<summary>🩹 Patches — 18/24 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
 - ❌ Spoof signature
-- ❌ Disable Play Store updates
+- ✅ Disable Play Store updates
 - ✅ Hide ads
 - ✅ Custom font
 - ✅ Force system font
@@ -149,7 +149,7 @@ Patch source: piko-newx — v3.48.0 ([v3.48.0](https://github.com/crimera/piko-n
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 42/46 applied</summary>
+<summary>🩹 Patches — 43/51 applied</summary>
 
 - ✅ NewX: Remove ads
 - ✅ NewX: Disable blur effects
@@ -197,6 +197,11 @@ Architecture: arm64-v8a
 - ✅ NewX: Show sensitive media
 - ✅ NewX: Hide posts by verified account type
 - ✅ NewX: Filter posts by keyword
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
 
 </details>
 
@@ -205,7 +210,7 @@ Patch source: jasonwu1994 — v3.11.0 ([v3.11.0](https://github.com/jasonwu1994/
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 42/42 applied</summary>
+<summary>🩹 Patches — 43/47 applied</summary>
 
 - ✅ English QWERTY Up-Flick Uppercase
 - ✅ Long-Press Editing Shortcuts
@@ -249,6 +254,11 @@ Architecture: arm64-v8a
 - ✅ Package Rename
 - ✅ Add Gboard Signature Bypass
 - ✅ Zhuyin Slide Input
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
 
 </details>
 
@@ -257,11 +267,15 @@ Patch source: hxreborn — v1.39.0 ([v1.39.0](https://github.com/hxreborn/morphe
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 2/3 applied</summary>
+<summary>🩹 Patches — 3/7 applied</summary>
 
 - ❌ Override certificate pinning
 - ✅ Unlock premium
 - ✅ Disable rating prompt
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
 
 </details>
 
@@ -270,7 +284,7 @@ Patch source: hushfeed — v0.66.0 ([v0.66.0](https://github.com/SysAdminDoc/hus
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 39/102 applied</summary>
+<summary>🩹 Patches — 40/107 applied</summary>
 
 - ❌ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -345,11 +359,11 @@ Architecture: arm64-v8a
 - ❌ Drop the animated image cache
 - ❌ Skip update checks
 - ❌ Skip the splash ad
-- ❌ Remove LIVE extras
 - ❌ Remove creation tools
-- ❌ Block P2P video relay
 - ❌ Remove content credential and card scanner assets
 - ❌ Remove unused language packs
+- ❌ Remove LIVE extras
+- ❌ Block P2P video relay
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
@@ -374,6 +388,11 @@ Architecture: arm64-v8a
 - ❌ Resource and battery governor
 - ❌ Look like the store app
 - ✅ Hide floating promotions
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
 
 </details>
 
@@ -382,7 +401,7 @@ Patch source: metra — v0.8.0 ([v0.8.0](https://github.com/icysymmetra/tiktok-p
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 41/42 applied</summary>
+<summary>🩹 Patches — 42/47 applied</summary>
 
 - ✅ Hide CAPTCHA popups
 - ✅ Feed filter
@@ -426,6 +445,11 @@ Architecture: arm64-v8a
 - ✅ Translate comments
 - ✅ Enable voice comments
 - ✅ Hide floating promotions
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
 
 </details>
 
@@ -434,7 +458,7 @@ Patch source: hoodles — v1.46.0 ([v1.46.0](https://github.com/hoo-dles/morphe-
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 2/7 applied</summary>
+<summary>🩹 Patches — 3/12 applied</summary>
 
 - ❌ Hide app icon
 - ❌ Enable debug
@@ -443,25 +467,54 @@ Architecture: arm64-v8a
 - ❌ Disable Pairip license check
 - ✅ Disable telemetry
 - ✅ Enable Premium
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
 
 </details>
 
-## Messenger — App v— — Patch v1.4.4
-Patch source: devanced — v1.4.4 ([v1.4.4](https://github.com/RookieEnough/De-Vanced))
-Architecture: —
+## Messenger — —
+Patch source: devanced
 
 <details>
-<summary>🩹 Patches — 7/9 applied</summary>
+<summary>🩹 Patches — unavailable</summary>
 
-- ❌ Clone app
-- ✅ Hide inbox ads
-- ✅ Hide inbox stories and notes tray
-- ✅ Hide inbox subtabs
-- ✅ Disable typing indicator
-- ✅ Hide Facebook buttons
-- ✅ Open links externally
-- ✅ Remove Meta AI
-- ❌ Spoof package version
+> README refresh failed for this app: 
+Exception in thread "main" java.lang.NoSuchMethodError: 'app.morphe.patcher.patch.BytecodePatch app.morphe.patches.shared.misc.gms.GmsCoreSupportPatchKt.gmsCoreSupportPatch$default(java.lang.String, java.lang.String, app.morphe.patcher.Fingerprint, java.util.Set, app.morphe.patcher.Fingerprint, app.morphe.patcher.patch.Patch, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function1, kotlin.jvm.functions.Function1, int, java.lang.Object)'
+	at app.morphe.patches.music.misc.gms.GmsCoreSupportPatchKt.<clinit>(GmsCoreSupportPatch.kt:17)
+	at java.base/jdk.internal.misc.Unsafe.ensureClassInitialized0(Native Method)
+	at java.base/jdk.internal.misc.Unsafe.ensureClassInitialized(Unsafe.java:1160)
+	at java.base/jdk.internal.reflect.MethodHandleAccessorFactory.ensureClassInitialized(MethodHandleAccessorFactory.java:301)
+	at java.base/jdk.internal.reflect.MethodHandleAccessorFactory.newMethodAccessor(MethodHandleAccessorFactory.java:72)
+	at java.base/jdk.internal.reflect.ReflectionFactory.newMethodAccessor(ReflectionFactory.java:159)
+	at java.base/java.lang.reflect.Method.acquireMethodAccessor(Method.java:726)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:577)
+	at app.morphe.patcher.patch.PatchLoader$Companion.getPatchMethods(Patch.kt:933)
+	at app.morphe.patcher.patch.PatchLoader$Companion.loadPatches$lambda$0$1(Patch.kt:957)
+	at kotlin.sequences.FlatteningSequence$iterator$1.ensureItemIterator(Sequences.kt:363)
+	at kotlin.sequences.FlatteningSequence$iterator$1.hasNext(Sequences.kt:351)
+	at kotlin.sequences.FilteringSequence$iterator$1.calcNext(Sequences.kt:202)
+	at kotlin.sequences.FilteringSequence$iterator$1.hasNext(Sequences.kt:227)
+	at kotlin.sequences.SequencesKt___SequencesKt.toSet(_Sequences.kt:1033)
+	at app.morphe.patcher.patch.PatchLoader$Companion.loadPatches(Patch.kt:960)
+	at app.morphe.patcher.patch.PatchLoader$Companion.access$loadPatches(Patch.kt:913)
+	at app.morphe.patcher.patch.PatchLoader.<init>(Patch.kt:858)
+	at app.morphe.patcher.patch.PatchLoader.<init>(Patch.kt)
+	at app.morphe.patcher.patch.PatchLoader$Jar.<init>(Patch.kt:867)
+	at app.morphe.patcher.patch.PatchKt.loadPatchesFromJar(Patch.kt:981)
+	at app.morphe.desktop.command.ListPatchesCommand.run(ListPatchesCommand.kt:217)
+	at picocli.CommandLine.executeUserObject(CommandLine.java:2045)
+	at picocli.CommandLine.access$1500(CommandLine.java:148)
+	at picocli.CommandLine$RunLast.executeUserObjectOfLastSubcommandWithSameParent(CommandLine.java:2469)
+	at picocli.CommandLine$RunLast.handle(CommandLine.java:2461)
+	at picocli.CommandLine$RunLast.handle(CommandLine.java:2423)
+	at picocli.CommandLine$AbstractParseResultHandler.execute(CommandLine.java:2277)
+	at picocli.CommandLine$RunLast.execute(CommandLine.java:2425)
+	at picocli.CommandLine.execute(CommandLine.java:2174)
+	at app.morphe.MorpheLauncherKt.main(MorpheLauncher.kt:85)
+
 
 </details>
 
@@ -470,7 +523,7 @@ Patch source: hushmessenger — v0.8.0 ([v0.8.0](https://github.com/SysAdminDoc/
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 22/31 applied</summary>
+<summary>🩹 Patches — 23/36 applied</summary>
 
 - ❌ Install beside Meta apps
 - ❌ Restore screens on re-signed builds
@@ -503,6 +556,11 @@ Architecture: arm64-v8a
 - ✅ View stories anonymously
 - ✅ Save any story
 - ✅ Open settings from menu
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
 
 </details>
 
@@ -511,7 +569,7 @@ Patch source: hushfacebook — v0.6.0 ([v0.6.0](https://github.com/SysAdminDoc/H
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 47/59 applied</summary>
+<summary>🩹 Patches — 48/64 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -572,6 +630,11 @@ Architecture: arm64-v8a
 - ❌ View stories anonymously
 - ✅ Hide suggested stories
 - ✅ Stop update prompts
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
 
 </details>
 
@@ -580,7 +643,7 @@ Patch source: rushi-excel — v1.22.0 ([v1.22.0](https://github.com/rushiranpise
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 1/8 applied</summary>
+<summary>🩹 Patches — 2/13 applied</summary>
 
 - ✅ Unlock Excel
 - ❌ Disable PairIP license check
@@ -590,6 +653,11 @@ Architecture: arm64-v8a
 - ❌ GmsCore support (MicroG)
 - ❌ Spoof install source
 - ❌ Spoof app signature
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
 
 </details>
 
@@ -598,7 +666,7 @@ Patch source: rushi-usbhotspot — v1.22.0 ([v1.22.0](https://github.com/rushira
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 1/8 applied</summary>
+<summary>🩹 Patches — 2/13 applied</summary>
 
 - ❌ Disable PairIP license check
 - ❌ Provide Original app certificate
@@ -608,5 +676,10 @@ Architecture: arm64-v8a
 - ❌ Spoof install source
 - ❌ Spoof app signature
 - ✅ Unlock Pro
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
 
 </details>
