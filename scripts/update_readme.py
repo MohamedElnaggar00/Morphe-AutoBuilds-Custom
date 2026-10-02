@@ -76,22 +76,43 @@ def download_asset(release: dict, suffix: str, output: Path) -> str:
     asset = candidates[0]
     headers = dict(HEADERS)
     headers["Accept"] = "application/octet-stream"
-    r = requests.get(asset["url"], headers=headers, timeout=120)
+    url = asset.get("url") or asset.get("browser_download_url") or asset.get("direct_asset_url")
+    if not url:
+        raise RuntimeError(f"Asset {asset.get('name', suffix)} has no download URL")
+    r = requests.get(url, headers=headers, timeout=120)
     r.raise_for_status()
     output.write_bytes(r.content)
     return asset["name"]
 
 
-def source_repo(source: str) -> tuple[str, str]:
+def source_repo(source: str) -> dict:
     data = json.loads((ROOT / "sources" / f"{source}.json").read_text(encoding="utf-8"))
     repos = [
         x for x in data[1:]
-        if x.get("user") and x.get("repo") and "morphe-cli" not in x.get("repo", "").lower()
+        if isinstance(x, dict)
+        and (
+            (x.get("user") and x.get("repo"))
+            or x.get("project")
+        )
+        and str(x.get("repo") or "").lower() != "morphe-cli"
     ]
     if not repos:
         raise RuntimeError(f"No patch repository found for source {source}")
-    x = repos[-1]
-    return x["user"], x["repo"]
+    return repos[-1]
+
+
+def latest_source_release(entry: dict) -> dict:
+    provider = str(entry.get("provider") or "github").strip().lower()
+    if provider == "gitlab":
+        return builder_utils.detect_release(entry)
+    return latest_release(str(entry["user"]), str(entry["repo"]))
+
+
+def source_repo_url(entry: dict) -> str:
+    provider = str(entry.get("provider") or "github").strip().lower()
+    if provider == "gitlab":
+        return f"https://gitlab.com/{entry['project']}"
+    return f"https://github.com/{entry['user']}/{entry['repo']}"
 
 
 def app_package(app_name: str) -> str:
@@ -248,8 +269,8 @@ def main():
         source = item["source"]
         display = app_display_name(app, registry)
         try:
-            owner, repo = source_repo(source)
-            release = latest_release(owner, repo)
+            source_entry = source_repo(source)
+            release = latest_source_release(source_entry)
             mpp = WORK / f"{source}-{release['tag_name'].lstrip('v')}.mpp"
             if not mpp.exists():
                 download_asset(release, ".mpp", mpp)
@@ -287,7 +308,7 @@ def main():
             source_version = str(release.get("tag_name", "latest")).lstrip("v")
             applied_count = sum(1 for _, value in final_rows if value)
 
-            patch_repo_url = f"https://github.com/{owner}/{repo}"
+            patch_repo_url = source_repo_url(source_entry)
             patch_version_link = f"[v{md_escape(source_version)}]({patch_repo_url})"
 
             sections += [
