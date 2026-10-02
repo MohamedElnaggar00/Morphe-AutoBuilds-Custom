@@ -85,6 +85,16 @@ def _patch_source_version(source: str) -> str:
         return ""
 
 
+def _force_rebuild_requested() -> bool:
+    """Return whether an explicit manual/test rebuild was requested."""
+    value = (
+        os.environ.get("MORPHE_FORCE_REBUILD")
+        or os.environ.get("MORPHE_TEST_FORCE_REBUILD")
+        or ""
+    )
+    return value.strip().lower() in {"1", "true", "yes"}
+
+
 def _release_already_has_build(app_name: str, arch: str, patch_version: str, version: str) -> bool:
     """
     Avoid rebuilding an APK that is already published for the exact app,
@@ -245,13 +255,14 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
     patch_version = _patch_source_version(source)
 
-    if supported_versions and os.environ.get("MORPHE_TEST_FORCE_REBUILD", "").lower() not in {"1", "true", "yes"}:
+    force_rebuild = _force_rebuild_requested()
+    if supported_versions and not force_rebuild:
         latest_supported = supported_versions[0]
         if _release_already_has_build(app_name, arch, patch_version, latest_supported):
             print(f"⏭️ Skipping {app_name}: {latest_supported} is already built and published.")
             return None
-    elif supported_versions:
-        print("🧪 Test mode: forcing rebuild even if the same app/patch is already published.")
+    elif supported_versions and force_rebuild:
+        print("🔁 Forced rebuild requested: ignoring the existing-release skip check.")
 
     # Bundle patch sets are tied to the exact split bundle they were
     # checked against. For these apps the authoritative source is APKMirror's
