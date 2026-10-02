@@ -1,0 +1,34 @@
+name: Dependency Status
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '30 9 * * 1'
+      timezone: "Africa/Cairo"
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    name: Check Morphe CLI and gplaydl
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Requests
+        run: python -m pip install requests
+
+      - name: Check Current Versions
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: python scripts/check_dependency_updates.py
