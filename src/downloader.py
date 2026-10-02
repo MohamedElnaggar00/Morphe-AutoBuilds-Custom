@@ -86,23 +86,32 @@ def download_required(source: str) -> tuple[list[Path], str]:
     if name.lower() != "morphe":
         try:
             universal_release = utils.detect_github_release("MorpheApp", "morphe-patches", "latest")
-            for asset in universal_release.get("assets", []):
-                asset_name = str(asset.get("name") or "")
-                if asset_name.lower().endswith(".mpp") and not asset_name.lower().endswith(".asc"):
-                    universal_name = f"morphe-universal-{asset_name}"
-                    downloaded_files.append(
-                        download_resource(asset["browser_download_url"], name=universal_name)
-                    )
-                    logging.info(
-                        "Downloaded Morphe universal patch bundle: %s", universal_name
-                    )
-                    break
+            universal_asset = next(
+                (
+                    asset for asset in universal_release.get("assets", [])
+                    if str(asset.get("name") or "").lower().endswith(".mpp")
+                    and not str(asset.get("name") or "").lower().endswith(".asc")
+                ),
+                None,
+            )
+            if universal_asset is None:
+                raise RuntimeError("No .mpp asset found in the latest MorpheApp/morphe-patches release")
+
+            asset_name = str(universal_asset.get("name") or "")
+            universal_name = f"morphe-universal-{asset_name}"
+            downloaded_files.append(
+                download_resource(universal_asset["browser_download_url"], name=universal_name)
+            )
+            logging.info(
+                "Downloaded required Morphe universal patch bundle: %s", universal_name
+            )
         except Exception as exc:
-            logging.warning(
-                "Could not download Morphe universal patch bundle for %s: %s",
+            logging.error(
+                "Required Morphe universal patch bundle could not be downloaded for %s: %s",
                 name,
                 exc,
             )
+            raise
 
     return downloaded_files, name
 
