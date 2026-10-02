@@ -1,0 +1,100 @@
+name: Watch Patch Source Releases
+
+on:
+  schedule:
+    # GitHub schedules can be delayed under load; this is intentionally a
+    # frequent fallback because external repositories cannot directly trigger
+    # this repository without a webhook/dispatch sender.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout watcher state
+        uses: actions/checkout@v4
+
+      - name: Check patch source releases and dispatch builds
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+
+          STATE_FILE="patch-release-state.json"
+          TMP_STATE="${STATE_FILE}.tmp"
+
+          if [ ! -f "${STATE_FILE}" ]; then
+            echo "::error::Missing ${STATE_FILE}"
+            exit 1
+          fi
+
+          cp "${STATE_FILE}" "${TMP_STATE}"
+
+          # These are the patch repositories currently referenced by
+          # patch-config.json. Duplicate sources are intentionally listed once.
+          sources=(
+            "MorpheApp/morphe-patches"
+            "crimera/piko-newx"
+            "jasonwu1994/Gboard-patches"
+            "hxreborn/morphe-patches"
+            "SysAdminDoc/hushfeed"
+            "icysymmetra/tiktok-patches-for-morphe"
+            "hoo-dles/morphe-patches"
+            "RookieEnough/De-Vanced"
+            "SysAdminDoc/HushMessenger"
+            "SysAdminDoc/Hushfacebook"
+            "rushiranpise/morphe-patches"
+          )
+
+          changed=0
+
+          for source_repo in "${sources[@]}"; do
+            echo "Checking ${source_repo}..."
+
+            release_json="$(gh api               -H "Accept: application/vnd.github+json"               "/repos/${source_repo}/releases?per_page=1")"
+
+            release_id="$(jq -r '.[0].id // empty' <<<"${release_json}")"
+            tag_name="$(jq -r '.[0].tag_name // empty' <<<"${release_json}")"
+            published_at="$(jq -r '.[0].published_at // empty' <<<"${release_json}")"
+            html_url="$(jq -r '.[0].html_url // empty' <<<"${release_json}")"
+
+            if [ -z "${release_id}" ]; then
+              echo "No published releases found for ${source_repo}; skipping."
+              continue
+            fi
+
+            previous_id="$(jq -r --arg repo "${source_repo}" '.[$repo] // 0' "${STATE_FILE}")"
+
+            if [ "${release_id}" = "${previous_id}" ]; then
+              echo "No new release: ${source_repo} @ ${tag_name}"
+              continue
+            fi
+
+            echo "NEW PATCH RELEASE: ${source_repo} @ ${tag_name}"
+
+            jq --arg repo "${source_repo}" --argjson id "${release_id}"               '.[$repo] = $id' "${TMP_STATE}" > "${TMP_STATE}.next"
+            mv "${TMP_STATE}.next" "${TMP_STATE}"
+
+            gh api               --method POST               -H "Accept: application/vnd.github+json"               "/repos/${REPOSITORY}/dispatches"               -f event_type="patch-release"               -F client_payload[patch_repository]="${source_repo}"               -F client_payload[release_id]="${release_id}"               -f client_payload[tag_name]="${tag_name}"               -f client_payload[published_at]="${published_at}"               -f client_payload[release_url]="${html_url}"
+
+            changed=1
+            echo "Dispatched patch-release for ${source_repo} @ ${tag_name}"
+          done
+
+          if [ "${changed}" -eq 1 ]; then
+            mv "${TMP_STATE}" "${STATE_FILE}"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add "${STATE_FILE}"
+            git commit -m "chore: record monitored patch releases"
+            git push
+          else
+            rm -f "${TMP_STATE}"
+            echo "No new patch releases detected."
+          fi
