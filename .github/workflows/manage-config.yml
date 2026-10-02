@@ -54,17 +54,6 @@ on:
         description: "Existing patch source ID from config/morphe-config.json"
         required: true
         type: string
-      architecture:
-        description: "Architecture for a new app/build"
-        required: false
-        type: choice
-        options:
-          - arm64-v8a
-          - armeabi-v7a
-          - x86_64
-          - x86
-          - universal
-        default: arm64-v8a
       type:
         description: "APKMirror artifact type (APK/BUNDLE)"
         required: false
@@ -76,7 +65,7 @@ on:
         type: string
         default: ""
       value:
-        description: "Patch name or comma-separated architectures for other operations"
+        description: "Patch name/architectures; for add-app use one architecture"
         required: false
         type: string
         default: ""
@@ -111,7 +100,6 @@ jobs:
           CONFIG_PACKAGE_NAME: ${{ inputs.package_name }}
           CONFIG_PROVIDER: ${{ inputs.provider }}
           CONFIG_PROVIDER_REF: ${{ inputs.provider_ref }}
-          CONFIG_ARCHITECTURE: ${{ inputs.architecture }}
           CONFIG_TYPE: ${{ inputs.type }}
           CONFIG_DPI: ${{ inputs.dpi }}
         run: |
@@ -124,7 +112,7 @@ jobs:
             --package-name "$CONFIG_PACKAGE_NAME" \
             --provider "$CONFIG_PROVIDER" \
             --provider-ref "$CONFIG_PROVIDER_REF" \
-            --architecture "$CONFIG_ARCHITECTURE" \
+            --architecture "$CONFIG_VALUE" \
             --provider-type "$CONFIG_TYPE" \
             --dpi "$CONFIG_DPI"
 
