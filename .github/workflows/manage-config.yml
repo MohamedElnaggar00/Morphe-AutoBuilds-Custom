@@ -7,36 +7,57 @@ on:
   workflow_dispatch:
     inputs:
       operation:
-        description: "Configuration operation"
+        description: "Configuration action: 1) Add application + patch source  2) Edit patch selection  3) Delete application  4) Enable/disable application"
         required: true
         type: choice
         options:
           - add-app
-          - enable-build
-          - disable-build
-          - set-arches
-          - add-enable-patch
-          - remove-enable-patch
-          - add-disable-patch
-          - remove-disable-patch
-          - clear-patches
-        default: enable-build
+          - edit-patches
+          - delete-app
+          - set-app-status
+        default: add-app
+
       app_name:
-        description: "Application ID (lowercase, e.g. my-app)"
+        description: "Existing application. For add-app keep __NEW_APP__."
         required: true
+        type: choice
+        options:
+          - "__NEW_APP__"
+          - "camscanner"
+          - "dwg-fastview"
+          - "excel"
+          - "facebook"
+          - "gboard"
+          - "messenger"
+          - "reddit"
+          - "tiktok"
+          - "tiktok-metra"
+          - "truecaller"
+          - "vpnify"
+          - "x"
+          - "youtube"
+        default: __NEW_APP__
+
+      new_app_name:
+        description: "New application ID (add-app only), e.g. truecaller"
+        required: false
         type: string
+        default: ""
+
       display_name:
-        description: "Display name"
+        description: "Application display name (add-app only)"
         required: false
         type: string
         default: ""
+
       package_name:
-        description: "Android package name, e.g. com.example.app"
+        description: "Android package name (add-app only), e.g. com.truecaller"
         required: false
         type: string
         default: ""
+
       provider:
-        description: "Download provider"
+        description: "Original APK download provider (add-app only)"
         required: false
         type: choice
         options:
@@ -45,30 +66,296 @@ on:
           - uptodown
           - aptoide
         default: apkmirror
+
       provider_ref:
-        description: "APKMirror: org/name; other providers: app name"
+        description: "Provider reference. APKMirror uses org/name; other providers use their app name."
         required: false
         type: string
         default: ""
-      source:
-        description: "Existing patch source ID from config/morphe-config.json"
-        required: true
-        type: string
-      type:
-        description: "APKMirror artifact type (APK/BUNDLE)"
+
+      provider_type:
+        description: "APKMirror artifact type (add-app only)"
         required: false
-        type: string
-        default: ""
+        type: choice
+        options:
+          - APK
+          - BUNDLE
+        default: APK
+
       dpi:
-        description: "APKMirror DPI (e.g. nodpi)"
+        description: "APKMirror DPI (add-app only), e.g. nodpi"
+        required: false
+        type: string
+        default: nodpi
+
+      architecture:
+        description: "Build architecture (add-app only)"
+        required: false
+        type: choice
+        options:
+          - arm64-v8a
+          - armeabi-v7a
+          - x86_64
+          - x86
+          - universal
+        default: arm64-v8a
+
+      patch_source_url:
+        description: "Morphe patch source URL (add-app only): GitHub/GitLab repo or https://morphe.software/add-source?github=... / ?gitlab=..."
         required: false
         type: string
         default: ""
-      value:
-        description: "Patch name/architecture; for add-app use one architecture"
+
+      source:
+        description: "Patch source for edit-patches. __AUTO__ works when the application has one build source."
         required: false
-        type: string
-        default: ""
+        type: choice
+        options:
+          - "__AUTO__"
+          - "devanced"
+          - "hoodles"
+          - "hoomans"
+          - "hushfacebook"
+          - "hushfeed"
+          - "hushmessenger"
+          - "hxreborn"
+          - "jasonwu1994"
+          - "metra"
+          - "morphe"
+          - "piko-newx"
+          - "rushi-excel"
+        default: morphe
+
+      patch_action:
+        description: "Patch edit: add=force enable, exclude=exception/disable, reset=return to Morphe default"
+        required: false
+        type: choice
+        options:
+          - add
+          - exclude
+          - reset
+        default: add
+
+      patch:
+        description: "Patch from the committed patches/ directory. Values include application/source for validation."
+        required: false
+        type: choice
+        options:
+          - "__NONE__"
+          - "camscanner / hoodles — Disable telemetry"
+          - "camscanner / hoodles — Enable Premium"
+          - "facebook / hushfacebook — Download any video"
+          - "facebook / hushfacebook — Hide Reels in the feed"
+          - "facebook / hushfacebook — Block background-return feed refresh"
+          - "facebook / hushfacebook — Hide Stories tray"
+          - "facebook / hushfacebook — Clean up Reels"
+          - "facebook / hushfacebook — Hide the Reels tab"
+          - "facebook / hushfacebook — Turn off double tap to like"
+          - "facebook / hushfacebook — Hold a reel for 2x"
+          - "facebook / hushfacebook — AMOLED black theme"
+          - "facebook / hushfacebook — Material You theme"
+          - "facebook / hushfacebook — Open on a chosen tab"
+          - "facebook / hushfacebook — Tag suggestions only after @"
+          - "facebook / hushfacebook — Use the phone's emoji"
+          - "facebook / hushfacebook — Use the system font"
+          - "facebook / hushfacebook — Don't send reel watch history"
+          - "messenger / hushmessenger — Disable typing indicator"
+          - "messenger / hushmessenger — Hide inbox ads"
+          - "messenger / hushmessenger — Hide inbox subtabs"
+          - "messenger / hushmessenger — Hide Facebook buttons"
+          - "messenger / hushmessenger — Remove Meta AI"
+          - "messenger / hushmessenger — Open links externally"
+          - "messenger / hushmessenger — Spoof package version"
+          - "messenger / hushmessenger — Allow chat bubbles"
+          - "messenger / hushmessenger — Allow screenshots"
+          - "messenger / hushmessenger — Hide read receipts"
+          - "messenger / hushmessenger — Keep unsent messages"
+          - "messenger / hushmessenger — Open web links externally"
+          - "messenger / hushmessenger — Install beside Meta apps"
+          - "messenger / hushmessenger — Restore screens on re-signed builds"
+          - "tiktok / hushfeed — Always show publish date"
+          - "tiktok / hushfeed — Comment publish diagnostics"
+          - "tiktok / hushfeed — Comment send fix"
+          - "tiktok / hushfeed — Copy comments without username"
+          - "tiktok / hushfeed — Custom offline videos limit"
+          - "tiktok / hushfeed — Disable login requirement"
+          - "tiktok / hushfeed — Disable screen capture detection"
+          - "tiktok / hushfeed — Disable the long press quick share"
+          - "tiktok / hushfeed — Disable the long press repost"
+          - "tiktok / hushfeed — Downloads"
+          - "tiktok / hushfeed — Feature Gate Lab"
+          - "tiktok / hushfeed — Feed filter"
+          - "tiktok / hushfeed — Feed tab navigation"
+          - "tiktok / hushfeed — Fix Google login"
+          - "tiktok / hushfeed — Follow diagnostics"
+          - "tiktok / hushfeed — Hide CAPTCHA popups"
+          - "tiktok / hushfeed — Hide comment typing suggestions"
+          - "tiktok / hushfeed — Hide feed LIVE button"
+          - "tiktok / hushfeed — Hide feed follow button"
+          - "tiktok / hushfeed — Hide feed save button"
+          - "tiktok / hushfeed — Hide feed search button"
+          - "tiktok / hushfeed — Hide floating promotions"
+          - "tiktok / hushfeed — Hold-and-slide 2x lock"
+          - "tiktok / hushfeed — Keep the Favorites tab"
+          - "tiktok / hushfeed — Open external links directly"
+          - "tiktok / hushfeed — Playback speed"
+          - "tiktok / hushfeed — Remember clear display"
+          - "tiktok / hushfeed — Repost diagnostics"
+          - "tiktok / hushfeed — Resume videos after scrolling"
+          - "tiktok / hushfeed — SIM spoof"
+          - "tiktok / hushfeed — Sanitize sharing links"
+          - "tiktok / hushfeed — Settings"
+          - "tiktok / hushfeed — Show LIVE search"
+          - "tiktok / hushfeed — Show the progress bar"
+          - "tiktok / hushfeed — Show the progress bar thumbnail"
+          - "tiktok / hushfeed — Stay on the video in full screen"
+          - "tiktok / hushfeed — Stop video looping"
+          - "tiktok / hushfeed — Translate comments"
+          - "tiktok / hushfeed — Use non-personalized search"
+          - "tiktok-metra / metra — Always show publish date"
+          - "tiktok-metra / metra — Comment sort controls"
+          - "tiktok-metra / metra — Copy comments without username"
+          - "tiktok-metra / metra — Custom offline videos limit"
+          - "tiktok-metra / metra — Disable login requirement"
+          - "tiktok-metra / metra — Disable long-press quick share"
+          - "tiktok-metra / metra — Disable long-press repost"
+          - "tiktok-metra / metra — Disable screen capture detection"
+          - "tiktok-metra / metra — Downloads"
+          - "tiktok-metra / metra — Enable Live search"
+          - "tiktok-metra / metra — Enable non-personalized search"
+          - "tiktok-metra / metra — Enable voice comments"
+          - "tiktok-metra / metra — Feature Gate Lab"
+          - "tiktok-metra / metra — Feed filter"
+          - "tiktok-metra / metra — Feed tab navigation"
+          - "tiktok-metra / metra — Fix Google login"
+          - "tiktok-metra / metra — Foldable split comment view"
+          - "tiktok-metra / metra — Force show Auto scroll"
+          - "tiktok-metra / metra — Hide AI content"
+          - "tiktok-metra / metra — Hide CAPTCHA popups"
+          - "tiktok-metra / metra — Hide FYP unpersonalized slop videos"
+          - "tiktok-metra / metra — Hide feed LIVE button"
+          - "tiktok-metra / metra — Hide feed follow button"
+          - "tiktok-metra / metra — Hide feed save button"
+          - "tiktok-metra / metra — Hide feed search button"
+          - "tiktok-metra / metra — Hide floating promotions"
+          - "tiktok-metra / metra — Hide quick comment reactions"
+          - "tiktok-metra / metra — Hide suggested accounts"
+          - "tiktok-metra / metra — Hold-and-slide 2x lock"
+          - "tiktok-metra / metra — Open external links directly"
+          - "tiktok-metra / metra — Playback speed"
+          - "tiktok-metra / metra — Region spoof"
+          - "tiktok-metra / metra — Remember clear display"
+          - "tiktok-metra / metra — Resume videos after scrolling"
+          - "tiktok-metra / metra — Sanitize sharing links"
+          - "tiktok-metra / metra — Settings"
+          - "tiktok-metra / metra — Share sheet modification"
+          - "tiktok-metra / metra — Show seekbar"
+          - "tiktok-metra / metra — Show seekbar thumbnail"
+          - "tiktok-metra / metra — Stop video looping"
+          - "tiktok-metra / metra — Translate comments"
+          - "vpnify / hxreborn — Disable rating prompt"
+          - "vpnify / hxreborn — Unlock premium"
+          - "youtube / morphe — Add to queue"
+          - "youtube / morphe — Alternative thumbnails"
+          - "youtube / morphe — Ambient mode"
+          - "youtube / morphe — App refresh rate"
+          - "youtube / morphe — Bypass image region restrictions"
+          - "youtube / morphe — Bypass link redirects"
+          - "youtube / morphe — Captions"
+          - "youtube / morphe — Change form factor"
+          - "youtube / morphe — Change header"
+          - "youtube / morphe — Change start page"
+          - "youtube / morphe — Channel search"
+          - "youtube / morphe — Check watch history domain name resolution"
+          - "youtube / morphe — Copy video link"
+          - "youtube / morphe — Custom player overlay opacity"
+          - "youtube / morphe — Disable DRC audio"
+          - "youtube / morphe — Disable Play Store updates"
+          - "youtube / morphe — Disable QUIC protocol"
+          - "youtube / morphe — Disable Shorts resuming on startup"
+          - "youtube / morphe — Disable double tap actions"
+          - "youtube / morphe — Disable fullscreen gestures"
+          - "youtube / morphe — Disable haptic feedback"
+          - "youtube / morphe — Disable layout updates"
+          - "youtube / morphe — Disable player popup panels"
+          - "youtube / morphe — Disable playlist autoplay"
+          - "youtube / morphe — Disable rolling number animations"
+          - "youtube / morphe — Disable scrolling speed limit"
+          - "youtube / morphe — Disable sign in to TV popup"
+          - "youtube / morphe — Disable video codecs"
+          - "youtube / morphe — Double tap to seek"
+          - "youtube / morphe — Downloads"
+          - "youtube / morphe — Enable debugging"
+          - "youtube / morphe — Exit fullscreen mode"
+          - "youtube / morphe — Force fullscreen landscape"
+          - "youtube / morphe — Force original audio"
+          - "youtube / morphe — Fullscreen video scale"
+          - "youtube / morphe — GmsCore support"
+          - "youtube / morphe — Hide Shorts components"
+          - "youtube / morphe — Hide ads"
+          - "youtube / morphe — Hide autoplay preview"
+          - "youtube / morphe — Hide end screen cards"
+          - "youtube / morphe — Hide end screen suggested video"
+          - "youtube / morphe — Hide info cards"
+          - "youtube / morphe — Hide layout components"
+          - "youtube / morphe — Hide player flyout menu components"
+          - "youtube / morphe — Hide player overlay buttons"
+          - "youtube / morphe — Hide related video overlay"
+          - "youtube / morphe — Hide related videos"
+          - "youtube / morphe — Hide timestamp"
+          - "youtube / morphe — Hide video action buttons"
+          - "youtube / morphe — Loop video"
+          - "youtube / morphe — Media notification controls"
+          - "youtube / morphe — Miniplayer"
+          - "youtube / morphe — Mute button"
+          - "youtube / morphe — Navigation bar"
+          - "youtube / morphe — Open Shorts in regular player"
+          - "youtube / morphe — Open channel of live avatar"
+          - "youtube / morphe — Open links externally"
+          - "youtube / morphe — Open system share sheet"
+          - "youtube / morphe — Open videos fullscreen"
+          - "youtube / morphe — Override YouTube Music buttons"
+          - "youtube / morphe — Play all"
+          - "youtube / morphe — Playback in feeds"
+          - "youtube / morphe — Playback speed"
+          - "youtube / morphe — PoToken provider"
+          - "youtube / morphe — Reload video"
+          - "youtube / morphe — Remember live stream playback position"
+          - "youtube / morphe — Remove background playback restrictions"
+          - "youtube / morphe — Remove viewer discretion dialog"
+          - "youtube / morphe — Return YouTube Dislike"
+          - "youtube / morphe — Sanitize sharing links"
+          - "youtube / morphe — Save to Watch later"
+          - "youtube / morphe — Seekbar"
+          - "youtube / morphe — Settings menu filter"
+          - "youtube / morphe — Shorts autoplay"
+          - "youtube / morphe — SponsorBlock"
+          - "youtube / morphe — Spoof app version"
+          - "youtube / morphe — Spoof device dimensions"
+          - "youtube / morphe — Spoof video streams"
+          - "youtube / morphe — Swipe controls"
+          - "youtube / morphe — Theme"
+          - "youtube / morphe — Video quality"
+          - "youtube / morphe — Voice over translation"
+          - "youtube / morphe — Wide search bar"
+          - "youtube / morphe — Network proxy"
+          - "youtube / morphe — Custom Branding"
+        default: __NONE__
+
+      status:
+        description: "Application build state (set-app-status only)"
+        required: false
+        type: choice
+        options:
+          - enabled
+          - disabled
+        default: disabled
+
+      confirm_delete:
+        description: "Safety confirmation required for delete-app"
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -81,6 +368,7 @@ jobs:
   manage:
     name: Apply Configuration Change
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
@@ -94,32 +382,57 @@ jobs:
         env:
           CONFIG_OPERATION: ${{ inputs.operation }}
           CONFIG_APP_NAME: ${{ inputs.app_name }}
-          CONFIG_SOURCE: ${{ inputs.source }}
-          CONFIG_VALUE: ${{ inputs.value }}
+          CONFIG_NEW_APP_NAME: ${{ inputs.new_app_name }}
           CONFIG_DISPLAY_NAME: ${{ inputs.display_name }}
           CONFIG_PACKAGE_NAME: ${{ inputs.package_name }}
           CONFIG_PROVIDER: ${{ inputs.provider }}
           CONFIG_PROVIDER_REF: ${{ inputs.provider_ref }}
-          CONFIG_TYPE: ${{ inputs.type }}
+          CONFIG_PROVIDER_TYPE: ${{ inputs.provider_type }}
           CONFIG_DPI: ${{ inputs.dpi }}
+          CONFIG_ARCHITECTURE: ${{ inputs.architecture }}
+          CONFIG_PATCH_SOURCE_URL: ${{ inputs.patch_source_url }}
+          CONFIG_SOURCE: ${{ inputs.source }}
+          CONFIG_PATCH_ACTION: ${{ inputs.patch_action }}
+          CONFIG_PATCH: ${{ inputs.patch }}
+          CONFIG_STATUS: ${{ inputs.status }}
+          CONFIG_CONFIRM_DELETE: ${{ inputs.confirm_delete }}
         run: |
-          python scripts/manage_config.py \
-            --operation "$CONFIG_OPERATION" \
-            --app-name "$CONFIG_APP_NAME" \
-            --source "$CONFIG_SOURCE" \
-            --value "$CONFIG_VALUE" \
-            --display-name "$CONFIG_DISPLAY_NAME" \
-            --package-name "$CONFIG_PACKAGE_NAME" \
-            --provider "$CONFIG_PROVIDER" \
-            --provider-ref "$CONFIG_PROVIDER_REF" \
-            --architecture "$CONFIG_VALUE" \
-            --provider-type "$CONFIG_TYPE" \
-            --dpi "$CONFIG_DPI"
+          set -euo pipefail
 
-      - name: Show Changes
+          args=(
+            --operation "$CONFIG_OPERATION"
+            --app-name "$CONFIG_APP_NAME"
+            --new-app-name "$CONFIG_NEW_APP_NAME"
+            --display-name "$CONFIG_DISPLAY_NAME"
+            --package-name "$CONFIG_PACKAGE_NAME"
+            --provider "$CONFIG_PROVIDER"
+            --provider-ref "$CONFIG_PROVIDER_REF"
+            --provider-type "$CONFIG_PROVIDER_TYPE"
+            --dpi "$CONFIG_DPI"
+            --architecture "$CONFIG_ARCHITECTURE"
+            --patch-source-url "$CONFIG_PATCH_SOURCE_URL"
+            --source "$CONFIG_SOURCE"
+            --patch-action "$CONFIG_PATCH_ACTION"
+            --patch "$CONFIG_PATCH"
+            --status "$CONFIG_STATUS"
+          )
+
+          if [ "$CONFIG_CONFIRM_DELETE" = "true" ]; then
+            args+=(--confirm-delete)
+          fi
+
+          python scripts/manage_config.py "${args[@]}"
+
+      - name: Show Configuration Changes
         run: |
           git status --short
-          git diff -- config/morphe-config.json patch-config.json arch-config.json apps sources patches
+          git diff -- config/morphe-config.json patch-config.json arch-config.json apps sources patches .github/workflows/manage-config.yml
+
+      - name: Validate Generated Files
+        run: |
+          python -m py_compile scripts/manage_config.py scripts/sync_config.py
+          python scripts/sync_config.py
+          git diff --check
 
       - name: Commit and Push
         run: |
@@ -127,11 +440,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
-          if git diff --quiet -- config/morphe-config.json patch-config.json arch-config.json apps sources patches; then
+          if git diff --quiet -- config/morphe-config.json patch-config.json arch-config.json apps sources patches .github/workflows/manage-config.yml; then
             echo "No configuration changes were necessary."
             exit 0
           fi
 
-          git add config/morphe-config.json patch-config.json arch-config.json apps sources patches
+          git add config/morphe-config.json patch-config.json arch-config.json apps sources patches .github/workflows/manage-config.yml
           git commit -m "chore: manage repository configuration"
           git push origin "HEAD:$GITHUB_REF_NAME"
