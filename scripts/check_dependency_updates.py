@@ -19,8 +19,9 @@ HEADERS = {
     "X-GitHub-Api-Version": "2022-11-28",
     "User-Agent": "Morphe-AutoBuilds-Custom-dependency-check",
 }
-if os.getenv("GITHUB_TOKEN"):
-    HEADERS["Authorization"] = f"Bearer {os.environ[\"GITHUB_TOKEN\"]}"
+token = os.getenv("GITHUB_TOKEN")
+if token:
+    HEADERS["Authorization"] = f"Bearer {token}"
 
 
 def version_key(value: str) -> tuple:
