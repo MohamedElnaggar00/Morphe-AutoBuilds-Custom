@@ -194,8 +194,16 @@ def resolve_app_version(app: str, source: str, cli: Path, patches: Path) -> str:
     if version:
         return version
 
-    # Preserve a safe fallback for sources that do not publish a readable
-    # patches-list to the builder's source-contract helper.
+    # Some patch sources do not publish a readable patches-list.json. In
+    # that case use the same Morphe CLI compatibility query the legacy
+    # planner uses, without inventing a store-latest version.
+    try:
+        supported = legacy.get_supported_versions(package, str(cli), str(patches))
+        if supported:
+            return supported[0]
+    except Exception:
+        pass
+
     version = legacy.fetch_recommended_version(app, source).strip()
     if version:
         return version
