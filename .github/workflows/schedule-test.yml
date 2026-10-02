@@ -1,0 +1,16 @@
+name: Schedule Trigger Test
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+      timezone: "Africa/Cairo"
+
+jobs:
+  test-schedule:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report scheduled execution
+        run: |
+          echo "Schedule trigger is working."
+          echo "UTC time: $(date -u)"
+          echo "Runner time: $(date)"
