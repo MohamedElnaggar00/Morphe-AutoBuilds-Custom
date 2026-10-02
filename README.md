@@ -1,8 +1,12 @@
 # Morphe AutoBuilds
 
 ## 🔄 Update Schedule
-- Automatic updates daily at 6:17 AM UTC
+- Automatic updates daily at 9:17 AM Africa/Cairo time
 - Manual updates available via workflow dispatch
+
+## ⚙️ Configuration
+Edit [config/morphe-config.json](config/morphe-config.json) to add apps, sources, build entries, or patch selections.
+Generated runtime files are synchronized by the **Sync Configuration** workflow.
 
 ## YouTube — App v— — Patch v1.44.0
 Patch source: morphe — v1.44.0 ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
@@ -136,8 +140,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v— — Patch v3.47.0
-Patch source: piko-newx — v3.47.0 ([v3.47.0](https://github.com/crimera/piko-newx))
+## X — App v— — Patch v3.48.0
+Patch source: piko-newx — v3.48.0 ([v3.48.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -457,8 +461,8 @@ Architecture: —
 
 </details>
 
-## Messenger — App v— — Patch v0.7.0
-Patch source: hushmessenger — v0.7.0 ([v0.7.0](https://github.com/SysAdminDoc/HushMessenger))
+## Messenger — App v— — Patch v0.8.0
+Patch source: hushmessenger — v0.8.0 ([v0.8.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
@@ -498,13 +502,14 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v— — Patch v0.5.0
-Patch source: hushfacebook — v0.5.0 ([v0.5.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v— — Patch v0.6.0
+Patch source: hushfacebook — v0.6.0 ([v0.6.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 39/51 applied</summary>
+<summary>🩹 Patches — 47/59 applied</summary>
 
+- ✅ Hide affiliate product links
 - ✅ Disable Audience Network
 - ✅ Block background ad prefetch
 - ✅ Hide sponsored Marketplace listings
@@ -524,6 +529,10 @@ Architecture: arm64-v8a
 - ✅ Download any video
 - ❌ Use the phone's emoji
 - ✅ Hide AI-detected posts
+- ✅ Hide the Feeds header
+- ✅ Hide Meta AI questions under posts
+- ✅ Keep post dates
+- ✅ Hide post prompts
 - ✅ Hide Reels in the feed
 - ✅ Block background-return feed refresh
 - ✅ Hide Stories tray
@@ -542,6 +551,8 @@ Architecture: arm64-v8a
 - ✅ Restore screens on re-signed builds
 - ✅ Hushfacebook settings
 - ✅ Sanitize sharing links
+- ✅ Start on x86 devices
+- ✅ Tab bar at the bottom
 - ✅ Marketplace only
 - ✅ Hide the Reels tab
 - ✅ Hide the Reels tab dot
@@ -550,6 +561,7 @@ Architecture: arm64-v8a
 - ✅ Clean up Reels
 - ✅ Turn off double tap to like
 - ✅ Hold a reel for 2x
+- ✅ Hide reel interest prompts
 - ❌ Don't send reel watch history
 - ✅ Hide Meta AI in search
 - ❌ Stop Story auto-advance
