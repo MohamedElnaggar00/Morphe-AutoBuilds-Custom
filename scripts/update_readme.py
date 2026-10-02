@@ -198,7 +198,7 @@ def resolve_app_version(app: str, source: str, cli: Path, patches: Path) -> str:
     # that case use the same Morphe CLI compatibility query the legacy
     # planner uses, without inventing a store-latest version.
     try:
-        supported = legacy.get_supported_versions(package, str(cli), str(patches))
+        supported = builder_utils.get_supported_versions(package, str(cli), str(patches))
         if supported:
             return supported[0]
     except Exception:
