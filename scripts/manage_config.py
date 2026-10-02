@@ -15,8 +15,12 @@ import argparse
 import hashlib
 import json
 import re
+import subprocess
+import tempfile
 from pathlib import Path
+from urllib.error import HTTPError
 from urllib.parse import parse_qs, unquote, urlparse
+from urllib.request import Request, urlopen
 
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG_PATH = ROOT / "config" / "morphe-config.json"
@@ -197,6 +201,115 @@ def choose_source_id(data: dict, info: dict) -> tuple[str, bool]:
     return candidate, False
 
 
+def _read_json_url(url: str) -> object:
+    request = Request(
+        url,
+        headers={
+            "Accept": "application/vnd.github+json",
+            "User-Agent": "Morphe-AutoBuilds-Custom-Manage-Configuration",
+        },
+    )
+    try:
+        with urlopen(request, timeout=30) as response:
+            return json.loads(response.read().decode("utf-8"))
+    except HTTPError as exc:
+        fail(f"could not access patch/CLI metadata: HTTP {exc.code} for {url}")
+
+
+def _download_url(url: str, destination: Path) -> None:
+    request = Request(
+        url,
+        headers={"User-Agent": "Morphe-AutoBuilds-Custom-Manage-Configuration"},
+    )
+    try:
+        with urlopen(request, timeout=120) as response:
+            destination.write_bytes(response.read())
+    except HTTPError as exc:
+        fail(f"could not download Morphe CLI: HTTP {exc.code}")
+
+
+def latest_morphe_cli_jar() -> Path:
+    releases = _read_json_url(
+        "https://api.github.com/repos/MorpheApp/morphe-cli/releases/latest"
+    )
+    assets = releases.get("assets") if isinstance(releases, dict) else None
+    if not isinstance(assets, list):
+        fail("Morphe CLI latest release returned no assets")
+    candidates = [
+        a for a in assets
+        if isinstance(a, dict)
+        and str(a.get("name") or "").lower().endswith(".jar")
+        and "morphe" in str(a.get("name") or "").lower()
+        and "dev" not in str(a.get("name") or "").lower()
+    ]
+    if not candidates:
+        fail("Morphe CLI latest release contains no stable .jar asset")
+    asset_url = candidates[0].get("browser_download_url")
+    if not asset_url:
+        fail("Morphe CLI asset has no browser download URL")
+    temp_dir = Path(tempfile.mkdtemp(prefix="morphe-manage-"))
+    jar = temp_dir / str(candidates[0]["name"])
+    _download_url(str(asset_url), jar)
+    if not jar.is_file() or jar.stat().st_size == 0:
+        fail("downloaded Morphe CLI is empty")
+    return jar
+
+
+def parse_default_patch_selection(output: str) -> tuple[list[str], list[str]]:
+    enabled: list[str] = []
+    disabled: list[str] = []
+    current_name: str | None = None
+    for raw in output.splitlines():
+        line = raw.strip()
+        if line.startswith("Name: "):
+            current_name = line[6:].strip()
+        elif line.startswith("Enabled: ") and current_name:
+            target = enabled if line[9:].strip().lower() == "true" else disabled
+            target.append(current_name)
+            current_name = None
+    return enabled, disabled
+
+
+def fetch_default_patch_selection(package_name: str, source_url: str) -> tuple[list[str], list[str]]:
+    cli = latest_morphe_cli_jar()
+    command = [
+        "java", "-jar", str(cli),
+        "list-patches",
+        "--with-descriptions=false",
+        "--filter-package-name", package_name,
+        "--patches", source_url,
+    ]
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=str(cli.parent),
+            text=True,
+            capture_output=True,
+            timeout=180,
+            check=False,
+        )
+    finally:
+        try:
+            cli.unlink(missing_ok=True)
+            cli.parent.rmdir()
+        except OSError:
+            pass
+
+    output = (completed.stdout or "") + (completed.stderr or "")
+    if completed.returncode != 0:
+        fail(
+            "could not read default patches from the selected source for "
+            f"{package_name}: {output[-2000:]}"
+        )
+    enabled, disabled = parse_default_patch_selection(output)
+    if not enabled and not disabled:
+        fail(
+            "the selected patch source returned no patches for "
+            f"{package_name}; verify that this source supports the application"
+        )
+    return enabled, disabled
+
+
 def build_source_entries(source_id: str, info: dict) -> list[dict]:
     entries: list[dict] = [
         {"name": source_id, "url": info["canonical_url"]},
@@ -319,19 +432,30 @@ def add_app(data: dict, args: argparse.Namespace) -> None:
         "providers": {provider: cfg},
     }
 
-    # No explicit patch overrides are created. Morphe therefore uses its
-    # curated/default selection, and future source updates can change it.
+    # Materialize Morphe's current default selection into the app/source
+    # patch file. This gives the GUI a concrete patch list to edit while
+    # preserving the exact defaults selected by Morphe for this package.
+    default_enabled, default_disabled = fetch_default_patch_selection(
+        package_name,
+        source_info["canonical_url"],
+    )
     data.setdefault("builds", []).append(
         {
             "app_name": app_name,
             "source": source_id,
             "arches": [architecture],
             "enabled": True,
+            "patches": {
+                "enable": default_enabled,
+                "disable": default_disabled,
+                "options": [],
+            },
         }
     )
     print(
-        f"✓ Added {app_name}/{source_id} with Morphe's default patch selection "
-        "(no explicit overrides)"
+        f"✓ Added {app_name}/{source_id} with "
+        f"{len(default_enabled)} default-enabled and {len(default_disabled)} "
+        "default-disabled Morphe patches"
     )
 
 
