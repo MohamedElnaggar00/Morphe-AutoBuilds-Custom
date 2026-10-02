@@ -1,0 +1,739 @@
+{
+  "version": 1,
+  "apps": {
+    "youtube": {
+      "display_name": "YouTube",
+      "providers": {
+        "apkmirror": {
+          "org": "google-inc",
+          "name": "youtube",
+          "type": "APK",
+          "arch": "universal",
+          "dpi": "nodpi",
+          "package": "com.google.android.youtube",
+          "version": ""
+        },
+        "apkpure": {
+          "name": "youtube",
+          "package": "com.google.android.youtube",
+          "version": ""
+        },
+        "uptodown": {
+          "name": "youtube",
+          "package": "com.google.android.youtube",
+          "version": ""
+        },
+        "aptoide": {
+          "name": "youtube",
+          "package": "com.google.android.youtube",
+          "version": ""
+        }
+      }
+    },
+    "reddit": {
+      "display_name": "Reddit",
+      "providers": {
+        "apkmirror": {
+          "org": "redditinc",
+          "name": "reddit",
+          "type": "",
+          "arch": "",
+          "dpi": "",
+          "package": "com.reddit.frontpage",
+          "version": ""
+        },
+        "apkpure": {
+          "name": "reddit-apk",
+          "package": "com.reddit.frontpage",
+          "version": ""
+        },
+        "uptodown": {
+          "name": "reddit-official-app",
+          "package": "com.reddit.frontpage",
+          "version": ""
+        },
+        "aptoide": {
+          "name": "reddit",
+          "package": "com.reddit.frontpage",
+          "version": ""
+        }
+      }
+    },
+    "x": {
+      "display_name": "X",
+      "providers": {
+        "apkmirror": {
+          "org": "x-corp",
+          "name": "twitter",
+          "release_prefix": "twitter",
+          "type": "BUNDLE",
+          "arch": "",
+          "dpi": "120-640dpi",
+          "package": "com.twitter.android",
+          "version": ""
+        },
+        "apkpure": {
+          "name": "x",
+          "package": "com.twitter.android",
+          "version": ""
+        },
+        "uptodown": {
+          "name": "twitter",
+          "package": "com.twitter.android",
+          "version": ""
+        },
+        "aptoide": {
+          "name": "twitter",
+          "package": "com.twitter.android",
+          "version": ""
+        }
+      }
+    },
+    "gboard": {
+      "display_name": "Gboard",
+      "providers": {
+        "apkmirror": {
+          "org": "google-inc",
+          "name": "gboard",
+          "release_prefix": "gboard-the-google-keyboard",
+          "type": "APK",
+          "arch": "arm64-v8a",
+          "dpi": "nodpi",
+          "package": "com.google.android.inputmethod.latin",
+          "version": ""
+        },
+        "apkpure": {
+          "name": "gboard-the-google-keyboard-app",
+          "package": "com.google.android.inputmethod.latin",
+          "version": ""
+        },
+        "aptoide": {
+          "name": "Gboard",
+          "package": "com.google.android.inputmethod.latin",
+          "version": ""
+        }
+      }
+    },
+    "vpnify": {
+      "display_name": "vpnify",
+      "providers": {
+        "apkmirror": {
+          "org": "vpnify",
+          "name": "vpnify",
+          "app_slug": "vpnify-unlimited-vpn-proxy",
+          "release_prefix": "vpnify-unlimited-vpn-proxy",
+          "type": "APK",
+          "arch": "arm64-v8a",
+          "dpi": "nodpi",
+          "package": "com.vpn.free.hotspot.secure.vpnify",
+          "version": ""
+        }
+      }
+    },
+    "tiktok": {
+      "display_name": "TikTok",
+      "providers": {
+        "apkmirror": {
+          "org": "tiktok-pte-ltd",
+          "name": "tik-tok-including-musical-ly",
+          "app_slug": "tik-tok-including-musical-ly",
+          "release_prefix": "tiktok",
+          "type": "APK",
+          "arch": "arm64-v8a",
+          "dpi": "nodpi",
+          "package": "com.zhiliaoapp.musically",
+          "version": "47.1.3"
+        }
+      }
+    },
+    "tiktok-metra": {
+      "display_name": "TikTok (Metra)",
+      "providers": {
+        "apkmirror": {
+          "org": "tiktok",
+          "name": "tiktok-metra",
+          "type": "APK",
+          "arch": "arm64-v8a",
+          "dpi": "nodpi",
+          "package": "com.zhiliaoapp.musically",
+          "version": "46.2.3"
+        }
+      }
+    },
+    "camscanner": {
+      "display_name": "CamScanner",
+      "providers": {
+        "apkmirror": {
+          "org": "camscanner",
+          "name": "camscanner",
+          "type": "APK",
+          "arch": "arm64-v8a",
+          "dpi": "nodpi",
+          "package": "com.intsig.camscanner",
+          "version": "7.20.0.2606230000"
+        }
+      }
+    },
+    "messenger": {
+      "display_name": "Messenger",
+      "providers": {
+        "aptoide": {
+          "name": "messenger",
+          "package": "com.facebook.orca"
+        }
+      }
+    },
+    "facebook": {
+      "display_name": "Facebook",
+      "providers": {
+        "aptoide": {
+          "name": "facebook",
+          "package": "com.facebook.katana"
+        }
+      }
+    },
+    "excel": {
+      "display_name": "Excel",
+      "providers": {
+        "aptoide": {
+          "name": "excel",
+          "package": "com.microsoft.office.excel"
+        }
+      }
+    },
+    "dwg-fastview": {
+      "display_name": "DWG FastView",
+      "providers": {
+        "aptoide": {
+          "name": "dwg-fastview",
+          "package": "com.gstarmc.android"
+        }
+      }
+    }
+  },
+  "sources": {
+    "devanced": {
+      "entries": [
+        {
+          "name": "devanced"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "RookieEnough",
+          "repo": "De-Vanced",
+          "tag": "latest"
+        }
+      ]
+    },
+    "hoodles": {
+      "entries": [
+        {
+          "name": "hoodles"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "hoo-dles",
+          "repo": "morphe-patches",
+          "tag": "latest"
+        }
+      ]
+    },
+    "hoomans": {
+      "entries": [
+        {
+          "name": "hoomans"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "arandomhooman",
+          "repo": "hoomans-morphe-patches",
+          "tag": "latest"
+        }
+      ]
+    },
+    "hushfacebook": {
+      "entries": [
+        {
+          "name": "hushfacebook"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "SysAdminDoc",
+          "repo": "Hushfacebook",
+          "tag": "latest"
+        }
+      ]
+    },
+    "hushfeed": {
+      "entries": [
+        {
+          "name": "hushfeed"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "SysAdminDoc",
+          "repo": "hushfeed",
+          "tag": "latest"
+        }
+      ]
+    },
+    "hushmessenger": {
+      "entries": [
+        {
+          "name": "hushmessenger"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "SysAdminDoc",
+          "repo": "HushMessenger",
+          "tag": "latest"
+        }
+      ]
+    },
+    "hxreborn": {
+      "entries": [
+        {
+          "name": "hxreborn"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "hxreborn",
+          "repo": "morphe-patches",
+          "tag": "latest"
+        }
+      ]
+    },
+    "jasonwu1994": {
+      "entries": [
+        {
+          "name": "morphe-patches"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "jasonwu1994",
+          "repo": "Gboard-patches",
+          "tag": "latest"
+        }
+      ]
+    },
+    "metra": {
+      "entries": [
+        {
+          "name": "metra"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "icysymmetra",
+          "repo": "tiktok-patches-for-morphe",
+          "tag": "latest"
+        }
+      ]
+    },
+    "morphe": {
+      "entries": [
+        {
+          "name": "morphe"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-patches",
+          "tag": "latest"
+        }
+      ]
+    },
+    "piko-newx": {
+      "entries": [
+        {
+          "name": "piko-patches"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "crimera",
+          "repo": "piko-newx",
+          "tag": "latest"
+        }
+      ]
+    },
+    "rushi-excel": {
+      "entries": [
+        {
+          "name": "rushi-excel"
+        },
+        {
+          "user": "MorpheApp",
+          "repo": "morphe-cli",
+          "tag": "latest"
+        },
+        {
+          "user": "rushiranpise",
+          "repo": "morphe-patches",
+          "tag": "latest"
+        }
+      ]
+    }
+  },
+  "builds": [
+    {
+      "app_name": "youtube",
+      "source": "morphe",
+      "arches": [
+        "arm64-v8a"
+      ],
+      "patches": {
+        "enable": [
+          "Add to queue",
+          "Alternative thumbnails",
+          "Ambient mode",
+          "App refresh rate",
+          "Bypass image region restrictions",
+          "Bypass link redirects",
+          "Captions",
+          "Change form factor",
+          "Change header",
+          "Change start page",
+          "Channel search",
+          "Check watch history domain name resolution",
+          "Copy video link",
+          "Custom player overlay opacity",
+          "Disable DRC audio",
+          "Disable Play Store updates",
+          "Disable QUIC protocol",
+          "Disable Shorts resuming on startup",
+          "Disable double tap actions",
+          "Disable fullscreen gestures",
+          "Disable haptic feedback",
+          "Disable layout updates",
+          "Disable player popup panels",
+          "Disable playlist autoplay",
+          "Disable rolling number animations",
+          "Disable scrolling speed limit",
+          "Disable sign in to TV popup",
+          "Disable video codecs",
+          "Double tap to seek",
+          "Downloads",
+          "Enable debugging",
+          "Exit fullscreen mode",
+          "Force fullscreen landscape",
+          "Force original audio",
+          "Fullscreen video scale",
+          "GmsCore support",
+          "Hide Shorts components",
+          "Hide ads",
+          "Hide autoplay preview",
+          "Hide end screen cards",
+          "Hide end screen suggested video",
+          "Hide info cards",
+          "Hide layout components",
+          "Hide player flyout menu components",
+          "Hide player overlay buttons",
+          "Hide related video overlay",
+          "Hide related videos",
+          "Hide timestamp",
+          "Hide video action buttons",
+          "Loop video",
+          "Media notification controls",
+          "Miniplayer",
+          "Mute button",
+          "Navigation bar",
+          "Open Shorts in regular player",
+          "Open channel of live avatar",
+          "Open links externally",
+          "Open system share sheet",
+          "Open videos fullscreen",
+          "Override YouTube Music buttons",
+          "Play all",
+          "Playback in feeds",
+          "Playback speed",
+          "PoToken provider",
+          "Reload video",
+          "Remember live stream playback position",
+          "Remove background playback restrictions",
+          "Remove viewer discretion dialog",
+          "Return YouTube Dislike",
+          "Sanitize sharing links",
+          "Save to Watch later",
+          "Seekbar",
+          "Settings menu filter",
+          "Shorts autoplay",
+          "SponsorBlock",
+          "Spoof app version",
+          "Spoof device dimensions",
+          "Spoof video streams",
+          "Swipe controls",
+          "Theme",
+          "Video quality",
+          "Voice over translation",
+          "Wide search bar"
+        ],
+        "disable": [
+          "Network proxy",
+          "Custom Branding"
+        ],
+        "options": [
+          "darkThemeColor=#181818"
+        ]
+      }
+    },
+    {
+      "app_name": "reddit",
+      "source": "morphe",
+      "arches": [
+        "arm64-v8a"
+      ]
+    },
+    {
+      "app_name": "x",
+      "source": "piko-newx",
+      "arches": [
+        "arm64-v8a"
+      ]
+    },
+    {
+      "app_name": "gboard",
+      "source": "jasonwu1994",
+      "arches": [
+        "arm64-v8a"
+      ]
+    },
+    {
+      "app_name": "vpnify",
+      "source": "hxreborn",
+      "arches": [
+        "arm64-v8a"
+      ],
+      "patches": {
+        "enable": [
+          "Disable rating prompt",
+          "Unlock premium"
+        ]
+      }
+    },
+    {
+      "app_name": "tiktok",
+      "source": "hushfeed",
+      "arches": [
+        "arm64-v8a"
+      ],
+      "patches": {
+        "enable": [
+          "Always show publish date",
+          "Comment publish diagnostics",
+          "Comment send fix",
+          "Copy comments without username",
+          "Custom offline videos limit",
+          "Disable login requirement",
+          "Disable screen capture detection",
+          "Disable the long press quick share",
+          "Disable the long press repost",
+          "Downloads",
+          "Feature Gate Lab",
+          "Feed filter",
+          "Feed tab navigation",
+          "Fix Google login",
+          "Follow diagnostics",
+          "Hide CAPTCHA popups",
+          "Hide comment typing suggestions",
+          "Hide feed LIVE button",
+          "Hide feed follow button",
+          "Hide feed save button",
+          "Hide feed search button",
+          "Hide floating promotions",
+          "Hold-and-slide 2x lock",
+          "Keep the Favorites tab",
+          "Open external links directly",
+          "Playback speed",
+          "Remember clear display",
+          "Repost diagnostics",
+          "Resume videos after scrolling",
+          "SIM spoof",
+          "Sanitize sharing links",
+          "Settings",
+          "Show LIVE search",
+          "Show the progress bar",
+          "Show the progress bar thumbnail",
+          "Stay on the video in full screen",
+          "Stop video looping",
+          "Translate comments",
+          "Use non-personalized search"
+        ]
+      }
+    },
+    {
+      "app_name": "tiktok-metra",
+      "source": "metra",
+      "arches": [
+        "arm64-v8a"
+      ],
+      "patches": {
+        "enable": [
+          "Always show publish date",
+          "Comment sort controls",
+          "Copy comments without username",
+          "Custom offline videos limit",
+          "Disable login requirement",
+          "Disable long-press quick share",
+          "Disable long-press repost",
+          "Disable screen capture detection",
+          "Downloads",
+          "Enable Live search",
+          "Enable non-personalized search",
+          "Enable voice comments",
+          "Feature Gate Lab",
+          "Feed filter",
+          "Feed tab navigation",
+          "Fix Google login",
+          "Foldable split comment view",
+          "Force show Auto scroll",
+          "Hide AI content",
+          "Hide CAPTCHA popups",
+          "Hide FYP unpersonalized slop videos",
+          "Hide feed LIVE button",
+          "Hide feed follow button",
+          "Hide feed save button",
+          "Hide feed search button",
+          "Hide floating promotions",
+          "Hide quick comment reactions",
+          "Hide suggested accounts",
+          "Hold-and-slide 2x lock",
+          "Open external links directly",
+          "Playback speed",
+          "Region spoof",
+          "Remember clear display",
+          "Resume videos after scrolling",
+          "Sanitize sharing links",
+          "Settings",
+          "Share sheet modification",
+          "Show seekbar",
+          "Show seekbar thumbnail",
+          "Stop video looping",
+          "Translate comments"
+        ]
+      }
+    },
+    {
+      "app_name": "camscanner",
+      "source": "hoodles",
+      "arches": [
+        "arm64-v8a"
+      ],
+      "patches": {
+        "enable": [
+          "Disable telemetry",
+          "Enable Premium"
+        ]
+      }
+    },
+    {
+      "app_name": "messenger",
+      "source": "devanced",
+      "arches": [
+        "arm64-v8a"
+      ]
+    },
+    {
+      "app_name": "messenger",
+      "source": "hushmessenger",
+      "arches": [
+        "arm64-v8a"
+      ],
+      "patches": {
+        "disable": [
+          "Disable typing indicator",
+          "Hide inbox ads",
+          "Hide inbox subtabs",
+          "Hide Facebook buttons",
+          "Remove Meta AI",
+          "Open links externally",
+          "Spoof package version",
+          "Allow chat bubbles",
+          "Allow screenshots",
+          "Hide read receipts",
+          "Keep unsent messages",
+          "Open web links externally",
+          "Install beside Meta apps",
+          "Restore screens on re-signed builds"
+        ]
+      }
+    },
+    {
+      "app_name": "facebook",
+      "source": "hushfacebook",
+      "arches": [
+        "arm64-v8a"
+      ],
+      "patches": {
+        "enable": [
+          "Download any video",
+          "Hide Reels in the feed",
+          "Block background-return feed refresh",
+          "Hide Stories tray",
+          "Clean up Reels",
+          "Hide the Reels tab",
+          "Turn off double tap to like",
+          "Hold a reel for 2x"
+        ],
+        "disable": [
+          "AMOLED black theme",
+          "Material You theme",
+          "Open on a chosen tab",
+          "Tag suggestions only after @",
+          "Use the phone's emoji",
+          "Use the system font",
+          "Don't send reel watch history"
+        ]
+      }
+    },
+    {
+      "app_name": "excel",
+      "source": "rushi-excel",
+      "arches": [
+        "arm64-v8a"
+      ]
+    }
+  ]
+}

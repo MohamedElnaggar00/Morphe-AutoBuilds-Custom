@@ -64,6 +64,14 @@ def download_required(source: str) -> tuple[list[Path], str]:
             or ""
         ).lower()
 
+        if "morphe-cli" in entry_name:
+            logging.info(
+                "Resolved Morphe CLI source %s/%s tag=%s",
+                repo_info.get("user", ""),
+                repo_info.get("repo", ""),
+                release.get("tag_name", "?"),
+            )
+
         for asset in release["assets"]:
             asset_name = asset["name"]
             asset_url = asset["browser_download_url"]

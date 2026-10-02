@@ -16,6 +16,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 
 import check_app_updates as legacy
+from src import utils as builder_utils
 
 API = "https://api.github.com"
 TOKEN = os.getenv("GITHUB_TOKEN") or os.getenv("GH_TOKEN")
@@ -36,6 +37,19 @@ APP_NAMES = {
     "tiktok-metra": "TikTok (Metra)",
     "camscanner": "CamScanner",
 }
+
+
+def load_registry() -> dict:
+    path = ROOT / "config" / "morphe-config.json"
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+
+
+def app_display_name(app: str, registry: dict) -> str:
+    value = registry.get("apps", {}).get(app, {}).get("display_name")
+    return str(value).strip() if value else APP_NAMES.get(app, app.title())
 
 WORK = ROOT / ".readme-cache"
 WORK.mkdir(exist_ok=True)
@@ -170,18 +184,29 @@ def md_escape(value: str) -> str:
 
 
 def resolve_app_version(app: str, source: str, cli: Path, patches: Path) -> str:
-    """Resolve the highest version actually supported by the current patch bundle."""
-    version = legacy.fetch_recommended_version(app, source).strip()
+    """Resolve the exact stable source target using the same policy as the builder."""
+    package = app_package(app)
+    try:
+        version = builder_utils.get_source_recommended_version(package, source).strip()
+    except Exception:
+        version = ""
+
     if version:
         return version
 
+    # Some patch sources do not publish a readable patches-list.json. In
+    # that case use the same Morphe CLI compatibility query the legacy
+    # planner uses, without inventing a store-latest version.
     try:
-        package = app_package(app)
-        supported = legacy.get_supported_versions(package, str(cli), str(patches))
+        supported = builder_utils.get_supported_versions(package, str(cli), str(patches))
         if supported:
             return supported[0]
     except Exception:
         pass
+
+    version = legacy.fetch_recommended_version(app, source).strip()
+    if version:
+        return version
 
     # Do not display a potentially unsupported store version in README.
     return "—"
@@ -189,6 +214,7 @@ def resolve_app_version(app: str, source: str, cli: Path, patches: Path) -> str:
 
 def main():
     config = json.loads((ROOT / "patch-config.json").read_text(encoding="utf-8"))
+    registry = load_registry()
     arch = {
         (x["app_name"], x["source"]): ", ".join(x.get("arches", []))
         for x in json.loads((ROOT / "arch-config.json").read_text(encoding="utf-8"))
@@ -207,8 +233,12 @@ def main():
         "# Morphe AutoBuilds",
         "",
         "## 🔄 Update Schedule",
-        "- Automatic updates daily at 6:17 AM UTC",
+        "- Automatic updates daily at 9:17 AM Africa/Cairo time",
         "- Manual updates available via workflow dispatch",
+        "",
+        "## ⚙️ Configuration",
+        "Edit [config/morphe-config.json](config/morphe-config.json) to add apps, sources, build entries, or patch selections.",
+        "Generated runtime files are synchronized by the **Sync Configuration** workflow.",
         "",
     ]
     failures = []
@@ -216,7 +246,7 @@ def main():
     for item in config.get("patch_list", []):
         app = item["app_name"]
         source = item["source"]
-        display = APP_NAMES.get(app, app.title())
+        display = app_display_name(app, registry)
         try:
             owner, repo = source_repo(source)
             release = latest_release(owner, repo)

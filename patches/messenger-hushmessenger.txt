@@ -1,14 +1,14 @@
--Disable typing indicator
--Hide inbox ads
--Hide inbox subtabs
--Hide Facebook buttons
--Remove Meta AI
--Open links externally
--Spoof package version
--Allow chat bubbles
--Allow screenshots
--Hide read receipts
--Keep unsent messages
--Open web links externally
--Install beside Meta apps
--Restore screens on re-signed builds
+- Disable typing indicator
+- Hide inbox ads
+- Hide inbox subtabs
+- Hide Facebook buttons
+- Remove Meta AI
+- Open links externally
+- Spoof package version
+- Allow chat bubbles
+- Allow screenshots
+- Hide read receipts
+- Keep unsent messages
+- Open web links externally
+- Install beside Meta apps
+- Restore screens on re-signed builds

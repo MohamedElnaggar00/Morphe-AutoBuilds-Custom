@@ -349,8 +349,20 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     # after ALL providers fail for that target do we move to the next source
     # target. This prevents APKMirror (or another provider) from silently
     # selecting an older version before the other providers are tried.
+    # Manual workflow can request one exact app version. Keep the patch
+    # source contract authoritative: the requested version will still be
+    # rejected below when it is not declared by the selected source.
+    manual_requested_version = os.getenv("MORPHE_MANUAL_VERSION", "").strip()
+
     explicit_target_versions = []
-    if source_targets:
+    if manual_requested_version:
+        explicit_target_versions = [manual_requested_version]
+        logging.info(
+            "Manual version override requested for %s: %s",
+            app_name,
+            manual_requested_version,
+        )
+    elif source_targets:
         explicit_target_versions = [target["version"] for target in source_targets]
     else:
         pinned_version = _configured_version(app_name)

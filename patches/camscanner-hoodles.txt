@@ -1,3 +1,2 @@
-# hoodles default Morphe patches for CamScanner
 + Disable telemetry
 + Enable Premium

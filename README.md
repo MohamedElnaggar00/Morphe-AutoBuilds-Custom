@@ -1,19 +1,24 @@
 # Morphe AutoBuilds
 
 ## 🔄 Update Schedule
-- Automatic updates daily at 6:17 AM UTC
+- Automatic updates daily at 9:17 AM Africa/Cairo time
 - Manual updates available via workflow dispatch
 
-## YouTube — App v— — Patch v1.44.0
-Patch source: morphe — v1.44.0 ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
+## ⚙️ Configuration
+Edit [config/morphe-config.json](config/morphe-config.json) to add apps, sources, build entries, or patch selections.
+Generated runtime files are synchronized by the **Sync Configuration** workflow.
+
+## YouTube — App v21.16.256 — Patch v1.45.0
+Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 83/88 applied</summary>
+<summary>🩹 Patches — 90/96 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
+- ❌ Spoof signature
 - ✅ Disable Play Store updates
 - ✅ Hide ads
 - ✅ Channel search
@@ -24,6 +29,7 @@ Architecture: arm64-v8a
 - ✅ Downloads
 - ✅ Disable haptic feedback
 - ✅ Loop video
+- ✅ Picture-in-picture button
 - ✅ Play all
 - ✅ Reload video
 - ✅ Save to Watch later
@@ -36,6 +42,7 @@ Architecture: arm64-v8a
 - ✅ Hide player overlay buttons
 - ✅ Captions
 - ✅ Disable layout updates
+- ✅ Disable auto feed refresh
 - ✅ Add to queue
 - ✅ Change form factor
 - ✅ Ambient mode
@@ -56,6 +63,7 @@ Architecture: arm64-v8a
 - ✅ Open channel of live avatar
 - ✅ Miniplayer
 - ✅ Override YouTube Music buttons
+- ✅ Restore original titles
 - ✅ Playback in feeds
 - ✅ Mute button
 - ✅ Disable fullscreen gestures
@@ -63,16 +71,19 @@ Architecture: arm64-v8a
 - ✅ Force fullscreen landscape
 - ✅ Fullscreen video scale
 - ✅ Open videos fullscreen
+- ✅ Player icon style
 - ✅ Custom player overlay opacity
 - ✅ Disable playlist autoplay
 - ✅ Return YouTube Dislike
 - ✅ Disable scrolling speed limit
 - ✅ Open system share sheet
 - ✅ Shorts autoplay
+- ✅ Shorts icon style
 - ✅ Disable Shorts resuming on startup
 - ✅ Open Shorts in regular player
 - ✅ SponsorBlock
 - ✅ Change start page
+- ✅ Hide status bar
 - ✅ Theme
 - ✅ Alternative thumbnails
 - ✅ Bypass image region restrictions
@@ -94,6 +105,7 @@ Architecture: arm64-v8a
 - ✅ Spoof device dimensions
 - ✅ Disable DRC audio
 - ✅ Force original audio
+- ✅ Playback buffer
 - ✅ Disable video codecs
 - ✅ Remember live stream playback position
 - ✅ Video quality
@@ -102,16 +114,17 @@ Architecture: arm64-v8a
 
 </details>
 
-## Reddit — App v— — Patch v1.44.0
-Patch source: morphe — v1.44.0 ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
+## Reddit — App v2026.24.0 — Patch v1.45.0
+Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 18/24 applied</summary>
+<summary>🩹 Patches — 17/24 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
+- ❌ Spoof signature
 - ❌ Disable Play Store updates
 - ✅ Hide ads
 - ✅ Custom font
@@ -128,7 +141,6 @@ Architecture: arm64-v8a
 - ✅ Hide Trending shelves
 - ✅ Show view count
 - ✅ App icon
-- ✅ Spoof signature
 - ✅ Start as guest
 - ✅ Open links directly
 - ✅ Open links externally
@@ -136,8 +148,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v— — Patch v3.47.0
-Patch source: piko-newx — v3.47.0 ([v3.47.0](https://github.com/crimera/piko-newx))
+## X — App v12.29.1-prod.01 — Patch v3.48.0
+Patch source: piko-newx — v3.48.0 ([v3.48.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -192,7 +204,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Gboard — App v— — Patch v3.11.0
+## Gboard — App v18.0.3.954559732-release-arm64-v8a — Patch v3.11.0
 Patch source: jasonwu1994 — v3.11.0 ([v3.11.0](https://github.com/jasonwu1994/Gboard-patches))
 Architecture: arm64-v8a
 
@@ -244,7 +256,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v— — Patch v1.38.0
+## vpnify — App v2.3.0 — Patch v1.38.0
 Patch source: hxreborn — v1.38.0 ([v1.38.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
@@ -257,7 +269,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v— — Patch v0.66.0
+## TikTok — App v47.1.4 — Patch v0.66.0
 Patch source: hushfeed — v0.66.0 ([v0.66.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
@@ -369,7 +381,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok (Metra) — App v— — Patch v0.8.0
+## TikTok (Metra) — App v46.2.3 — Patch v0.8.0
 Patch source: metra — v0.8.0 ([v0.8.0](https://github.com/icysymmetra/tiktok-patches-for-morphe))
 Architecture: arm64-v8a
 
@@ -421,7 +433,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## CamScanner — App v— — Patch v1.46.0
+## CamScanner — App v7.20.0.2606230000 — Patch v1.46.0
 Patch source: hoodles — v1.46.0 ([v1.46.0](https://github.com/hoo-dles/morphe-patches))
 Architecture: arm64-v8a
 
@@ -438,9 +450,9 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — App v— — Patch v1.4.4
+## Messenger — App v573.0.0.44.88 — Patch v1.4.4
 Patch source: devanced — v1.4.4 ([v1.4.4](https://github.com/RookieEnough/De-Vanced))
-Architecture: —
+Architecture: arm64-v8a
 
 <details>
 <summary>🩹 Patches — 7/9 applied</summary>
@@ -457,8 +469,8 @@ Architecture: —
 
 </details>
 
-## Messenger — App v— — Patch v0.7.0
-Patch source: hushmessenger — v0.7.0 ([v0.7.0](https://github.com/SysAdminDoc/HushMessenger))
+## Messenger — App v580.0.0.49.91 — Patch v0.8.0
+Patch source: hushmessenger — v0.8.0 ([v0.8.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
@@ -498,13 +510,14 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v— — Patch v0.5.0
-Patch source: hushfacebook — v0.5.0 ([v0.5.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v580.0.0.51.74 — Patch v0.6.0
+Patch source: hushfacebook — v0.6.0 ([v0.6.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 39/51 applied</summary>
+<summary>🩹 Patches — 47/59 applied</summary>
 
+- ✅ Hide affiliate product links
 - ✅ Disable Audience Network
 - ✅ Block background ad prefetch
 - ✅ Hide sponsored Marketplace listings
@@ -524,6 +537,10 @@ Architecture: arm64-v8a
 - ✅ Download any video
 - ❌ Use the phone's emoji
 - ✅ Hide AI-detected posts
+- ✅ Hide the Feeds header
+- ✅ Hide Meta AI questions under posts
+- ✅ Keep post dates
+- ✅ Hide post prompts
 - ✅ Hide Reels in the feed
 - ✅ Block background-return feed refresh
 - ✅ Hide Stories tray
@@ -542,6 +559,8 @@ Architecture: arm64-v8a
 - ✅ Restore screens on re-signed builds
 - ✅ Hushfacebook settings
 - ✅ Sanitize sharing links
+- ✅ Start on x86 devices
+- ✅ Tab bar at the bottom
 - ✅ Marketplace only
 - ✅ Hide the Reels tab
 - ✅ Hide the Reels tab dot
@@ -550,6 +569,7 @@ Architecture: arm64-v8a
 - ✅ Clean up Reels
 - ✅ Turn off double tap to like
 - ✅ Hold a reel for 2x
+- ✅ Hide reel interest prompts
 - ❌ Don't send reel watch history
 - ✅ Hide Meta AI in search
 - ❌ Stop Story auto-advance
@@ -559,7 +579,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Excel — App v— — Patch v1.22.0
+## Excel — App v16.0.20228.20090 — Patch v1.22.0
 Patch source: rushi-excel — v1.22.0 ([v1.22.0](https://github.com/rushiranpise/morphe-patches))
 Architecture: arm64-v8a
 

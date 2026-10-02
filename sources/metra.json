@@ -1,5 +1,15 @@
 [
-  {"name":"metra"},
-  {"user":"MorpheApp","repo":"morphe-cli","tag":"latest"},
-  {"user":"icysymmetra","repo":"tiktok-patches-for-morphe","tag":"latest"}
+  {
+    "name": "metra"
+  },
+  {
+    "user": "MorpheApp",
+    "repo": "morphe-cli",
+    "tag": "latest"
+  },
+  {
+    "user": "icysymmetra",
+    "repo": "tiktok-patches-for-morphe",
+    "tag": "latest"
+  }
 ]

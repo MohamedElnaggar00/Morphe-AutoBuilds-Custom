@@ -1,4 +1,3 @@
-# Metra default patches for TikTok
 + Always show publish date
 + Comment sort controls
 + Copy comments without username

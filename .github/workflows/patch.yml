@@ -15,44 +15,11 @@ on:
     - cron: '17 9 * * *'
       timezone: "Africa/Cairo"  # Daily at 9:17 AM Egypt time
 
-jobs:
-  download-tools:
-    name: Download Morphe Tools
-    runs-on: ubuntu-latest
-    if: ${{ false }}
-    outputs:
-      cache-key: ${{ steps.cache-key.outputs.cache-key }}
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-      
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
-      
-      - name: Download Morphe Tools
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          mkdir -p tools
-          curl -L "https://github.com/revanced/revanced-cli/releases/latest/download/revanced-cli-all.jar" -o tools/revanced-cli.jar
-          curl -L "https://github.com/revanced/revanced-patches/releases/latest/download/patches.jar" -o tools/patches.jar
-          curl -L "https://github.com/revanced/revanced-integrations/releases/latest/download/app-release-unsigned.apk" -o tools/integrations.apk
-      
-      - name: Cache Tools
-        uses: actions/cache@v4
-        id: cache-tools
-        with:
-          path: tools/
-          key: revanced-tools-${{ hashFiles('patch-config.json', 'arch-config.json') }}
-      
-      - name: Generate Cache Key
-        id: cache-key
-        run: echo "cache-key=${{ steps.cache-tools.outputs.cache-key || 'no-cache' }}" >> $GITHUB_OUTPUT
+concurrency:
+  group: morphe-autobuild-${{ github.ref }}
+  cancel-in-progress: false
 
+jobs:
   check-updates:
     name: Check for Updates
     runs-on: ubuntu-latest
@@ -72,6 +39,8 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+      - name: Synchronize Configuration
+        run: python scripts/sync_config.py
 
       - name: Validate GitHub Auth
         env:
@@ -82,8 +51,12 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install -r requirements.txt
-          pip install requests beautifulsoup4
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade -r requirements.txt
+
+      - name: Update and Verify Build Tools
+        run: |
+          python scripts/prepare_build_tools.py --install
 
       - name: Validate Release Planner Syntax
         run: |
@@ -136,57 +109,15 @@ jobs:
         run: |
           MATRIX='${{ needs.check-updates.outputs.build_matrix }}'
           if [ -z "$MATRIX" ] || [ "$MATRIX" = "null" ]; then
-            echo "Empty matrix from check; falling back to full patch-config.json"
-            MATRIX=$(jq -c '.patch_list' patch-config.json)
+            echo "::error::Planner returned an empty build matrix while updates were requested."
+            exit 1
+          fi
+          if ! printf '%s' "$MATRIX" | jq -e 'type == "array" and length > 0' >/dev/null; then
+            echo "::error::Planner returned an invalid build matrix."
+            exit 1
           fi
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
           echo "Matrix: $MATRIX" | head -c 1000
-
-  update-readme:
-    name: Update README
-    needs: check-updates
-    if: always()
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Setup Java 21
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '21'
-
-      - name: Install Dependencies
-        run: |
-          pip install requests curl-cffi PyGithub
-
-      - name: Refresh README from patch sources
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          python scripts/update_readme.py
-
-      - name: Commit README changes
-        run: |
-          if git diff --quiet -- README.md; then
-            echo "README is already up to date."
-            exit 0
-          fi
-
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md
-          git commit -m "docs: refresh README app and patch list"
-          git push
 
   build-apps:
     name: Build Applications
@@ -211,21 +142,28 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.11
+
+      - name: Synchronize Configuration
+        run: python scripts/sync_config.py
+
       - name: Restore Cached Tools
         uses: actions/cache@v4
         with:
           path: tools/
           key: revanced-tools-${{ hashFiles('patch-config.json', 'arch-config.json') }}
 
-      - name: Install Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: 3.11
-
       - name: Install Dependencies
         run: |
-          pip install -r requirements.txt
-          pip install requests beautifulsoup4
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade -r requirements.txt
+
+      - name: Update and Verify Build Tools
+        run: |
+          python scripts/prepare_build_tools.py --install
 
       - name: Setup Java 21
         uses: actions/setup-java@v4
@@ -294,6 +232,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
           GPLAYDL_API_KEY: ${{ secrets.GPLAYDL_API_KEY }}
+          SOURCE_PATCH_VERSION: ${{ matrix.patch_version }}
+          PLANNED_APP_VERSION: ${{ matrix.app_version }}
+          SOURCE_SIGNATURE_DIGEST: ${{ matrix.source_signature_digest }}
           TRAWL_URL: http://localhost:8191
           SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/morphe-signing.jks
           SIGNING_KEYSTORE_TYPE: JKS
@@ -329,6 +270,9 @@ jobs:
         env:
           APP_NAME: ${{ matrix.app_name }}
           SOURCE: ${{ matrix.source }}
+          SOURCE_PATCH_VERSION: ${{ matrix.patch_version }}
+          PLANNED_APP_VERSION: ${{ matrix.app_version }}
+          SOURCE_SIGNATURE_DIGEST: ${{ matrix.source_signature_digest }}
         run: |
           mkdir -p build_records
           # Record every produced APK so manifest can map (app, source, arch) -> filename
@@ -343,14 +287,15 @@ jobs:
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: apk-${{ matrix.app_name }}-${{ matrix.source }}
+          name: apk-${{ matrix.app_name }}-${{ matrix.source }}-${{ matrix.arch }}
           path: "*.apk"
+          if-no-files-found: error
 
       - name: Upload Build Records
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: build-records-${{ matrix.app_name }}-${{ matrix.source }}
+          name: build-records-${{ matrix.app_name }}-${{ matrix.source }}-${{ matrix.arch }}
           path: build_records/
           if-no-files-found: ignore
 
@@ -358,7 +303,7 @@ jobs:
     name: Publish Independent App Releases
     needs: [check-updates, build-apps]
     runs-on: ubuntu-latest
-    if: always() && needs.check-updates.outputs.has_updates == 'true'
+    if: needs.check-updates.outputs.has_updates == 'true' && needs.build-apps.result == 'success'
     permissions:
       contents: write
 
@@ -406,6 +351,8 @@ jobs:
             app_name="$(jq -r '.app_name // empty' "$record")"
             source_name="$(jq -r '.source // empty' "$record")"
             arch="$(jq -r '.arch // empty' "$record")"
+            source_signature_digest="$(jq -r '.source_signature_digest // empty' "$record")"
+            planned_app_version="$(jq -r '.planned_app_version // empty' "$record")"
 
             if [ -z "$filename" ] || [ -z "$app_name" ] || [ -z "$source_name" ] || [ -z "$arch" ]; then
               echo "::error::Incomplete build record: $record"
@@ -443,6 +390,12 @@ jobs:
               echo "- **Architecture:** ${arch}"
               echo "- **APK:** ${filename}"
               echo
+              if [ -n "$source_signature_digest" ]; then
+                echo "<!-- morphe-build-meta: source_signature_digest=${source_signature_digest} -->"
+              fi
+              if [ -n "$planned_app_version" ]; then
+                echo "<!-- morphe-build-meta: planned_app_version=${planned_app_version} -->"
+              fi
               echo "This release contains only this app/source build."
             } > "$notes_file"
 
@@ -475,6 +428,54 @@ jobs:
           GH_REPO: ${{ github.repository }}
         run: |
           gh release list --repo "$GH_REPO" --limit 30
+
+  update-readme:
+    name: Update README
+    needs: [check-updates, create-app-releases]
+    if: always() && needs.check-updates.result == 'success'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Synchronize Configuration
+        run: python scripts/sync_config.py
+
+      - name: Setup Java 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Install Dependencies
+        run: |
+          pip install requests curl-cffi PyGithub
+
+      - name: Refresh README from patch sources
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python scripts/update_readme.py
+
+      - name: Commit README changes
+        run: |
+          if git diff --quiet -- README.md; then
+            echo "README is already up to date."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          git commit -m "docs: refresh README app and patch list"
+          git push
 
   cleanup:
     name: Cleanup Workflow Runs

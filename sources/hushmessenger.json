@@ -1,5 +1,15 @@
 [
-  {"name":"hushmessenger"},
-  {"user":"MorpheApp","repo":"morphe-cli","tag":"latest"},
-  {"user":"SysAdminDoc","repo":"HushMessenger","tag":"latest"}
+  {
+    "name": "hushmessenger"
+  },
+  {
+    "user": "MorpheApp",
+    "repo": "morphe-cli",
+    "tag": "latest"
+  },
+  {
+    "user": "SysAdminDoc",
+    "repo": "HushMessenger",
+    "tag": "latest"
+  }
 ]

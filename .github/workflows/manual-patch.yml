@@ -12,10 +12,10 @@ on:
         type: string
         default: 'youtube'
       source:
-        description: 'Source name (from sources/ folder)'
+        description: 'Patch source ID (from config/morphe-config.json)'
         required: true
         type: string
-        default: 'revanced'
+        default: 'morphe'
       version:
         description: 'Specific version (leave empty for latest)'
         required: false
@@ -52,32 +52,13 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
       
-      - name: Set Specific Version (if provided)
-        if: ${{ inputs.version != '' }}
-        run: |
-          # Update app config with specific version
-          for dir in apps/apkmirror apps/apkpure apps/uptodown; do
-            config_file="$dir/${{ inputs.app_name }}.json"
-            if [ -f "$config_file" ]; then
-              echo "Updating $config_file with version ${{ inputs.version }}"
-              # Update JSON with specific version
-              python -c "
-              import json, sys, os
-              with open('$config_file', 'r') as f:
-                  config = json.load(f)
-              config['version'] = '${{ inputs.version }}'
-              with open('$config_file', 'w') as f:
-                  json.dump(config, f, indent=2)
-              "
-              echo "Updated: $config_file"
-              break
-            fi
-          done
-      
       - name: Install Python
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
+
+      - name: Synchronize Configuration
+        run: python scripts/sync_config.py
       
       - name: Install Dependencies
         run: |
@@ -97,6 +78,7 @@ jobs:
           ARCH: ${{ inputs.architecture }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TRAWL_URL: http://localhost:8191
+          MORPHE_MANUAL_VERSION: ${{ inputs.version }}
         run: |
           echo "🔧 Building ${{ inputs.app_name }} with ${{ inputs.source }} for ${{ inputs.architecture }} architecture..."
           python -m src
@@ -166,23 +148,4 @@ jobs:
           echo "🔗 $(gh release view "$TAG" --json url --jq .url)"
           for apk in *.apk; do
             echo "  - https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${apk}"
-          done
-
-      - name: Cleanup Version Override
-        if: ${{ inputs.version != '' && always() }}
-        run: |
-          # Reset version to empty in configs
-          for dir in apps/apkmirror apps/apkpure apps/uptodown; do
-            config_file="$dir/${{ inputs.app_name }}.json"
-            if [ -f "$config_file" ]; then
-              echo "Resetting version in $config_file"
-              python -c "
-              import json, sys, os
-              with open('$config_file', 'r') as f:
-                  config = json.load(f)
-              config['version'] = ''
-              with open('$config_file', 'w') as f:
-                  json.dump(config, f, indent=2)
-              "
-            fi
           done

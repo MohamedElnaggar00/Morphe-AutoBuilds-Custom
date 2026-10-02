@@ -12,6 +12,7 @@ The planner intentionally does not use manifest.json. This makes the release
 history itself the source of truth and allows the repository to start with zero
 releases.
 """
+import hashlib
 import json
 import os
 import re
@@ -96,6 +97,39 @@ def extract_asset_identity(name: str, app: str, source: str, arch: str) -> Optio
     }
 
 
+def _patch_source_signature_digest(source: str) -> str:
+    """Hash actual patch-source metadata used for this build.
+
+    Morphe CLI/desktop is a build tool and is intentionally excluded. Patch
+    repository release/asset/default-branch changes remain observable.
+    """
+    try:
+        raw = legacy.get_source_signature(source)
+    except Exception:
+        return ""
+
+    parts = []
+    for segment in (raw or "").split(";"):
+        segment = segment.strip()
+        if not segment:
+            continue
+        if "@" in segment:
+            repo_id = segment.split("@", 1)[0].strip().lower().rstrip("/")
+            if repo_id in {
+                "morpheapp/morphe-cli",
+                "morpheapp/morphe-desktop",
+                "morphe-cli",
+                "morphe-desktop",
+            }:
+                continue
+        parts.append(segment)
+
+    effective = ";".join(parts) or f"empty:{source}"
+    if legacy._is_unreliable_source_sig(effective):
+        return ""
+    return hashlib.sha256(effective.encode("utf-8")).hexdigest()[:16]
+
+
 def latest_build_for(app: str, source: str, arch: str,
                      releases: List[dict]) -> Optional[dict]:
     candidates = []
@@ -110,6 +144,11 @@ def latest_build_for(app: str, source: str, arch: str,
             release_name,
         )
         if title_match:
+            body = release.get("body") or ""
+            digest_match = re.search(
+                r"morphe-build-meta:\s*source_signature_digest=([0-9a-fA-F]{8,64})",
+                body,
+            )
             candidates.append({
                 "apk": next(
                     (
@@ -121,6 +160,7 @@ def latest_build_for(app: str, source: str, arch: str,
                 ),
                 "patch_version": title_match.group(2).strip().lstrip("vV"),
                 "app_version": title_match.group(1).strip().lstrip("vV"),
+                "source_signature_digest": digest_match.group(1).lower() if digest_match else "",
                 "release_tag": release.get("tag_name") or "",
                 "release_name": release_name,
                 "published_at": release.get("published_at") or release.get("created_at") or "",
@@ -133,6 +173,12 @@ def latest_build_for(app: str, source: str, arch: str,
             identity = extract_asset_identity(name, app, source, arch)
             if not identity:
                 continue
+            body = release.get("body") or ""
+            digest_match = re.search(
+                r"morphe-build-meta:\s*source_signature_digest=([0-9a-fA-F]{8,64})",
+                body,
+            )
+            identity["source_signature_digest"] = digest_match.group(1).lower() if digest_match else ""
             identity["release_tag"] = release.get("tag_name") or ""
             identity["release_name"] = release_name
             identity["published_at"] = release.get("published_at") or release.get("created_at") or ""
@@ -200,13 +246,18 @@ def needs_build(item: dict, previous: Optional[dict]) -> Tuple[bool, str, str, s
 
     old_patch = previous.get("patch_version", "").strip()
     old_app = previous.get("app_version", "").strip()
+    old_sig = previous.get("source_signature_digest", "").strip().lower()
+    current_sig = _patch_source_signature_digest(source)
 
     # If we can read a current patch version, it must match the published APK.
     if patch_version and old_patch and patch_version != old_patch:
         return True, f"patch update {old_patch} -> {patch_version}", patch_version, app_version
 
-    # If current patch version could not be resolved, do not rebuild solely on
-    # a missing value. A successful build will still publish a concrete filename.
+    # Detect a patch-source republish/change even when the patch version stays
+    # the same. Older releases may not have signature metadata yet.
+    if current_sig and old_sig and current_sig != old_sig:
+        return True, "patch source content/metadata changed", patch_version, app_version
+
     if app_version and old_app and app_version != old_app:
         return True, f"app update {old_app} -> {app_version}", patch_version, app_version
 
@@ -250,7 +301,11 @@ def main() -> int:
 
         label = f"{item['app_name']}/{item['source']}/{item['arch']}"
         if build:
-            build_matrix.append(item)
+            planned = dict(item)
+            planned["patch_version"] = patch_version
+            planned["app_version"] = app_version
+            planned["source_signature_digest"] = _patch_source_signature_digest(item["source"])
+            build_matrix.append(planned)
             reasons.append(f"{label}: {reason}")
             print(f"BUILD  {label}: {reason}")
         else:

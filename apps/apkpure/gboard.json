@@ -1,5 +1,5 @@
 {
-    "name": "gboard-the-google-keyboard-app",
-    "package": "com.google.android.inputmethod.latin",
-    "version": ""
+  "name": "gboard-the-google-keyboard-app",
+  "package": "com.google.android.inputmethod.latin",
+  "version": ""
 }
