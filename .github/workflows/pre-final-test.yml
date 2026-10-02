@@ -5,6 +5,9 @@ env:
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "scripts/sync_config.py"
 
 jobs:
   prepare-matrix:
