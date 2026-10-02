@@ -107,6 +107,23 @@ It validates the registry and regenerates the existing runtime files used by the
 
 The normal build/download/fallback logic is not replaced by this configuration layer.
 
+### Actions UI
+
+The **Manage Configuration** workflow provides a GitHub Actions form for common changes without manually editing JSON:
+
+- enable or disable an existing app/source build
+- add or remove an individual enabled/disabled patch
+- clear custom patch selections
+- change the configured architecture list
+
+The workflow updates `config/morphe-config.json`, regenerates the runtime files, and commits the result back to the selected branch.
+
 ## 6. Adding a completely new downloader
 
 Adding a new website/provider module is different from adding an application. That requires a code change in `src/` and is not represented by the configuration registry.
+
+## 7. Dependency monitoring
+
+The **Dependency Status** workflow checks the pinned `gplaydl` version and the Morphe CLI repositories referenced by the configured sources. It runs weekly and can also be started manually.
+
+The check is informational only: it does not automatically upgrade dependencies. This is intentional because `src/gplaydl.py` uses gplaydl's Python APIs directly, while Morphe's CLI packaging is evolving. Any dependency change should therefore be reviewed against the current build/download flow first.
