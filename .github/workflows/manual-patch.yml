@@ -7,17 +7,17 @@ on:
   workflow_dispatch:
     inputs:
       app_name:
-        description: 'App name (from apps/ folder)'
+        description: 'App ID from config/morphe-config.json'
         required: true
         type: string
         default: 'youtube'
       source:
-        description: 'Patch source ID (from config/morphe-config.json)'
+        description: 'Enabled patch source for this app'
         required: true
         type: string
         default: 'morphe'
       version:
-        description: 'Specific version (leave empty for latest)'
+        description: 'Exact app version (leave empty to use the patch source target)'
         required: false
         type: string
         default: ''
@@ -28,124 +28,335 @@ on:
         options:
           - arm64-v8a
           - armeabi-v7a
+          - x86_64
+          - x86
           - universal
-        default: 'universal'
+        default: 'arm64-v8a'
       replace_in_release:
-        description: 'Publish the APK as a new release'
+        description: 'Publish this manual build as a separate GitHub Release'
         required: true
         type: boolean
         default: true
 
+concurrency:
+  group: morphe-manual-${{ github.ref }}-${{ inputs.app_name }}-${{ inputs.source }}-${{ inputs.architecture }}
+  cancel-in-progress: false
+
 jobs:
   manual-patch:
+    name: Manual build - ${{ inputs.app_name }} / ${{ inputs.source }} / ${{ inputs.architecture }}
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     services:
       trawl:
         image: ghcr.io/germondai/trawl:latest
         ports:
           - 8191:8191
+        env:
+          RESIDENTIAL_PROXY_URL: ${{ secrets.RESIDENTIAL_PROXY_URL }}
         options: --shm-size=1gb
+
     permissions:
       contents: write
-    
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-      
-      - name: Install Python
+
+      - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.11
+          python-version: '3.11'
 
       - name: Synchronize Configuration
-        run: python scripts/sync_config.py
-      
-      - name: Install Dependencies
         run: |
-          pip install -r requirements.txt
-          pip install requests beautifulsoup4
-      
+          set -euo pipefail
+          python scripts/sync_config.py
+
+      - name: Validate Manual Build Request
+        env:
+          MANUAL_APP_NAME: ${{ inputs.app_name }}
+          MANUAL_SOURCE: ${{ inputs.source }}
+          MANUAL_ARCH: ${{ inputs.architecture }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          data = json.loads(
+              Path("config/morphe-config.json").read_text(encoding="utf-8")
+          )
+
+          app = os.environ["MANUAL_APP_NAME"].strip()
+          source = os.environ["MANUAL_SOURCE"].strip()
+          arch = os.environ["MANUAL_ARCH"].strip()
+
+          allowed_arches = {
+              "arm64-v8a",
+              "armeabi-v7a",
+              "x86_64",
+              "x86",
+              "universal",
+          }
+          if arch not in allowed_arches:
+              raise SystemExit(f"Unsupported architecture: {arch}")
+
+          if app not in data.get("apps", {}):
+              raise SystemExit(
+                  f"Unknown app '{app}'. Add it with Manage Configuration first."
+              )
+
+          if source not in data.get("sources", {}):
+              raise SystemExit(
+                  f"Unknown patch source '{source}'. Choose one from config/morphe-config.json."
+              )
+
+          builds = [
+              build
+              for build in data.get("builds", [])
+              if build.get("enabled", True)
+              and build.get("app_name") == app
+              and build.get("source") == source
+          ]
+          if not builds:
+              raise SystemExit(
+                  f"No enabled build exists for {app}/{source}. "
+                  "Enable the build with Manage Configuration first."
+              )
+
+          configured_arches = {
+              str(item).strip()
+              for build in builds
+              for item in (build.get("arches") or [])
+          }
+
+          if arch != "universal" and arch not in configured_arches:
+              raise SystemExit(
+                  f"Architecture '{arch}' is not configured for {app}/{source}. "
+                  f"Configured architectures: {sorted(configured_arches) or '(none)'}"
+              )
+
+          if arch == "universal" and "universal" not in configured_arches:
+              provider_arches = {
+                  str(cfg.get("arch") or "").strip()
+                  for cfg in data["apps"][app].get("providers", {}).values()
+              }
+              if not ("" in provider_arches or "universal" in provider_arches):
+                  raise SystemExit(
+                      f"Universal build is not supported by the current provider "
+                      f"configuration for {app}. Select a configured architecture instead."
+                  )
+
+          print(
+              f"Validated manual request: app={app}, source={source}, "
+              f"architecture={arch}"
+          )
+          PY
+
+      - name: Install Python Dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade -r requirements.txt
+
+      - name: Update and Verify Build Tools
+        run: |
+          set -euo pipefail
+          python scripts/prepare_build_tools.py --install
+
       - name: Setup Java 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '21'
-      
+
+      - name: Prepare Signing Keystore
+        env:
+          MORPHE_KEYSTORE_BASE64: ${{ secrets.MORPHE_KEYSTORE_BASE64 }}
+          MORPHE_KEY_PASSWORD: Morphe
+        run: |
+          set -euo pipefail
+
+          if [ -z "${MORPHE_KEYSTORE_BASE64:-}" ]; then
+            echo "::error::Missing GitHub Actions secret MORPHE_KEYSTORE_BASE64"
+            echo "Add the base64-encoded BKS keystore in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          sudo apt-get update
+          sudo apt-get install -y libbcprov-java
+
+          SOURCE_KEYSTORE="${RUNNER_TEMP}/morphe-signing.bks"
+          SIGNING_KEYSTORE_PATH="${RUNNER_TEMP}/morphe-signing.jks"
+
+          printf "%s" "${MORPHE_KEYSTORE_BASE64}" | base64 --decode > "${SOURCE_KEYSTORE}"
+          chmod 600 "${SOURCE_KEYSTORE}"
+
+          if [ ! -s "${SOURCE_KEYSTORE}" ]; then
+            echo "::error::Decoded signing keystore is empty."
+            exit 1
+          fi
+
+          keytool -importkeystore \
+            -providerclass org.bouncycastle.jce.provider.BouncyCastleProvider \
+            -providerpath /usr/share/java/bcprov.jar \
+            -srckeystore "${SOURCE_KEYSTORE}" \
+            -srcstoretype BKS \
+            -srcstorepass "" \
+            -srckeypass "${MORPHE_KEY_PASSWORD}" \
+            -srcalias Morphe \
+            -destkeystore "${SIGNING_KEYSTORE_PATH}" \
+            -deststoretype JKS \
+            -deststorepass public \
+            -destkeypass public \
+            -destalias public \
+            -noprompt
+
+          chmod 600 "${SIGNING_KEYSTORE_PATH}"
+          rm -f "${SOURCE_KEYSTORE}"
+
+          if [ ! -s "${SIGNING_KEYSTORE_PATH}" ]; then
+            echo "::error::JKS signing keystore conversion failed."
+            exit 1
+          fi
+
       - name: Build APK
         env:
           APP_NAME: ${{ inputs.app_name }}
           SOURCE: ${{ inputs.source }}
           ARCH: ${{ inputs.architecture }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
+          GPLAYDL_API_KEY: ${{ secrets.GPLAYDL_API_KEY }}
           TRAWL_URL: http://localhost:8191
           MORPHE_MANUAL_VERSION: ${{ inputs.version }}
+          SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/morphe-signing.jks
+          SIGNING_KEYSTORE_TYPE: JKS
+          SIGNING_KEY_ALIAS: public
+          SIGNING_KEYSTORE_PASSWORD: public
+          SIGNING_KEY_PASSWORD: public
         run: |
-          echo "🔧 Building ${{ inputs.app_name }} with ${{ inputs.source }} for ${{ inputs.architecture }} architecture..."
+          set -euo pipefail
+          echo "Building $APP_NAME with $SOURCE for $ARCH..."
           python -m src
-      
-      - name: Find Built APK
-        id: find-apk
-        run: |
-          # Find the built APK file(s)
-          apk_files=$(ls -1 *.apk 2>/dev/null)
-          if [ -z "$apk_files" ]; then
-            echo "❌ No APK files found"
+
+          apk_count=$(find . -maxdepth 1 -type f -name "*.apk" | wc -l)
+          echo "Produced APKs: $apk_count"
+
+          if [ "$apk_count" -eq 0 ]; then
+            if [ -f .build-skipped ]; then
+              echo "::error::Manual build unexpectedly skipped because the exact APK is already published."
+              echo "Manual builds must be forced independently of the automatic release skip check."
+              exit 1
+            fi
+            echo "::error::Build completed without producing an APK."
             exit 1
           fi
-          
-          # Fix for multi-line output in GitHub Actions
-          {
-            echo "apk_files<<EOF"
-            echo "$apk_files"
-            echo "EOF"
-          } >> "$GITHUB_OUTPUT"
-          
-          echo "apk_count=$(echo "$apk_files" | wc -l)" >> "$GITHUB_OUTPUT"
-          
-          # Print for debugging
-          echo "Found these APKs:"
-          echo "$apk_files"
-      
+
+          find . -maxdepth 1 -type f -name "*.apk" -print -exec ls -lh {} \;
+
+      - name: Cleanup Signing Keystore
+        if: always()
+        run: |
+          rm -f "${RUNNER_TEMP}/morphe-signing.bks" "${RUNNER_TEMP}/morphe-signing.jks"
+
       - name: Upload as Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: manual-apk-${{ inputs.app_name }}-${{ inputs.architecture }}
-          path: "*.apk"
-      
+          name: manual-apk-${{ inputs.app_name }}-${{ inputs.source }}-${{ inputs.architecture }}
+          path: '*.apk'
+          if-no-files-found: error
+          retention-days: 7
+
       - name: Publish as New Release
         if: ${{ inputs.replace_in_release == true }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
 
-          # A manual build is published as its own NEW release (never by editing
-          # an old one), so release trackers such as Obtainium pick it up.
-          # It is NOT flagged "latest": the automatic workflow keeps reading
-          # manifest.json from the newest automatic release.
-          TAG="manual-${{ inputs.app_name }}-${{ inputs.architecture }}-${GITHUB_RUN_NUMBER}"
-          TITLE="Manual build - ${{ inputs.app_name }} ${{ inputs.architecture }} - $(date -u +'%Y-%m-%d %H:%M') UTC"
+          mkdir -p manual-release
 
+          while IFS= read -r apk; do
+            [ -n "$apk" ] || continue
+            base="$(basename "$apk")"
+            cp -f "$apk" "manual-release/manual-$base"
+          done < <(find . -maxdepth 1 -type f -name '*.apk' -print | sort)
+
+          if ! find manual-release -maxdepth 1 -type f -name '*.apk' | grep -q .; then
+            echo "::error::No APK files are available for the manual release."
+            exit 1
+          fi
+
+          first_apk="$(find manual-release -maxdepth 1 -type f -name '*.apk' -print | sort | head -n1)"
+          original_name="$(basename "${first_apk#manual-release/manual-}")"
+          patch_version="$(printf '%s\n' "$original_name" | sed -nE 's/.*-patch-v(.+)-app-v(.+)\.apk/\1/p')"
+          app_version="$(printf '%s\n' "$original_name" | sed -nE 's/.*-patch-v(.+)-app-v(.+)\.apk/\2/p')"
+
+          if [ -z "$app_version" ]; then
+            app_version="unknown"
+          fi
+          if [ -z "$patch_version" ]; then
+            patch_version="unknown"
+          fi
+
+          safe_app="$(printf '%s' '${{ inputs.app_name }}' | tr -cs 'A-Za-z0-9._-' '-')"
+          safe_source="$(printf '%s' '${{ inputs.source }}' | tr -cs 'A-Za-z0-9._-' '-')"
+          safe_arch="$(printf '%s' '${{ inputs.architecture }}' | tr -cs 'A-Za-z0-9._-' '-')"
+          tag="manual-${safe_app}-v${app_version}-patch-v${patch_version}-${safe_source}-${safe_arch}-${GITHUB_RUN_NUMBER}"
+          title="Manual ${{ inputs.app_name }} v${app_version} — Patch v${patch_version} — ${{ inputs.source }} — ${{ inputs.architecture }}"
+
+          notes_file="${RUNNER_TEMP}/${tag}.md"
           {
             echo "# Manual build"
-            echo ""
-            for apk in *.apk; do
-              echo "- $apk"
+            echo
+            echo "- **Application:** ${{ inputs.app_name }}"
+            echo "- **Application version:** ${app_version}"
+            echo "- **Patch source:** ${{ inputs.source }}"
+            echo "- **Patch version:** ${patch_version}"
+            echo "- **Architecture:** ${{ inputs.architecture }}"
+            echo
+            echo "This is an on-demand manual build. It is intentionally published as a separate release and is not marked as the repository's latest release."
+            echo
+            echo "Built APK(s):"
+            for apk in manual-release/*.apk; do
+              echo "- $(basename "$apk")"
             done
-            echo ""
-            echo "**App:** ${{ inputs.app_name }}"
-            echo "**Architecture:** ${{ inputs.architecture }}"
-            echo "**Source:** ${{ inputs.source }}"
-          } > release_notes.md
+          } > "$notes_file"
 
-          gh release create "$TAG" *.apk \
-            --title "$TITLE" \
-            --notes-file release_notes.md \
-            --target "$GITHUB_SHA" \
-            --latest=false
+          if gh release view "$tag" --repo "$GH_REPO" >/dev/null 2>&1; then
+            echo "Release $tag already exists; replacing its manual APK assets."
+            gh release upload "$tag" manual-release/*.apk --clobber --repo "$GH_REPO"
+            gh release edit "$tag" --repo "$GH_REPO" --title "$title" --notes-file "$notes_file"
+          else
+            gh release create "$tag" manual-release/*.apk \
+              --repo "$GH_REPO" \
+              --title "$title" \
+              --notes-file "$notes_file" \
+              --target "$GITHUB_SHA" \
+              --latest=false
+          fi
 
-          echo "✅ Published release $TAG"
-          echo "🔗 $(gh release view "$TAG" --json url --jq .url)"
-          for apk in *.apk; do
-            echo "  - https://github.com/${GITHUB_REPOSITORY}/releases/download/${TAG}/${apk}"
-          done
+          expected_assets="$(find manual-release -maxdepth 1 -type f -name '*.apk' -printf '%f\n' | sort)"
+          actual_assets="$(gh release view "$tag" --repo "$GH_REPO" --json assets --jq '.assets[].name' | sort)"
+
+          if [ "$expected_assets" != "$actual_assets" ]; then
+            echo "::error::Manual release asset verification failed."
+            echo "Expected:"
+            echo "$expected_assets"
+            echo "Actual:"
+            echo "$actual_assets"
+            exit 1
+          fi
+
+          echo "✅ Published and verified manual release: $tag"
+          echo "🔗 $(gh release view "$tag" --repo "$GH_REPO" --json url --jq .url)"
+          while IFS= read -r apk; do
+            [ -n "$apk" ] || continue
+            echo "  - https://github.com/${GITHUB_REPOSITORY}/releases/download/${tag}/$(basename "$apk")"
+          done < <(find manual-release -maxdepth 1 -type f -name '*.apk' -print | sort)
