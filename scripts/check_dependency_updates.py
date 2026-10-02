@@ -46,8 +46,8 @@ def main() -> int:
     print("")
 
     req = (ROOT / "requirements.txt").read_text(encoding="utf-8")
-    match = re.search(r"^gplaydl\s*==\s*([^\s#]+)", req, re.M | re.I)
-    pinned = match.group(1) if match else "unpinned"
+    match = re.search(r"^gplaydl\s*(?:==|>=)\s*([^\s#]+)", req, re.M | re.I)
+    configured = match.group(1) if match else "unpinned"
 
     try:
         pypi = requests.get(PYPI, timeout=30).json()
@@ -57,8 +57,8 @@ def main() -> int:
         latest = None
 
     if latest:
-        status = "CURRENT" if pinned != "unpinned" and version_key(pinned) >= version_key(latest) else "UPDATE AVAILABLE"
-        print(f"- gplaydl: pinned={pinned}, latest={latest} -> **{status}**")
+        status = "CURRENT MINIMUM" if configured != "unpinned" and version_key(configured) <= version_key(latest) else "CONFIG REVIEW"
+        print(f"- gplaydl: configured-minimum={configured}, latest={latest} -> **{status}**")
 
     sources_dir = ROOT / "sources"
     seen = set()
@@ -101,7 +101,7 @@ def main() -> int:
                 print(f"- Morphe CLI ({source}): check failed: {exc}")
 
     print("")
-    print("No dependency is upgraded automatically by this check; changes require compatibility review first.")
+    print("Build workflows install the latest stable gplaydl at runtime and resolve Morphe CLI from tag=latest.")
     return 0
 
 
