@@ -482,7 +482,7 @@ jobs:
           repo = os.environ["GH_REPO"]
 
           def is_automatic_release(release):
-              tag = (release.get("tagName") or "").strip()
+              tag = (release.get("tag_name") or "").strip()
               name = (release.get("name") or "").strip()
               return (
                   tag.startswith("build-")
@@ -558,8 +558,8 @@ jobs:
           def published_key(release):
               # Only a tie-breaker when two releases have the same Patch Version.
               return (
-                  release.get("publishedAt") or
-                  release.get("createdAt") or
+                  release.get("published_at") or
+                  release.get("created_at") or
                   ""
               )
 
@@ -656,7 +656,7 @@ jobs:
           deleted = 0
 
           for identity, release in to_delete:
-              tag = (release.get("tagName") or "").strip()
+              tag = (release.get("tag_name") or "").strip()
               if not tag:
                   continue
 
