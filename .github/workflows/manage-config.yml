@@ -55,12 +55,17 @@ jobs:
           python-version: "3.11"
 
       - name: Apply Change and Synchronize
+        env:
+          CONFIG_OPERATION: ${{ inputs.operation }}
+          CONFIG_APP_NAME: ${{ inputs.app_name }}
+          CONFIG_SOURCE: ${{ inputs.source }}
+          CONFIG_VALUE: ${{ inputs.value }}
         run: |
           python scripts/manage_config.py \
-            --operation "${{ inputs.operation }}" \
-            --app-name "${{ inputs.app_name }}" \
-            --source "${{ inputs.source }}" \
-            --value "${{ inputs.value }}"
+            --operation "$CONFIG_OPERATION" \
+            --app-name "$CONFIG_APP_NAME" \
+            --source "$CONFIG_SOURCE" \
+            --value "$CONFIG_VALUE"
 
       - name: Show Changes
         run: |
