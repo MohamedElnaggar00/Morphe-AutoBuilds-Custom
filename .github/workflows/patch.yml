@@ -474,27 +474,16 @@ jobs:
           python - <<'PY'
           import json
           import os
+          import re
           import subprocess
           import sys
           from collections import defaultdict
-          from datetime import datetime, timezone
 
           repo = os.environ["GH_REPO"]
-
-          def gh_json(args):
-              result = subprocess.run(
-                  ["gh", *args, "--repo", repo],
-                  check=True,
-                  capture_output=True,
-                  text=True,
-              )
-              return json.loads(result.stdout)
 
           def is_automatic_release(release):
               tag = (release.get("tagName") or "").strip()
               name = (release.get("name") or "").strip()
-              # Automatic releases created by this workflow always use the
-              # build-... tag and include the structured app/source/arch title.
               return (
                   tag.startswith("build-")
                   and " — Patch v" in name
@@ -502,16 +491,21 @@ jobs:
               )
 
           def parse_identity(release):
-              name = release["name"]
-              # Expected:
-              # app vAPP — Patch vPATCH — source — arch
+              """
+              Release title:
+                APP vAPP_VERSION — Patch vPATCH_VERSION — SOURCE — ARCH
+
+              Cleanup identity deliberately excludes APP_VERSION.
+              PATCH_VERSION is the authoritative version for retention.
+              """
+              name = (release.get("name") or "").strip()
               parts = [p.strip() for p in name.split(" — ")]
               if len(parts) != 4:
                   return None
 
               app_part, patch_part, source_name, arch = parts
 
-              if not app_part.startswith("") or not patch_part.startswith("Patch v"):
+              if not patch_part.startswith("Patch v"):
                   return None
 
               app_split = app_part.rsplit(" v", 1)
@@ -525,15 +519,49 @@ jobs:
               if not app_name or not app_version or not patch_version or not source_name or not arch:
                   return None
 
-              return (app_name, source_name, arch)
+              # App version is intentionally NOT part of the identity.
+              return {
+                  "identity": (app_name, source_name, arch),
+                  "app_name": app_name,
+                  "source": source_name,
+                  "arch": arch,
+                  "app_version": app_version,
+                  "patch_version": patch_version,
+              }
 
-          def parse_time(value):
-              if not value:
-                  return datetime.min.replace(tzinfo=timezone.utc)
-              try:
-                  return datetime.fromisoformat(value.replace("Z", "+00:00"))
-              except Exception:
-                  return datetime.min.replace(tzinfo=timezone.utc)
+          def patch_version_key(version):
+              """
+              Compare patch versions, not application versions.
+
+              Examples:
+                1.9.0 < 1.10.0
+                2.0.0 > 1.99.99
+
+              Numeric components are compared numerically. Non-numeric
+              suffixes are retained as a deterministic tie-breaker.
+              """
+              value = version.strip().lstrip("vV")
+
+              # Split common semantic/numeric patch versions into components.
+              parts = re.split(r"[.\-_+]", value)
+
+              key = []
+              for part in parts:
+                  match = re.match(r"^(\d+)(.*)$", part)
+                  if match:
+                      key.append((0, int(match.group(1)), match.group(2)))
+                  else:
+                      key.append((1, part))
+
+              return tuple(key)
+
+          def published_key(release):
+              # Only a tie-breaker when two releases have the same Patch Version.
+              return (
+                  release.get("publishedAt") or
+                  release.get("createdAt") or
+                  ""
+              )
 
           releases = []
           page = 1
@@ -545,7 +573,6 @@ jobs:
                       f"repos/{repo}/releases",
                       "-f", f"per_page=100",
                       "-f", f"page={page}",
-                      "--paginate",
                   ],
                   capture_output=True,
                   text=True,
@@ -555,8 +582,6 @@ jobs:
                   print(result.stderr, file=sys.stderr)
                   sys.exit(result.returncode)
 
-              # gh api --paginate may concatenate JSON arrays. Using one page
-              # at a time keeps parsing deterministic.
               try:
                   data = json.loads(result.stdout)
               except json.JSONDecodeError:
@@ -582,23 +607,32 @@ jobs:
               if not is_automatic_release(release):
                   continue
 
-              identity = parse_identity(release)
-              if identity is None:
-                  print(f"SKIP: unable to determine release identity: {release.get('name')}")
+              parsed = parse_identity(release)
+              if parsed is None:
+                  print(
+                      f"SKIP: unable to determine release identity: "
+                      f"{release.get('name')}"
+                  )
                   continue
 
-              groups[identity].append(release)
+              release["_cleanup_identity"] = parsed
+              groups[parsed["identity"]].append(release)
 
           to_delete = []
 
           for identity, items in groups.items():
-              # Sort newest first. We retain exactly TWO releases per identity:
-              # the newest build and the one immediately preceding it.
+              # IMPORTANT:
+              # Patch Version is the ONLY version used to determine which
+              # releases are newest/oldest.
+              #
+              # App Version is never used for retention ordering.
+              # Publication date is used only when Patch Versions are equal.
               items.sort(
                   key=lambda r: (
-                      parse_time(r.get("publishedAt")),
-                      parse_time(r.get("createdAt")),
-                      r.get("databaseId") or 0,
+                      patch_version_key(
+                          r["_cleanup_identity"]["patch_version"]
+                      ),
+                      published_key(r),
                   ),
                   reverse=True,
               )
@@ -607,9 +641,13 @@ jobs:
               delete = items[2:]
 
               app_name, source_name, arch = identity
+
               print(
                   f"{app_name}/{source_name}/{arch}: "
-                  f"total={len(items)} keep={len(keep)} delete={len(delete)}"
+                  f"patch versions="
+                  f"{[r['_cleanup_identity']['patch_version'] for r in items]} "
+                  f"keep={[r['_cleanup_identity']['patch_version'] for r in keep]} "
+                  f"delete={[r['_cleanup_identity']['patch_version'] for r in delete]}"
               )
 
               for release in delete:
@@ -622,12 +660,14 @@ jobs:
               if not tag:
                   continue
 
+              parsed = release["_cleanup_identity"]
+
               print(
-                  f"Deleting old automatic release: "
-                  f"{release.get('name')} [{tag}]"
+                  "Deleting old automatic release: "
+                  f"{release.get('name')} [{tag}] "
+                  f"(Patch v{parsed['patch_version']})"
               )
 
-              # delete_tag=true removes both the GitHub Release and its tag.
               subprocess.run(
                   [
                       "gh", "release", "delete", tag,
@@ -637,6 +677,7 @@ jobs:
                   ],
                   check=True,
               )
+
               deleted += 1
 
           print(f"Old automatic releases deleted: {deleted}")
