@@ -12,10 +12,10 @@ on:
         type: string
         default: 'youtube'
       source:
-        description: 'Source name (from sources/ folder)'
+        description: 'Patch source ID (from config/morphe-config.json)'
         required: true
         type: string
-        default: 'revanced'
+        default: 'morphe'
       version:
         description: 'Specific version (leave empty for latest)'
         required: false
@@ -78,6 +78,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: 3.11
+
+      - name: Synchronize Configuration
+        run: python scripts/sync_config.py
       
       - name: Install Dependencies
         run: |
