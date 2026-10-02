@@ -768,8 +768,13 @@ def main() -> None:
     data = load()
     edit(data, args)
     save(data)
-    refresh_workflow_choices(data)
+
+    # Generate/remove patches/<app>-<source>.txt first. The workflow dropdown
+    # is then refreshed from the actual committed patches/ directory so a new
+    # app's freshly materialized default selection is immediately available.
     validate_and_sync()
+    refresh_workflow_choices(data)
+
     print("✓ Manage Configuration change applied; Auto Build workflow logic was not modified.")
 
 
