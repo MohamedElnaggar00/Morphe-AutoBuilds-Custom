@@ -8,16 +8,17 @@
 Edit [config/morphe-config.json](config/morphe-config.json) to add apps, sources, build entries, or patch selections.
 Generated runtime files are synchronized by the **Sync Configuration** workflow.
 
-## YouTube — App v21.16.256 — Patch v1.44.0
-Patch source: morphe — v1.44.0 ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
+## YouTube — App v21.16.256 — Patch v1.45.0
+Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 83/88 applied</summary>
+<summary>🩹 Patches — 90/96 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
+- ❌ Spoof signature
 - ✅ Disable Play Store updates
 - ✅ Hide ads
 - ✅ Channel search
@@ -28,6 +29,7 @@ Architecture: arm64-v8a
 - ✅ Downloads
 - ✅ Disable haptic feedback
 - ✅ Loop video
+- ✅ Picture-in-picture button
 - ✅ Play all
 - ✅ Reload video
 - ✅ Save to Watch later
@@ -40,6 +42,7 @@ Architecture: arm64-v8a
 - ✅ Hide player overlay buttons
 - ✅ Captions
 - ✅ Disable layout updates
+- ✅ Disable auto feed refresh
 - ✅ Add to queue
 - ✅ Change form factor
 - ✅ Ambient mode
@@ -60,6 +63,7 @@ Architecture: arm64-v8a
 - ✅ Open channel of live avatar
 - ✅ Miniplayer
 - ✅ Override YouTube Music buttons
+- ✅ Restore original titles
 - ✅ Playback in feeds
 - ✅ Mute button
 - ✅ Disable fullscreen gestures
@@ -67,16 +71,19 @@ Architecture: arm64-v8a
 - ✅ Force fullscreen landscape
 - ✅ Fullscreen video scale
 - ✅ Open videos fullscreen
+- ✅ Player icon style
 - ✅ Custom player overlay opacity
 - ✅ Disable playlist autoplay
 - ✅ Return YouTube Dislike
 - ✅ Disable scrolling speed limit
 - ✅ Open system share sheet
 - ✅ Shorts autoplay
+- ✅ Shorts icon style
 - ✅ Disable Shorts resuming on startup
 - ✅ Open Shorts in regular player
 - ✅ SponsorBlock
 - ✅ Change start page
+- ✅ Hide status bar
 - ✅ Theme
 - ✅ Alternative thumbnails
 - ✅ Bypass image region restrictions
@@ -98,6 +105,7 @@ Architecture: arm64-v8a
 - ✅ Spoof device dimensions
 - ✅ Disable DRC audio
 - ✅ Force original audio
+- ✅ Playback buffer
 - ✅ Disable video codecs
 - ✅ Remember live stream playback position
 - ✅ Video quality
@@ -106,16 +114,17 @@ Architecture: arm64-v8a
 
 </details>
 
-## Reddit — App v2026.14.0 — Patch v1.44.0
-Patch source: morphe — v1.44.0 ([v1.44.0](https://github.com/MorpheApp/morphe-patches))
+## Reddit — App v2026.24.0 — Patch v1.45.0
+Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 18/24 applied</summary>
+<summary>🩹 Patches — 17/24 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
+- ❌ Spoof signature
 - ❌ Disable Play Store updates
 - ✅ Hide ads
 - ✅ Custom font
@@ -132,7 +141,6 @@ Architecture: arm64-v8a
 - ✅ Hide Trending shelves
 - ✅ Show view count
 - ✅ App icon
-- ✅ Spoof signature
 - ✅ Start as guest
 - ✅ Open links directly
 - ✅ Open links externally
@@ -342,10 +350,10 @@ Architecture: arm64-v8a
 - ❌ Skip update checks
 - ❌ Skip the splash ad
 - ❌ Remove creation tools
+- ❌ Block P2P video relay
 - ❌ Remove content credential and card scanner assets
 - ❌ Remove unused language packs
 - ❌ Remove LIVE extras
-- ❌ Block P2P video relay
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
@@ -444,7 +452,7 @@ Architecture: arm64-v8a
 
 ## Messenger — App v573.0.0.44.88 — Patch v1.4.4
 Patch source: devanced — v1.4.4 ([v1.4.4](https://github.com/RookieEnough/De-Vanced))
-Architecture: —
+Architecture: arm64-v8a
 
 <details>
 <summary>🩹 Patches — 7/9 applied</summary>
