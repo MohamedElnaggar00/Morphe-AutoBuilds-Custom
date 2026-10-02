@@ -4,6 +4,9 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 on:
+  repository_dispatch:
+    types: [patch-release]
+
   workflow_dispatch:
     inputs:
       force_full_rebuild:
@@ -12,7 +15,11 @@ on:
         required: false
         default: false
   schedule:
-    - cron: '0 6 * * *' # Daily at 6:00 AM UTC
+    - cron: '0 6 * * *' # Daily fallback check at 6:00 AM UTC
+
+concurrency:
+  group: morphe-auto-build
+  cancel-in-progress: false
 
 jobs:
   download-tools:
