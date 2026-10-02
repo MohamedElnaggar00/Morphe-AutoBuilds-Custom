@@ -106,7 +106,10 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          FORCE_FULL_REBUILD: ${{ inputs.force_full_rebuild || 'false' }}
+          # A release of MorpheApp/morphe-patches updates the shared
+          # universal patch bundle. That bundle is now part of every app build,
+          # so all app/source/arch entries must be rebuilt when it changes.
+          FORCE_FULL_REBUILD: ${{ inputs.force_full_rebuild || (github.event_name == 'repository_dispatch' && github.event.client_payload.patch_repository == 'MorpheApp/morphe-patches') || 'false' }}
         run: |
           python scripts/check_release_updates.py
 
