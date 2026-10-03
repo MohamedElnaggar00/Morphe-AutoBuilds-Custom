@@ -16,8 +16,8 @@ on:
           - hushgram
           - hushfeed
           - hushfacebook
-      enable_new_hushfacebook:
-        description: "Enable newly discovered HushFacebook patches (existing selections are always preserved)"
+      enable_new_patches:
+        description: "Enable newly discovered patches for the selected source(s)"
         type: boolean
         required: true
         default: false
@@ -49,7 +49,7 @@ jobs:
       - name: Update Patch Selection
         env:
           SELECTED_SOURCE: ${{ inputs.source }}
-          ENABLE_NEW_HUSHFACEBOOK: ${{ inputs.enable_new_hushfacebook }}
+          ENABLE_NEW_PATCHES: ${{ inputs.enable_new_patches }}
           DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
@@ -80,7 +80,7 @@ jobs:
           }
 
           selected = os.environ["SELECTED_SOURCE"]
-          enable_new_hushfacebook = os.environ["ENABLE_NEW_HUSHFACEBOOK"].lower() == "true"
+          enable_new_patches = os.environ["ENABLE_NEW_PATCHES"].lower() == "true"
           dry_run = os.environ["DRY_RUN"].lower() == "true"
 
           names = list(SOURCES) if selected == "all" else [selected]
@@ -150,7 +150,7 @@ jobs:
                       if name in existing:
                           selection[name] = existing[name]
                       else:
-                          selection[name] = "+" if enable_new_hushfacebook else "-"
+                          selection[name] = "+" if enable_new_patches else "-"
               else:
                   raise RuntimeError(f"Unknown sync mode: {config['mode']}")
 
