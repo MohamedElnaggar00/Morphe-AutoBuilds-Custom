@@ -1,7 +1,7 @@
 # Morphe AutoBuilds
 
 ## 🔄 Update Schedule
-- Automatic updates daily at 6:17 AM UTC
+- Automatic updates are checked every 3 hours by the Patch Source Watcher when a new patch-source release is detected
 - Manual updates available via workflow dispatch
 
 ## YouTube — App v— — Patch v1.45.0
