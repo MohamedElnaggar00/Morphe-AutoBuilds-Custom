@@ -475,20 +475,26 @@ jobs:
           merge-multiple: false
 
       - name: Collect Built APKs
+        id: collect
         run: |
           set -euo pipefail
-          mkdir -p ./release-apks
+          mkdir -p ./all-apks ./all-records ./release-apks
           find ./all-apks -type f -name "*.apk" -exec cp -f {} ./release-apks/ \;
 
           count=$(find ./release-apks -maxdepth 1 -type f -name "*.apk" | wc -l)
           echo "Built APKs ready for independent releases: $count"
+
           if [ "$count" -eq 0 ]; then
-            echo "::error::No APKs were produced by the build jobs."
-            exit 1
+            echo "has_apks=false" >> "$GITHUB_OUTPUT"
+            echo "No new APKs were produced; skipping release publication."
+            exit 0
           fi
+
+          echo "has_apks=true" >> "$GITHUB_OUTPUT"
           ls -lh ./release-apks
 
       - name: Publish One Release Per App and Patch Source
+        if: steps.collect.outputs.has_apks == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -592,6 +598,7 @@ jobs:
 
 
       - name: Show Published Releases
+        if: steps.collect.outputs.has_apks == 'true'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
