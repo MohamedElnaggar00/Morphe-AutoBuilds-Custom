@@ -48,9 +48,9 @@ jobs:
 
       - name: Update Patch Selection
         env:
-          SELECTED_SOURCE: ${ inputs.source }}
-          ENABLE_NEW_HUSHFACEBOOK: ${ inputs.enable_new_hushfacebook }}
-          DRY_RUN: ${ inputs.dry_run }}
+          SELECTED_SOURCE: ${{ inputs.source }}
+          ENABLE_NEW_HUSHFACEBOOK: ${{ inputs.enable_new_hushfacebook }}
+          DRY_RUN: ${{ inputs.dry_run }}
         run: |
           set -euo pipefail
 
@@ -211,7 +211,7 @@ jobs:
           PY
 
       - name: Commit Patch Selection Updates
-        if: ${ inputs.dry_run == false }}
+        if: ${{ inputs.dry_run == false }}
         run: |
           set -euo pipefail
 
