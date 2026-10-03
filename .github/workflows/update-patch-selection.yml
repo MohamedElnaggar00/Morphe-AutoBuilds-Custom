@@ -1,0 +1,230 @@
+name: Update Patch Selection
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      source:
+        description: "Patch source to synchronize"
+        type: choice
+        required: true
+        default: all
+        options:
+          - all
+          - hushgram
+          - hushfeed
+          - hushfacebook
+      enable_new_hushfacebook:
+        description: "Enable newly discovered HushFacebook patches (existing selections are always preserved)"
+        type: boolean
+        required: true
+        default: false
+      dry_run:
+        description: "Preview changes without committing them"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  update-selection:
+    name: Synchronize Patch Selection
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Update Patch Selection
+        env:
+          SELECTED_SOURCE: ${ inputs.source }}
+          ENABLE_NEW_HUSHFACEBOOK: ${ inputs.enable_new_hushfacebook }}
+          DRY_RUN: ${ inputs.dry_run }}
+        run: |
+          set -euo pipefail
+
+          python - <<'PY'
+          import json
+          import os
+          import urllib.request
+          from pathlib import Path
+
+          SOURCES = {
+              "hushgram": {
+                  "url": "https://raw.githubusercontent.com/SysAdminDoc/HushGram/main/patches-list.json",
+                  "file": "patches/instagram-hushgram.txt",
+                  "mode": "all",
+              },
+              "hushfeed": {
+                  "url": "https://raw.githubusercontent.com/SysAdminDoc/hushfeed/main/patches-list.json",
+                  "file": "patches/tiktok-hushfeed.txt",
+                  "mode": "all_except",
+                  "exclude": {"AMOLED dark theme"},
+              },
+              "hushfacebook": {
+                  "url": "https://raw.githubusercontent.com/SysAdminDoc/Hushfacebook/main/patches-list.json",
+                  "file": "patches/facebook-hushfacebook.txt",
+                  "mode": "preserve",
+              },
+          }
+
+          selected = os.environ["SELECTED_SOURCE"]
+          enable_new_hushfacebook = os.environ["ENABLE_NEW_HUSHFACEBOOK"].lower() == "true"
+          dry_run = os.environ["DRY_RUN"].lower() == "true"
+
+          names = list(SOURCES) if selected == "all" else [selected]
+
+          def fetch_patches(url):
+              request = urllib.request.Request(
+                  url,
+                  headers={"User-Agent": "Morphe-AutoBuilds-Custom/update-patch-selection"},
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  payload = json.load(response)
+
+              patches = payload.get("patches")
+              if not isinstance(patches, list):
+                  raise RuntimeError(f"Invalid patches-list.json from {url}: missing patches[]")
+
+              result = []
+              seen = set()
+              for patch in patches:
+                  name = patch.get("name") if isinstance(patch, dict) else None
+                  if not isinstance(name, str) or not name.strip():
+                      continue
+                  name = name.strip()
+                  if name not in seen:
+                      result.append(name)
+                      seen.add(name)
+
+              if not result:
+                  raise RuntimeError(f"No patch names found in {url}")
+
+              return result, payload.get("version", "unknown")
+
+          def parse_local(path):
+              existing = {}
+              comments = []
+              for raw in path.read_text(encoding="utf-8").splitlines():
+                  line = raw.rstrip()
+                  if not line:
+                      continue
+                  if line.lstrip().startswith("#"):
+                      comments.append(line)
+                      continue
+                  if line[:1] in "+-":
+                      name = line[1:].strip()
+                      if name:
+                          existing[name] = line[:1]
+              return comments, existing
+
+          changed_files = []
+
+          for key in names:
+              config = SOURCES[key]
+              path = Path(config["file"])
+              upstream, version = fetch_patches(config["url"])
+              comments, existing = parse_local(path)
+
+              if config["mode"] == "all":
+                  selection = {name: "+" for name in upstream}
+              elif config["mode"] == "all_except":
+                  selection = {
+                      name: "+" for name in upstream
+                      if name not in config["exclude"]
+                  }
+              elif config["mode"] == "preserve":
+                  selection = {}
+                  for name in upstream:
+                      if name in existing:
+                          selection[name] = existing[name]
+                      else:
+                          selection[name] = "+" if enable_new_hushfacebook else "-"
+              else:
+                  raise RuntimeError(f"Unknown sync mode: {config['mode']}")
+
+              header = comments[0] if comments else f"# {key} patch selection"
+              lines = [header]
+              lines.extend(f"{sign} {name}" for name, sign in selection.items())
+              new_content = "\\n".join(lines) + "\\n"
+              old_content = path.read_text(encoding="utf-8")
+
+              added = [name for name in selection if name not in existing]
+              removed = [name for name in existing if name not in selection]
+
+              print(f"\\n=== {key} ===")
+              print(f"Upstream version: {version}")
+              print(f"Upstream patches: {len(upstream)}")
+              print(f"Selected patches:  {len(selection)}")
+              print(f"New patches:       {len(added)}")
+              print(f"Removed patches:   {len(removed)}")
+
+              for name in added:
+                  print(f"  + NEW {'enabled' if selection[name] == '+' else 'disabled'}: {name}")
+              for name in removed:
+                  print(f"  - REMOVED: {name}")
+
+              if new_content != old_content:
+                  changed_files.append((path, new_content))
+                  if not dry_run:
+                      path.write_text(new_content, encoding="utf-8")
+                  print("  -> file will be updated" if dry_run else "  -> file updated")
+              else:
+                  print("  -> already synchronized")
+
+          if dry_run:
+              print("\\nDRY RUN: no files were committed.")
+              raise SystemExit(0)
+
+          if not changed_files:
+              print("\\nNo patch-selection changes detected; nothing to commit.")
+              raise SystemExit(0)
+
+          print("\\nFiles changed:")
+          for path, _ in changed_files:
+              print(f"  - {path}")
+          PY
+
+      - name: Validate Patch Selection Files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          for path in sorted(Path("patches").glob("*.txt")):
+              for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+                  if not line or line.lstrip().startswith("#"):
+                      continue
+                  if line[:1] not in "+-":
+                      raise SystemExit(f"Invalid patch-selection line in {path}:{number}: {line!r}")
+          print("Patch selection syntax is valid.")
+          PY
+
+      - name: Commit Patch Selection Updates
+        if: ${ inputs.dry_run == false }}
+        run: |
+          set -euo pipefail
+
+          if git diff --quiet -- patches/instagram-hushgram.txt patches/tiktok-hushfeed.txt patches/facebook-hushfacebook.txt; then
+            echo "No patch-selection changes to commit."
+            exit 0
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add patches/instagram-hushgram.txt patches/tiktok-hushfeed.txt patches/facebook-hushfacebook.txt
+          git commit -m "chore: update patch selections"
+          git push origin HEAD:main
+
+          echo "Patch selection update committed successfully."
