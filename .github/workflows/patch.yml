@@ -73,6 +73,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -156,7 +158,7 @@ jobs:
 
   update-readme:
     name: Update README
-    needs: check-updates
+    needs: [check-updates, build-apps, create-app-releases]
     if: always()
     runs-on: ubuntu-latest
     permissions:
@@ -180,25 +182,78 @@ jobs:
         run: |
           pip install requests curl-cffi PyGithub
 
-      - name: Refresh README from patch sources
+      - name: Refresh README and synchronize repository state
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PATCH_EVENT: ${{ github.event_name }}
+          PATCH_REPOSITORY: ${{ github.event.client_payload.patch_repository }}
+          PATCH_RELEASE_ID: ${{ github.event.client_payload.release_id }}
+          HAS_UPDATES: ${{ needs.check-updates.outputs.has_updates }}
+          BUILD_RESULT: ${{ needs.build-apps.result }}
+          PUBLISH_RESULT: ${{ needs.create-app-releases.result }}
         run: |
-          python scripts/update_readme.py
+          set -euo pipefail
 
-      - name: Commit README changes
-        run: |
-          if git diff --quiet -- README.md; then
-            echo "README is already up to date."
-            exit 0
-          fi
+          max_attempts=3
 
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md
-          git commit -m "docs: refresh README app and patch list"
-          git push
+          for attempt in $(seq 1 "$max_attempts"); do
+            echo "===== Repository finalization attempt $attempt/$max_attempts ====="
+
+            # Start each attempt from the newest remote main.
+            git fetch origin main
+            git reset --hard origin/main
+
+            # Regenerate from the exact repository state we just synchronized to.
+            python scripts/update_readme.py
+
+            # Record the watched release only after the build/publication succeeds.
+            record_state=false
+            if [ "$PATCH_EVENT" = "repository_dispatch" ] \
+              && [ -n "${PATCH_REPOSITORY:-}" ] \
+              && [ -n "${PATCH_RELEASE_ID:-}" ] \
+              && [[ "${PATCH_RELEASE_ID}" =~ ^[0-9]+$ ]]; then
+              if [ "$HAS_UPDATES" = "false" ] ||
+                 { [ "$BUILD_RESULT" = "success" ] && [ "$PUBLISH_RESULT" = "success" ]; }; then
+                record_state=true
+              fi
+            fi
+
+            if [ "$record_state" = "true" ]; then
+              tmp_state="patch-release-state.json.tmp"
+              jq --arg repo "$PATCH_REPOSITORY" \
+                 --argjson id "$PATCH_RELEASE_ID" \
+                 '.[$repo] = $id' \
+                 patch-release-state.json > "$tmp_state"
+              mv "$tmp_state" patch-release-state.json
+              echo "Recorded monitored release: $PATCH_REPOSITORY @ $PATCH_RELEASE_ID"
+            fi
+
+            if git diff --quiet -- README.md patch-release-state.json; then
+              echo "README and monitored release state are already up to date."
+              exit 0
+            fi
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add README.md patch-release-state.json
+            git commit -m "docs: refresh README and patch release state"
+
+            # If main advanced after our fetch/reset, the push can be rejected.
+            # The next attempt re-syncs to the new main and regenerates everything.
+            if git push origin HEAD:main; then
+              echo "Repository finalization push succeeded."
+              exit 0
+            fi
+
+            if [ "$attempt" -lt "$max_attempts" ]; then
+              echo "Remote main advanced during the push; re-syncing and retrying..."
+              sleep 2
+            fi
+          done
+
+          echo "::error::Could not publish synchronized README/state after ${max_attempts} attempts."
+          exit 1
 
   build-apps:
     name: Build Applications
