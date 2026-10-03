@@ -178,6 +178,11 @@ def latest_build_for(app: str, source: str, arch: str,
 
             for asset in assets:
                 name = (asset.get("name") or "").strip()
+                if not any(
+                    name.startswith(f"{app}-{arch}-{source_name}-")
+                    for source_name in source_names
+                ):
+                    continue
                 versions = _apk_versions(name)
                 if not versions:
                     continue
