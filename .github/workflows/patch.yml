@@ -8,12 +8,6 @@ on:
     types: [patch-release]
 
   workflow_dispatch:
-    inputs:
-      force_full_rebuild:
-        description: "Rebuild every app (ignore incremental check)"
-        type: boolean
-        required: false
-        default: false
   # schedule:
   #   - cron: '0 6 * * *' # Daily fallback check at 6:00 AM UTC
 
@@ -112,7 +106,8 @@ jobs:
           # from MorpheApp/morphe-patches is NOT a global rebuild trigger.
           # Rebuild decisions remain incremental and are driven by each app's
           # configured patch source/version (or an explicit manual full rebuild).
-          FORCE_FULL_REBUILD: ${{ inputs.force_full_rebuild || 'false' }}
+          # Manual and watcher runs both use the incremental planner.
+          FORCE_FULL_REBUILD: 'false'
         run: |
           python scripts/check_release_updates.py
 
