@@ -96,55 +96,140 @@ def extract_asset_identity(name: str, app: str, source: str, arch: str) -> Optio
     }
 
 
+def _source_asset_names(source: str) -> List[str]:
+    """Return configured source IDs/names that may appear in published APK filenames."""
+    names = {str(source).strip()}
+    path = ROOT / "sources" / f"{source}.json"
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if isinstance(data, list) and data and isinstance(data[0], dict):
+            display_name = str(data[0].get("name") or "").strip()
+            if display_name:
+                names.add(display_name)
+    except Exception:
+        pass
+    return [name for name in names if name]
+
+
+def _release_metadata(release: dict) -> dict:
+    """Read the exact identity written into generated release notes."""
+    body = release.get("body") or ""
+    fields = {
+        "app_name": r"^- \*\*Application:\*\* (.+)$",
+        "source": r"^- \*\*Patch source:\*\* (.+)$",
+        "arch": r"^- \*\*Architecture:\*\* (.+)$",
+    }
+    values = {}
+    for key, pattern in fields.items():
+        match = re.search(pattern, body, re.MULTILINE)
+        if match:
+            values[key] = match.group(1).strip()
+    return values
+
+
+def _apk_versions(name: str) -> Optional[dict]:
+    """Extract patch/app versions from a generated APK filename."""
+    match = re.search(r"-patch-v(.+)-app-v(.+)\.apk$", name or "", re.IGNORECASE)
+    if not match:
+        return None
+    return {
+        "patch_version": match.group(1).strip().lstrip("vV"),
+        "app_version": match.group(2).strip().lstrip("vV"),
+    }
+
+
 def latest_build_for(app: str, source: str, arch: str,
                      releases: List[dict]) -> Optional[dict]:
-    candidates = []
-    for release in releases:
-        release_name = (release.get("name") or "").strip()
+    """
+    Find the newest published build for the exact (app, source, arch).
 
-        # Release title is authoritative. APK filenames can contain the patch
-        # package name rather than the configured source key.
-        title_match = re.match(
-            rf"^{re.escape(app)} v(.+) — Patch v(.+) — "
-            rf"{re.escape(source)} — {re.escape(arch)}$",
-            release_name,
-        )
-        if title_match:
-            candidates.append({
-                "apk": next(
-                    (
-                        (a.get("name") or "").strip()
-                        for a in release.get("assets") or []
-                        if (a.get("name") or "").endswith(".apk")
-                    ),
-                    "",
-                ),
-                "patch_version": title_match.group(2).strip().lstrip("vV"),
-                "app_version": title_match.group(1).strip().lstrip("vV"),
-                "release_tag": release.get("tag_name") or "",
-                "release_name": release_name,
-                "published_at": release.get("published_at") or release.get("created_at") or "",
-            })
+    Generated releases now carry authoritative identity in their release-body
+    metadata. That metadata is preferred over release titles because titles are
+    intentionally human-friendly (e.g. "X - piko-newx"), while APK filenames
+    may use the source's configured display name (e.g. "piko-patches").
+    """
+    candidates = []
+    source_names = _source_asset_names(source)
+
+    for release in releases:
+        if release.get("draft"):
             continue
 
-        # Backward-compatible fallback for older release titles.
-        for asset in release.get("assets") or []:
-            name = (asset.get("name") or "").strip()
-            identity = extract_asset_identity(name, app, source, arch)
-            if not identity:
+        release_name = (release.get("name") or "").strip()
+        release_tag = release.get("tag_name") or ""
+        assets = [
+            a for a in (release.get("assets") or [])
+            if (a.get("name") or "").strip().lower().endswith(".apk")
+        ]
+
+        metadata = _release_metadata(release)
+        metadata_complete = all(
+            key in metadata for key in ("app_name", "source", "arch")
+        )
+
+        # Preferred path: generated release metadata is exact and source-aware.
+        if metadata_complete:
+            if (
+                metadata["app_name"] != app
+                or metadata["source"] != source
+                or metadata["arch"] != arch
+            ):
                 continue
-            identity["release_tag"] = release.get("tag_name") or ""
-            identity["release_name"] = release_name
-            identity["published_at"] = release.get("published_at") or release.get("created_at") or ""
-            candidates.append(identity)
+
+            for asset in assets:
+                name = (asset.get("name") or "").strip()
+                versions = _apk_versions(name)
+                if not versions:
+                    continue
+                candidates.append({
+                    "apk": name,
+                    "patch_version": versions["patch_version"],
+                    "app_version": versions["app_version"],
+                    "release_tag": release_tag,
+                    "release_name": release_name,
+                    "published_at": release.get("published_at")
+                    or release.get("created_at")
+                    or "",
+                })
+                break
+            continue
+
+        # Backward-compatible path for releases created before exact metadata.
+        # Still require the configured source identity in the APK filename and,
+        # when available, in the generated tag. Never fall back to app/version
+        # alone because that could confuse two patch sources for the same app.
+        safe_source = re.sub(r"[^A-Za-z0-9._-]+", "-", str(source)).strip("-")
+        tag_source_match = (
+            not release_tag
+            or f"-{safe_source}-" in release_tag
+        )
+
+        if not tag_source_match:
+            continue
+
+        for asset in assets:
+            name = (asset.get("name") or "").strip()
+            for source_name in source_names:
+                identity = extract_asset_identity(name, app, source_name, arch)
+                if not identity:
+                    continue
+                identity["release_tag"] = release_tag
+                identity["release_name"] = release_name
+                identity["published_at"] = (
+                    release.get("published_at")
+                    or release.get("created_at")
+                    or ""
+                )
+                candidates.append(identity)
+                break
 
     if not candidates:
         return None
 
-    candidates.sort(key=lambda x: x["published_at"])
+    candidates.sort(
+        key=lambda x: (x.get("published_at", ""), x.get("release_tag", ""))
+    )
     return candidates[-1]
-
-
 def source_patch_version(source: str) -> str:
     sig = legacy.get_source_signature(source)
     effective = legacy._effective_patch_version_signature(sig)
