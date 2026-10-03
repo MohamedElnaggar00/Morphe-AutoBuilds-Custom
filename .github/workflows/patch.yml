@@ -600,9 +600,9 @@ jobs:
           releases = [release for page in pages for release in page]
 
           field_patterns = {
-              "app": r"^- \\*\\*Application:\\*\\* (.+)$",
-              "source": r"^- \\*\\*Patch source:\\*\\* (.+)$",
-              "arch": r"^- \\*\\*Architecture:\\*\\* (.+)$",
+              "app": r"^- \*\*Application:\*\* (.+)$",
+              "source": r"^- \*\*Patch source:\*\* (.+)$",
+              "arch": r"^- \*\*Architecture:\*\* (.+)$",
           }
 
           groups = {}
@@ -647,7 +647,7 @@ jobs:
 
               for old in items[1:]:
                   tag = old["tag_name"]
-                  if old.get("is_immutable"):
+                  if old.get("immutable") or old.get("is_immutable"):
                       print(f"  SKIP (immutable): {tag}")
                       continue
 
