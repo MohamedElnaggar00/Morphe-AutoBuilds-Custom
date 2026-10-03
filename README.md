@@ -206,30 +206,6 @@ Architecture: arm64-v8a
 
 </details>
 
-## Instagram — Piko
-Patch source: piko-instagram — crimera/piko
-Architecture: arm64-v8a
-
-<details>
-<summary>🩹 Patch selection</summary>
-
-- ✅ Disable Play Store updates (Universal)
-- ℹ️ App-specific patches use Piko's default patch selection.
-
-</details>
-
-## Instagram — HushGram
-Patch source: hushgram — SysAdminDoc/HushGram
-Architecture: arm64-v8a
-
-<details>
-<summary>🩹 Patch selection</summary>
-
-- ✅ Disable Play Store updates (Universal)
-- ℹ️ App-specific patches use HushGram's default patch selection.
-
-</details>
-
 ## Gboard — App v— — Patch v3.11.0
 Patch source: jasonwu1994 — v3.11.0 ([v3.11.0](https://github.com/jasonwu1994/Gboard-patches))
 Architecture: arm64-v8a
@@ -664,6 +640,113 @@ Architecture: arm64-v8a
 - ❌ Spoof install source
 - ❌ Spoof app signature
 - ✅ Unlock Pro
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
+
+</details>
+
+## Instagram — —
+Patch source: piko-instagram
+
+<details>
+<summary>🩹 Patches — unavailable</summary>
+
+> README refresh failed for this app: 
+Exception in thread "main" java.lang.NoSuchMethodError: 'app.morphe.patcher.patch.BytecodePatch app.morphe.patches.all.misc.fix.changepackageinstaller.ChangePackageInstallerPatchKt.changePackageInstallerPatch(kotlin.jvm.functions.Function0)'
+	at app.morphe.patches.all.misc.installer.ChangeInstallerSourceKt.changeInstallerSource$lambda$0(ChangeInstallerSource.kt:34)
+	at app.morphe.patcher.patch.PatchKt.buildPatch(Patch.kt:606)
+	at app.morphe.patcher.patch.PatchKt.resourcePatch(Patch.kt:816)
+	at app.morphe.patches.all.misc.installer.ChangeInstallerSourceKt.<clinit>(ChangeInstallerSource.kt:15)
+	at java.base/jdk.internal.misc.Unsafe.ensureClassInitialized0(Native Method)
+	at java.base/jdk.internal.misc.Unsafe.ensureClassInitialized(Unsafe.java:1160)
+	at java.base/jdk.internal.reflect.MethodHandleAccessorFactory.ensureClassInitialized(MethodHandleAccessorFactory.java:301)
+	at java.base/jdk.internal.reflect.MethodHandleAccessorFactory.newMethodAccessor(MethodHandleAccessorFactory.java:72)
+	at java.base/jdk.internal.reflect.ReflectionFactory.newMethodAccessor(ReflectionFactory.java:159)
+	at java.base/java.lang.reflect.Method.acquireMethodAccessor(Method.java:726)
+	at java.base/java.lang.reflect.Method.invoke(Method.java:577)
+	at app.morphe.patcher.patch.PatchLoader$Companion.getPatchMethods(Patch.kt:933)
+	at app.morphe.patcher.patch.PatchLoader$Companion.loadPatches$lambda$0$1(Patch.kt:957)
+	at kotlin.sequences.FlatteningSequence$iterator$1.ensureItemIterator(Sequences.kt:363)
+	at kotlin.sequences.FlatteningSequence$iterator$1.hasNext(Sequences.kt:351)
+	at kotlin.sequences.FilteringSequence$iterator$1.calcNext(Sequences.kt:202)
+	at kotlin.sequences.FilteringSequence$iterator$1.hasNext(Sequences.kt:227)
+	at kotlin.sequences.SequencesKt___SequencesKt.toSet(_Sequences.kt:1029)
+	at app.morphe.patcher.patch.PatchLoader$Companion.loadPatches(Patch.kt:960)
+	at app.morphe.patcher.patch.PatchLoader$Companion.access$loadPatches(Patch.kt:913)
+	at app.morphe.patcher.patch.PatchLoader.<init>(Patch.kt:858)
+	at app.morphe.patcher.patch.PatchLoader.<init>(Patch.kt)
+	at app.morphe.patcher.patch.PatchLoader$Jar.<init>(Patch.kt:867)
+	at app.morphe.patcher.patch.PatchKt.loadPatchesFromJar(Patch.kt:981)
+	at app.morphe.desktop.command.ListPatchesCommand.run(ListPatchesCommand.kt:217)
+	at picocli.CommandLine.executeUserObject(CommandLine.java:2045)
+	at picocli.CommandLine.access$1500(CommandLine.java:148)
+	at picocli.CommandLine$RunLast.executeUserObjectOfLastSubcommandWithSameParent(CommandLine.java:2469)
+	at picocli.CommandLine$RunLast.handle(CommandLine.java:2461)
+	at picocli.CommandLine$RunLast.handle(CommandLine.java:2423)
+	at picocli.CommandLine$AbstractParseResultHandler.execute(CommandLine.java:2277)
+	at picocli.CommandLine$RunLast.execute(CommandLine.java:2425)
+	at picocli.CommandLine.execute(CommandLine.java:2174)
+	at app.morphe.MorpheLauncherKt.main(MorpheLauncher.kt:85)
+
+
+</details>
+
+## Instagram — App v— — Patch v0.0.4
+Patch source: hushgram — v0.0.4 ([v0.0.4](https://github.com/SysAdminDoc/HushGram))
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 19/51 applied</summary>
+
+- ✅ Hide ads
+- ✅ Download any reel
+- ✅ Download any story
+- ❌ Download any video
+- ❌ Hide the Explore grid
+- ❌ Start Home on Following
+- ❌ Hide Reels in the feed
+- ✅ Hide suggested posts
+- ❌ Stop swipe to create
+- ✅ Default playback quality
+- ✅ Resume long videos
+- ❌ Tap to play
+- ✅ Hide Meta AI
+- ✅ Remove the advertising ID
+- ✅ Disable analytics
+- ❌ Remove the empty space at the bottom
+- ✅ Remove build expired popup
+- ❌ Copy comment
+- ❌ Save comment photo
+- ❌ Open developer options
+- ✅ Open links in external browser
+- ✅ Restore trust on re-signed builds
+- ✅ HushGram settings
+- ✅ Sanitize sharing links
+- ❌ Pure black dark mode
+- ✅ Start on x86 devices
+- ✅ Show if a profile follows you
+- ❌ Hide highlights
+- ❌ Hide suggested people on profiles
+- ❌ Keep Reels auto scroll on
+- ❌ Clean up Reels
+- ❌ Turn off double tap to like
+- ❌ Stop Reels scrolling
+- ❌ Keep a seek bar on Reels
+- ✅ Keep the reel speed
+- ❌ Hide suggested accounts in Reels
+- ❌ Hide the Reels tab
+- ❌ Don't send reel watch history
+- ❌ Hide the Repost button
+- ❌ Hide group buttons on the share sheet
+- ❌ Stop Story auto-advance
+- ❌ Loop a story
+- ❌ Story ring size
+- ❌ View stories anonymously
+- ❌ Show a story's exact time
+- ✅ Hide suggested stories
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
