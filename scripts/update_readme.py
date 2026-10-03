@@ -123,6 +123,82 @@ def run_cli(cli: Path, patches: Path | list[Path], args: list[str]) -> str:
     return result.stdout
 
 
+
+
+_published_release_versions_cache: dict[tuple[str, str, str], str] | None = None
+
+
+def _published_release_versions() -> dict[tuple[str, str, str], str]:
+    """Return the latest published APK version for each (app, source, arch).
+
+    README generation runs after release publication, so the generated release
+    metadata is the most reliable record of the version that was actually built
+    and published. This is intentionally independent of store/CLI probing.
+    """
+    global _published_release_versions_cache
+    if _published_release_versions_cache is not None:
+        return _published_release_versions_cache
+
+    _published_release_versions_cache = {}
+    repo = os.getenv("GITHUB_REPOSITORY", "").strip()
+    if "/" not in repo:
+        return _published_release_versions_cache
+
+    try:
+        releases = []
+        for page in range(1, 11):
+            batch = api_json(f"{API}/repos/{repo}/releases?per_page=100&page={page}")
+            if not isinstance(batch, list) or not batch:
+                break
+            releases.extend(batch)
+            if len(batch) < 100:
+                break
+
+        # GitHub returns releases newest-first; keep the first matching release
+        # for every app/source/architecture tuple.
+        for release in releases:
+            if release.get("draft"):
+                continue
+            body = str(release.get("body") or "")
+
+            def field(name: str) -> str:
+                match = re.search(
+                    rf"^- \\*\\*{re.escape(name)}:\\*\\* (.+)$",
+                    body,
+                    re.MULTILINE,
+                )
+                return match.group(1).strip() if match else ""
+
+            app = field("Application")
+            source = field("Patch source")
+            arch = field("Architecture")
+            if not app or not source or not arch:
+                continue
+
+            version = field("Application version")
+            if not version:
+                for asset in release.get("assets") or []:
+                    asset_name = str(asset.get("name") or "")
+                    match = re.search(r"-app-v(.+)\\.apk$", asset_name)
+                    if match:
+                        version = match.group(1).strip()
+                        break
+            if version:
+                _published_release_versions_cache.setdefault((app, source, arch), version)
+
+    except Exception as exc:
+        # Publishing metadata is an enhancement/fallback; a GitHub API outage
+        # must not prevent the README from being regenerated.
+        logging_warning = f"Published-release version lookup failed: {exc}"
+        print(f"::warning::{logging_warning}")
+
+    return _published_release_versions_cache
+
+
+def published_app_version(app: str, source: str, architecture: str) -> str:
+    return _published_release_versions().get((app, source, architecture), "")
+
+
 def parse_patch_list(output: str) -> list[tuple[str, bool]]:
     rows = []
     current_name = None
@@ -173,8 +249,29 @@ def md_escape(value: str) -> str:
     return value.replace("\\", "\\\\").replace("|", "\\|")
 
 
-def resolve_app_version(app: str, source: str, cli: Path, patches: Path) -> str:
-    """Resolve the highest version actually supported by the current patch bundle."""
+def resolve_app_version(
+    app: str,
+    source: str,
+    architecture: str,
+    cli: Path,
+    patches: Path,
+) -> str:
+    """Resolve the exact application version shown in README.
+
+    Priority:
+      1. Latest published build release for this app/source/architecture.
+      2. Explicit version pinned in apps/*.json.
+      3. Source-published recommended target.
+      4. Morphe CLI supported-version list.
+    """
+    published = published_app_version(app, source, architecture).strip()
+    if published:
+        return published
+
+    pinned = legacy.load_app_config_version(app).strip()
+    if pinned:
+        return pinned
+
     version = legacy.fetch_recommended_version(app, source).strip()
     if version:
         return version
@@ -277,7 +374,7 @@ def main():
 
             # Keep README app version in sync with the exact source-aware version
             # resolution used by the build planner, not a fragile CLI text parser.
-            app_version = resolve_app_version(app, source, cli, mpp)
+            app_version = resolve_app_version(\n                app,\n                source,\n                arch.get((app, source), "—"),\n                cli,\n                mpp,\n            )
             source_version = str(release.get("tag_name", "latest")).lstrip("v")
             applied_count = sum(1 for _, value in final_rows if value)
 
