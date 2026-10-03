@@ -1,0 +1,2 @@
+# Use Piko's default patch selection.
+# The universal "Disable Play Store updates" patch is enabled automatically by the builder.
