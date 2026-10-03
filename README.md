@@ -209,14 +209,24 @@ Architecture: arm64-v8a
 ## Instagram — Piko
 Patch source: piko-instagram — crimera/piko
 Architecture: arm64-v8a
-Patch selection: source defaults + universal **Disable Play Store updates**
+
+<details>
+<summary>🩹 Patch selection</summary>
+
+- ✅ Disable Play Store updates (Universal)
+- ℹ️ App-specific patches use Piko's default patch selection.
 
 </details>
 
 ## Instagram — HushGram
 Patch source: hushgram — SysAdminDoc/HushGram
 Architecture: arm64-v8a
-Patch selection: source defaults + universal **Disable Play Store updates**
+
+<details>
+<summary>🩹 Patch selection</summary>
+
+- ✅ Disable Play Store updates (Universal)
+- ℹ️ App-specific patches use HushGram's default patch selection.
 
 </details>
 
