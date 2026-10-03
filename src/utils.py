@@ -852,10 +852,18 @@ def validate_source_artifact(
                 or ("APK" in normalized_allowed and actual_type in {"APK", *bundle_types})
                 or ("XAPK" in normalized_allowed and actual_type in bundle_types)
                 # Google Play App Bundles are downloaded as split APKs and
-                # merged by gplaydl/APKEditor into a standalone APK. This is
-                # intentionally opt-in so a source that requires XAPK does
-                # not generally start accepting arbitrary APKs.
-                or (allow_merged_play_apk and actual_type == "APK" and "XAPK" in normalized_allowed)
+                # merged by gplaydl/APKEditor into one standalone APK. The merged
+                # APK represents the complete base + compatible config-split set,
+                # so it is a valid transport equivalent for any source that
+                # declares a split-bundle container (APKM/APKS/XAPK). This is
+                # intentionally opt-in: only the verified gplaydl merge path may
+                # use this packaging transition; arbitrary provider APKs are
+                # still rejected when the source requires a bundle.
+                or (
+                    allow_merged_play_apk
+                    and actual_type == "APK"
+                    and bool(normalized_allowed & bundle_types)
+                )
             )
             if not type_compatible:
                 reasons.append(
