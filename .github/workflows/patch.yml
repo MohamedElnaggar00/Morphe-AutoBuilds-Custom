@@ -523,7 +523,32 @@ jobs:
               exit 1
             fi
 
-            title="${app_name} v${app_version} — Patch v${patch_version} — ${source_name} — ${arch}"
+            # Keep the visible release name simple so Obtainium can identify the app/source cleanly.
+            # Internal version/patch/architecture metadata remains in the release body and APK filename.
+            case "$app_name" in
+              youtube) app_display="YouTube" ;;
+              reddit) app_display="Reddit" ;;
+              x) app_display="X" ;;
+              gboard) app_display="Gboard" ;;
+              vpnify) app_display="VPNify" ;;
+              tiktok) app_display="TikTok" ;;
+              camscanner) app_display="CamScanner" ;;
+              facebook) app_display="Facebook" ;;
+              messenger) app_display="Messenger" ;;
+              excel) app_display="Excel" ;;
+              usbhotspot) app_display="USB Hotspot" ;;
+              instagram) app_display="Instagram" ;;
+              *) app_display="$app_name" ;;
+            esac
+
+            # Some source IDs contain an app-specific suffix. Use the actual
+            # patch source name in the visible title (e.g. piko-instagram -> piko).
+            case "$source_name" in
+              piko-instagram) source_display="piko" ;;
+              *) source_display="$source_name" ;;
+            esac
+
+            title="${app_display} - ${source_display}"
 
             safe_app="$(printf '%s' "$app_name" | tr -cs 'A-Za-z0-9._-' '-')"
             safe_patch="$(printf '%s' "$patch_version" | tr -cs 'A-Za-z0-9._-' '-')"
