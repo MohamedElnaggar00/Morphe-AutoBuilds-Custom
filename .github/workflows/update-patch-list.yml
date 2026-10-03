@@ -1,0 +1,259 @@
+name: Update Patch List
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Preview patch-list updates without committing them"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  update-patch-list:
+    name: Update All Patch Selections
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Update patch selections
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          python <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          import urllib.error
+          import urllib.request
+          from pathlib import Path
+
+          ROOT = Path.cwd()
+          PATCH_CONFIG = ROOT / "patch-config.json"
+          SOURCES_DIR = ROOT / "sources"
+          PATCHES_DIR = ROOT / "patches"
+
+          TOKEN = os.environ.get("GITHUB_TOKEN", "")
+          DRY_RUN = os.environ.get("DRY_RUN", "false").lower() == "true"
+
+          # These patches are intentionally never selected automatically.
+          AUTO_ENABLE_EXCLUSIONS = {
+              "hushfeed": {"AMOLED dark theme"},
+          }
+
+          def github_json(url):
+              request = urllib.request.Request(
+                  url,
+                  headers={
+                      "Accept": "application/vnd.github+json",
+                      "User-Agent": "Morphe-AutoBuilds-Custom/update-patch-list",
+                      **({"Authorization": f"Bearer {TOKEN}"} if TOKEN else {}),
+                  },
+              )
+              with urllib.request.urlopen(request, timeout=30) as response:
+                  return json.loads(response.read().decode("utf-8"))
+
+          def load_upstream_patches(source_id):
+              source_file = SOURCES_DIR / f"{source_id}.json"
+              if not source_file.exists():
+                  print(f"SKIP {source_id}: source configuration not found")
+                  return None
+
+              config = json.loads(source_file.read_text(encoding="utf-8"))
+              entries = config if isinstance(config, list) else config.get("sources", [])
+
+              # Use the last configured remote patch repository, excluding Morphe CLI.
+              remote = None
+              for entry in entries:
+                  if not isinstance(entry, dict):
+                      continue
+                  user = entry.get("user")
+                  repo = entry.get("repo")
+                  if user and repo and not (user.lower() == "morpheapp" and repo.lower() == "morphe-cli"):
+                      remote = (user, repo)
+
+              if not remote:
+                  print(f"SKIP {source_id}: no remote patch repository configured")
+                  return None
+
+              user, repo = remote
+              api_url = f"https://api.github.com/repos/{user}/{repo}/contents/patches-list.json"
+
+              try:
+                  data = github_json(api_url)
+                  if isinstance(data, dict) and data.get("content"):
+                      import base64
+                      raw = base64.b64decode(data["content"]).decode("utf-8")
+                  else:
+                      raise ValueError("patches-list.json content was not returned")
+              except (urllib.error.HTTPError, urllib.error.URLError, ValueError, json.JSONDecodeError) as exc:
+                  # Some repositories expose the file through raw.githubusercontent.com
+                  # even when the Contents endpoint is unavailable.
+                  raw_url = f"https://raw.githubusercontent.com/{user}/{repo}/HEAD/patches-list.json"
+                  try:
+                      request = urllib.request.Request(
+                          raw_url,
+                          headers={"User-Agent": "Morphe-AutoBuilds-Custom/update-patch-list"},
+                      )
+                      with urllib.request.urlopen(request, timeout=30) as response:
+                          raw = response.read().decode("utf-8")
+                  except Exception:
+                      print(f"SKIP {source_id}: could not read {user}/{repo}/patches-list.json ({exc})")
+                      return None
+
+              payload = json.loads(raw)
+              if isinstance(payload, dict):
+                  items = payload.get("patches", [])
+              else:
+                  items = payload
+
+              names = []
+              for item in items:
+                  if isinstance(item, str):
+                      name = item.strip()
+                  elif isinstance(item, dict):
+                      name = str(item.get("name", "")).strip()
+                  else:
+                      continue
+                  if name and name not in names:
+                      names.append(name)
+
+              print(f"{source_id}: upstream patch list contains {len(names)} patches ({user}/{repo})")
+              return names
+
+          def parse_selection(path):
+              entries = {}
+              passthrough = []
+
+              for raw_line in path.read_text(encoding="utf-8").splitlines():
+                  line = raw_line.strip()
+                  if not line or line.startswith("#") or line.startswith("@"):
+                      passthrough.append(raw_line)
+                      continue
+                  if line[0] in "+-" and len(line) > 1:
+                      name = line[1:].strip()
+                      if name:
+                          entries[name] = line[0]
+                      continue
+                  # Keep unknown/comment-like lines instead of destroying user content.
+                  passthrough.append(raw_line)
+
+              return entries, passthrough
+
+          def find_patch_file(source_id):
+              candidates = sorted(PATCHES_DIR.glob("*.txt"))
+              suffix = f"-{source_id}"
+              matches = [p for p in candidates if p.stem.endswith(suffix)]
+              if not matches:
+                  return None
+              if len(matches) > 1:
+                  print(f"WARNING {source_id}: multiple patch files found; using {matches[0].name}")
+              return matches[0]
+
+          config = json.loads(PATCH_CONFIG.read_text(encoding="utf-8"))
+          configured = config.get("patch_list", [])
+
+          changed_files = []
+          skipped = 0
+
+          for item in configured:
+              if not isinstance(item, dict):
+                  continue
+
+              source_id = str(item.get("source", "")).strip()
+              if not source_id:
+                  continue
+
+              patch_file = find_patch_file(source_id)
+              if patch_file is None:
+                  print(f"SKIP {source_id}: no matching local patch-selection file")
+                  skipped += 1
+                  continue
+
+              upstream = load_upstream_patches(source_id)
+              if upstream is None:
+                  skipped += 1
+                  continue
+
+              current, passthrough = parse_selection(patch_file)
+              upstream_set = set(upstream)
+              exclusions = AUTO_ENABLE_EXCLUSIONS.get(source_id, set())
+
+              # Preserve the user's existing + / - choice for patches that still exist.
+              # Every newly discovered patch is automatically enabled with +.
+              updated = {}
+              for name in upstream:
+                  if name in exclusions:
+                      continue
+                  updated[name] = current.get(name, "+")
+
+              old_text = patch_file.read_text(encoding="utf-8")
+              new_lines = list(passthrough)
+
+              # Keep selection entries in the upstream order, which also makes newly
+              # discovered patches easy to spot and keeps the file deterministic.
+              new_lines.extend(f"{sign}{name}" for name, sign in updated.items())
+              new_text = "\n".join(new_lines).rstrip() + "\n"
+
+              if new_text == old_text:
+                  print(f"OK {patch_file}: no changes")
+                  continue
+
+              added = [name for name in upstream if name not in current and name not in exclusions]
+              removed = [name for name in current if name not in upstream_set or name in exclusions]
+
+              print(f"UPDATE {patch_file}")
+              if added:
+                  print("  New patches enabled:")
+                  for name in added:
+                      print(f"    + {name}")
+              if removed:
+                  print("  Removed from selection:")
+                  for name in removed:
+                      print(f"    - {name}")
+
+              changed_files.append((patch_file, new_text))
+
+              if not DRY_RUN:
+                  patch_file.write_text(new_text, encoding="utf-8")
+
+          if DRY_RUN:
+              print("")
+              print("DRY RUN: no files were changed and no commit was created.")
+              raise SystemExit(0)
+
+          if not changed_files:
+              print("")
+              print("No patch-selection changes detected. Nothing to commit.")
+              raise SystemExit(0)
+
+          subprocess.run(["git", "config", "user.name", "github-actions[bot]"], check=True)
+          subprocess.run(
+              ["git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
+              check=True,
+          )
+          subprocess.run(["git", "add", "patches/*.txt"], check=True)
+          subprocess.run(
+              ["git", "commit", "-m", "chore: update patch selections"],
+              check=True,
+          )
+          subprocess.run(["git", "push"], check=True)
+
+          print("")
+          print(f"Committed patch-selection updates for {len(changed_files)} file(s).")
+          PY
