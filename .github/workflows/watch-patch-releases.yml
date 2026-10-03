@@ -45,6 +45,7 @@ jobs:
           sources=(
             "MorpheApp/morphe-patches"
             "crimera/piko-newx"
+            "crimera/piko"
             "jasonwu1994/Gboard-patches"
             "hxreborn/morphe-patches"
             "SysAdminDoc/hushfeed"
@@ -52,6 +53,7 @@ jobs:
             "hoo-dles/morphe-patches"
             "SysAdminDoc/HushMessenger"
             "SysAdminDoc/Hushfacebook"
+            "SysAdminDoc/HushGram"
             "rushiranpise/morphe-patches"
           )
 
