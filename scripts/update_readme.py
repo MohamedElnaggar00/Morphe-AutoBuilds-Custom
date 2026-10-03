@@ -374,7 +374,13 @@ def main():
 
             # Keep README app version in sync with the exact source-aware version
             # resolution used by the build planner, not a fragile CLI text parser.
-            app_version = resolve_app_version(\n                app,\n                source,\n                arch.get((app, source), "—"),\n                cli,\n                mpp,\n            )
+            app_version = resolve_app_version(
+                app,
+                source,
+                arch.get((app, source), "—"),
+                cli,
+                mpp,
+            )
             source_version = str(release.get("tag_name", "latest")).lstrip("v")
             applied_count = sum(1 for _, value in final_rows if value)
 
