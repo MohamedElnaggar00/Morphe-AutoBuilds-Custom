@@ -82,5 +82,19 @@
     "arches": [
       "arm64-v8a"
     ]
+  },
+  {
+    "app_name": "instagram",
+    "source": "piko-instagram",
+    "arches": [
+      "arm64-v8a"
+    ]
+  },
+  {
+    "app_name": "instagram",
+    "source": "hushgram",
+    "arches": [
+      "arm64-v8a"
+    ]
   }
 ]
