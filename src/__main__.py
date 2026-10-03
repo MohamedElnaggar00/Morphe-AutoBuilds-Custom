@@ -146,12 +146,21 @@ def _release_has_exact_build(
 
         expected_suffix = f"-app-v{version}.apk" if patch_version else f"-v{version}.apk"
         expected_marker = f"-patch-v{patch_version}-" if patch_version else ""
+        source_names = _source_asset_names(source)
+        expected_prefix = f"{app_name}-{arch}-"
         for name in assets:
-            if (
-                name.endswith(expected_suffix)
-                and (not expected_marker or expected_marker in name)
+            if not name.startswith(expected_prefix):
+                continue
+            if not any(
+                name.startswith(f"{expected_prefix}{source_name}-")
+                for source_name in source_names
             ):
-                return True, name
+                continue
+            if not name.endswith(expected_suffix):
+                continue
+            if expected_marker and expected_marker not in name:
+                continue
+            return True, name
         return False, ""
 
     # Compatibility path for older generated releases with no exact metadata.
