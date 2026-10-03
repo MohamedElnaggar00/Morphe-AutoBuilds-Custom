@@ -191,7 +191,7 @@ jobs:
           PATCH_EVENT: ${{ github.event_name }}
           PATCH_REPOSITORY: ${{ github.event.client_payload.patch_repository }}
           PATCH_RELEASE_ID: ${{ github.event.client_payload.release_id }}
-          PATCH_RELEASES_JSON: ${{ github.event.client_payload.patch_releases }}
+          PATCH_RELEASES_JSON: ${{ toJSON(github.event.client_payload.patch_releases) }}
           HAS_UPDATES: ${{ needs.check-updates.outputs.has_updates }}
           BUILD_RESULT: ${{ needs.build-apps.result }}
           PUBLISH_RESULT: ${{ needs.create-app-releases.result }}
@@ -239,7 +239,7 @@ jobs:
                 ' patch-release-state.json > "$tmp_state"
 
                 echo "Recorded monitored releases from one batched dispatch:"
-                jq -r '.[] | "  - (.patch_repository) @ release (.release_id)"'                   <<<"$PATCH_RELEASES_JSON"
+                jq -r '.[] | "  - \(.patch_repository) @ release \(.release_id)"' <<<"$PATCH_RELEASES_JSON"
               # Legacy single-release payload support keeps older/manual dispatches safe.
               elif [ -n "${PATCH_REPOSITORY:-}" ]                 && [ -n "${PATCH_RELEASE_ID:-}" ]                 && [[ "${PATCH_RELEASE_ID}" =~ ^[0-9]+$ ]]; then
 
