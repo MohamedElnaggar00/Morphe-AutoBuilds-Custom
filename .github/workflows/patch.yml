@@ -191,6 +191,7 @@ jobs:
           PATCH_EVENT: ${{ github.event_name }}
           PATCH_REPOSITORY: ${{ github.event.client_payload.patch_repository }}
           PATCH_RELEASE_ID: ${{ github.event.client_payload.release_id }}
+          PATCH_RELEASES_JSON: ${{ github.event.client_payload.patch_releases }}
           HAS_UPDATES: ${{ needs.check-updates.outputs.has_updates }}
           BUILD_RESULT: ${{ needs.build-apps.result }}
           PUBLISH_RESULT: ${{ needs.create-app-releases.result }}
@@ -209,12 +210,9 @@ jobs:
             # Regenerate from the exact repository state we just synchronized to.
             python scripts/update_readme.py
 
-            # Record the watched release only after the build/publication succeeds.
+            # Record every watched release only after the build/publication succeeds.
             record_state=false
-            if [ "$PATCH_EVENT" = "repository_dispatch" ] \
-              && [ -n "${PATCH_REPOSITORY:-}" ] \
-              && [ -n "${PATCH_RELEASE_ID:-}" ] \
-              && [[ "${PATCH_RELEASE_ID}" =~ ^[0-9]+$ ]]; then
+            if [ "$PATCH_EVENT" = "repository_dispatch" ]; then
               if [ "$HAS_UPDATES" = "false" ] ||
                  { [ "$BUILD_RESULT" = "success" ] && [ "$PUBLISH_RESULT" = "success" ]; }; then
                 record_state=true
@@ -223,12 +221,39 @@ jobs:
 
             if [ "$record_state" = "true" ]; then
               tmp_state="patch-release-state.json.tmp"
-              jq --arg repo "$PATCH_REPOSITORY" \
-                 --argjson id "$PATCH_RELEASE_ID" \
-                 '.[$repo] = $id' \
-                 patch-release-state.json > "$tmp_state"
-              mv "$tmp_state" patch-release-state.json
-              echo "Recorded monitored release: $PATCH_REPOSITORY @ $PATCH_RELEASE_ID"
+
+              # New watcher payload: one dispatch can contain multiple source releases.
+              if [ -n "${PATCH_RELEASES_JSON:-}" ]                 && jq -e '
+                  type == "array"
+                  and all(.[]; (.patch_repository | type) == "string"
+                          and (.patch_repository | length) > 0
+                          and ((.release_id | type) == "number"
+                               or ((.release_id | type) == "string"
+                                   and (.release_id | test("^[0-9]+$")))))
+                ' <<<"$PATCH_RELEASES_JSON" >/dev/null 2>&1; then
+
+                jq --argjson releases "$PATCH_RELEASES_JSON" '
+                  reduce $releases[] as $item (.;
+                    .[$item.patch_repository] = ($item.release_id | tonumber)
+                  )
+                ' patch-release-state.json > "$tmp_state"
+
+                echo "Recorded monitored releases from one batched dispatch:"
+                jq -r '.[] | "  - (.patch_repository) @ release (.release_id)"'                   <<<"$PATCH_RELEASES_JSON"
+              # Legacy single-release payload support keeps older/manual dispatches safe.
+              elif [ -n "${PATCH_REPOSITORY:-}" ]                 && [ -n "${PATCH_RELEASE_ID:-}" ]                 && [[ "${PATCH_RELEASE_ID}" =~ ^[0-9]+$ ]]; then
+
+                jq --arg repo "$PATCH_REPOSITORY"                    --argjson id "$PATCH_RELEASE_ID"                    '.[$repo] = $id'                    patch-release-state.json > "$tmp_state"
+
+                echo "Recorded monitored release: $PATCH_REPOSITORY @ $PATCH_RELEASE_ID"
+              else
+                echo "::warning::repository_dispatch completed without a valid patch release payload; monitored release state was not changed."
+                rm -f "$tmp_state"
+              fi
+
+              if [ -f "$tmp_state" ]; then
+                mv "$tmp_state" patch-release-state.json
+              fi
             fi
 
             if git diff --quiet -- README.md patch-release-state.json; then
