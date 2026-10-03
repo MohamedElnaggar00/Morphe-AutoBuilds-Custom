@@ -475,49 +475,6 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — —
-Patch source: devanced
-
-<details>
-<summary>🩹 Patches — unavailable</summary>
-
-> README refresh failed for this app: 
-Exception in thread "main" java.lang.NoSuchMethodError: 'app.morphe.patcher.patch.BytecodePatch app.morphe.patches.shared.misc.gms.GmsCoreSupportPatchKt.gmsCoreSupportPatch$default(java.lang.String, java.lang.String, app.morphe.patcher.Fingerprint, java.util.Set, app.morphe.patcher.Fingerprint, app.morphe.patcher.patch.Patch, kotlin.jvm.functions.Function0, kotlin.jvm.functions.Function1, kotlin.jvm.functions.Function1, int, java.lang.Object)'
-	at app.morphe.patches.music.misc.gms.GmsCoreSupportPatchKt.<clinit>(GmsCoreSupportPatch.kt:17)
-	at java.base/jdk.internal.misc.Unsafe.ensureClassInitialized0(Native Method)
-	at java.base/jdk.internal.misc.Unsafe.ensureClassInitialized(Unsafe.java:1160)
-	at java.base/jdk.internal.reflect.MethodHandleAccessorFactory.ensureClassInitialized(MethodHandleAccessorFactory.java:301)
-	at java.base/jdk.internal.reflect.MethodHandleAccessorFactory.newMethodAccessor(MethodHandleAccessorFactory.java:72)
-	at java.base/jdk.internal.reflect.ReflectionFactory.newMethodAccessor(ReflectionFactory.java:159)
-	at java.base/java.lang.reflect.Method.acquireMethodAccessor(Method.java:726)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:577)
-	at app.morphe.patcher.patch.PatchLoader$Companion.getPatchMethods(Patch.kt:933)
-	at app.morphe.patcher.patch.PatchLoader$Companion.loadPatches$lambda$0$1(Patch.kt:957)
-	at kotlin.sequences.FlatteningSequence$iterator$1.ensureItemIterator(Sequences.kt:363)
-	at kotlin.sequences.FlatteningSequence$iterator$1.hasNext(Sequences.kt:351)
-	at kotlin.sequences.FilteringSequence$iterator$1.calcNext(Sequences.kt:202)
-	at kotlin.sequences.FilteringSequence$iterator$1.hasNext(Sequences.kt:227)
-	at kotlin.sequences.SequencesKt___SequencesKt.toSet(_Sequences.kt:1033)
-	at app.morphe.patcher.patch.PatchLoader$Companion.loadPatches(Patch.kt:960)
-	at app.morphe.patcher.patch.PatchLoader$Companion.access$loadPatches(Patch.kt:913)
-	at app.morphe.patcher.patch.PatchLoader.<init>(Patch.kt:858)
-	at app.morphe.patcher.patch.PatchLoader.<init>(Patch.kt)
-	at app.morphe.patcher.patch.PatchLoader$Jar.<init>(Patch.kt:867)
-	at app.morphe.patcher.patch.PatchKt.loadPatchesFromJar(Patch.kt:981)
-	at app.morphe.desktop.command.ListPatchesCommand.run(ListPatchesCommand.kt:217)
-	at picocli.CommandLine.executeUserObject(CommandLine.java:2045)
-	at picocli.CommandLine.access$1500(CommandLine.java:148)
-	at picocli.CommandLine$RunLast.executeUserObjectOfLastSubcommandWithSameParent(CommandLine.java:2469)
-	at picocli.CommandLine$RunLast.handle(CommandLine.java:2461)
-	at picocli.CommandLine$RunLast.handle(CommandLine.java:2423)
-	at picocli.CommandLine$AbstractParseResultHandler.execute(CommandLine.java:2277)
-	at picocli.CommandLine$RunLast.execute(CommandLine.java:2425)
-	at picocli.CommandLine.execute(CommandLine.java:2174)
-	at app.morphe.MorpheLauncherKt.main(MorpheLauncher.kt:85)
-
-
-</details>
-
 ## Messenger — App v— — Patch v0.8.0
 Patch source: hushmessenger — v0.8.0 ([v0.8.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
