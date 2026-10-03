@@ -194,38 +194,43 @@ jobs:
               upstream_set = set(upstream)
               exclusions = AUTO_ENABLE_EXCLUSIONS.get(source_id, set())
 
-              # Preserve the user's existing + / - choice for patches that still exist.
-              # Every newly discovered patch is automatically enabled with +.
-              updated = {}
-              for name in upstream:
-                  if name in exclusions:
-                      continue
-                  updated[name] = current.get(name, "+")
+              # Compare the upstream list with the patches already present locally.
+              # Existing + / - choices are never changed.
+              added = [
+                  name for name in upstream
+                  if name not in current and name not in exclusions
+              ]
+              removed_upstream = [
+                  name for name in current
+                  if name not in upstream_set and name not in exclusions
+              ]
 
-              old_text = patch_file.read_text(encoding="utf-8")
-              new_lines = list(passthrough)
-
-              # Keep selection entries in the upstream order, which also makes newly
-              # discovered patches easy to spot and keeps the file deterministic.
-              new_lines.extend(f"{sign}{name}" for name, sign in updated.items())
-              new_text = "\n".join(new_lines).rstrip() + "\n"
-
-              if new_text == old_text:
-                  print(f"OK {patch_file}: no changes")
+              if not added:
+                  print(f"OK {patch_file.name}: no new patches")
+                  if removed_upstream:
+                      print(
+                          f"  Note: {len(removed_upstream)} local patch(es) are no longer "
+                          "listed upstream; they were left untouched."
+                      )
                   continue
 
-              added = [name for name in upstream if name not in current and name not in exclusions]
-              removed = [name for name in current if name not in upstream_set or name in exclusions]
+              print(f"NEW PATCHES — {patch_file.name}")
+              for name in added:
+                  print(f"  + {name}")
 
-              print(f"UPDATE {patch_file}")
-              if added:
-                  print("  New patches enabled:")
-                  for name in added:
-                      print(f"    + {name}")
-              if removed:
-                  print("  Removed from selection:")
-                  for name in removed:
-                      print(f"    - {name}")
+              if removed_upstream:
+                  print(
+                      f"  Note: {len(removed_upstream)} local patch(es) are no longer "
+                      "listed upstream; they were left untouched."
+                  )
+
+              # Append only genuinely new patches. Do not rebuild/reorder the file,
+              # so a dry run reports differences without making the whole selection
+              # file look changed.
+              old_text = patch_file.read_text(encoding="utf-8")
+              base = old_text.rstrip()
+              suffix = "\n" if base else ""
+              new_text = base + suffix + "\n".join(f"+ {name}" for name in added) + "\n"
 
               changed_files.append((patch_file, new_text))
 
