@@ -285,112 +285,112 @@ Patch source: hushfeed — v0.67.0 ([v0.67.0](https://github.com/SysAdminDoc/hus
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 42/111 applied</summary>
+<summary>🩹 Patches — 106/111 applied</summary>
 
-- ❌ Hide the risk control CAPTCHA
+- ✅ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
 - ✅ Feed filter
-- ❌ Allow screenshots and Circle to Search
+- ✅ Allow screenshots and Circle to Search
 - ✅ Disable screen capture detection
-- ❌ Show author region
-- ❌ Keep playing in the background
-- ❌ Block author button
-- ❌ Subtitle tools
+- ✅ Show author region
+- ✅ Keep playing in the background
+- ✅ Block author button
+- ✅ Subtitle tools
 - ✅ Remember clear display
-- ❌ Confirm feed interactions
-- ❌ Advanced downloads
+- ✅ Confirm feed interactions
+- ✅ Advanced downloads
 - ✅ Downloads
-- ❌ Allow Duet and Stitch
+- ✅ Allow Duet and Stitch
 - ✅ Keep the Favorites tab
 - ✅ Hide feed save button
 - ✅ Hide feed follow button
-- ❌ Mute feed videos
-- ❌ Feed text sizes
+- ✅ Mute feed videos
+- ✅ Feed text sizes
 - ✅ Hide feed LIVE button
 - ✅ Hide feed search button
-- ❌ Double-tap controls
-- ❌ Long-press controls
-- ❌ Swipe-left controls
-- ❌ Ghost mode
-- ❌ Automatic video advance
+- ✅ Double-tap controls
+- ✅ Long-press controls
+- ✅ Swipe-left controls
+- ✅ Ghost mode
+- ✅ Automatic video advance
 - ✅ Stay on the video in full screen
 - ✅ Stop video looping
-- ❌ Not interested button
+- ✅ Not interested button
 - ✅ Custom offline videos limit
 - ✅ Always show publish date
-- ❌ Playback quality
+- ✅ Playback quality
 - ✅ Disable the long press quick share
 - ✅ Disable the long press repost
 - ✅ Hide comment typing suggestions
 - ✅ Resume videos after scrolling
 - ✅ Use non-personalized search
 - ✅ Show LIVE search
-- ❌ Hide search suggestions
+- ✅ Hide search suggestions
 - ✅ Show the progress bar
 - ✅ Show the progress bar thumbnail
-- ❌ Hide already seen videos
-- ❌ Skip content warnings
-- ❌ Share sheet tools
+- ✅ Hide already seen videos
+- ✅ Skip content warnings
+- ✅ Share sheet tools
 - ✅ Hold-and-slide 2x lock
 - ✅ Playback speed
-- ❌ Use system font
-- ❌ Fit the video to the screen
-- ❌ Hide video overlays
-- ❌ Change app name
+- ✅ Use system font
+- ✅ Fit the video to the screen
+- ✅ Hide video overlays
+- ✅ Change app name
 - ✅ Copy comments without username
 - ✅ Comment publish diagnostics
 - ✅ Comment send fix
-- ❌ Comment sort controls
-- ❌ Comment tools
-- ❌ Hide comment popup ads
+- ✅ Comment sort controls
+- ✅ Comment tools
+- ✅ Hide comment popup ads
 - ✅ Open external links directly
 - ✅ Feature Gate Lab
-- ❌ Feature Gate Recorder
-- ❌ Foldable split comment view
+- ✅ Feature Gate Recorder
+- ✅ Foldable split comment view
 - ✅ Follow diagnostics
-- ❌ Keep a streak going
-- ❌ Expand activity list
-- ❌ Hide inbox stories
-- ❌ Hide suggested accounts
-- ❌ Hide inbox items
-- ❌ Notification controls
+- ✅ Keep a streak going
+- ✅ Expand activity list
+- ✅ Hide inbox stories
+- ✅ Hide suggested accounts
+- ✅ Hide inbox items
+- ✅ Notification controls
 - ✅ Block suggested video notifications
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
-- ❌ Skip the splash ad
-- ❌ Limit background traffic
-- ❌ Drop the animated image cache
-- ❌ Skip update checks
-- ❌ Remove content credential and card scanner assets
-- ❌ Remove unused language packs
-- ❌ Remove LIVE extras
-- ❌ Remove creation tools
-- ❌ Block P2P video relay
-- ❌ Keep the screen's refresh rate
+- ✅ Skip the splash ad
+- ✅ Limit background traffic
+- ✅ Drop the animated image cache
+- ✅ Skip update checks
+- ✅ Remove content credential and card scanner assets
+- ✅ Remove unused language packs
+- ✅ Remove LIVE extras
+- ✅ Remove creation tools
+- ✅ Block P2P video relay
+- ✅ Keep the screen's refresh rate
 - ✅ Repost diagnostics
-- ❌ Diagnostic tools
+- ✅ Diagnostic tools
 - ✅ Settings
 - ✅ Sanitize sharing links
-- ❌ Hide the launcher shortcuts
-- ❌ Region spoof
+- ✅ Hide the launcher shortcuts
+- ✅ Region spoof
 - ✅ SIM spoof
-- ❌ Disable telemetry
+- ✅ Disable telemetry
 - ❌ AMOLED dark theme
 - ✅ Translate comments
-- ❌ Hide Play Store update offer
-- ❌ Enable voice comments
-- ❌ Stop on-device AI profiling
-- ❌ In-app browser privacy guard
-- ❌ Camera and microphone indicator
-- ❌ Block contact list access
-- ❌ Device privacy guard
-- ❌ Block installed app scanning
-- ❌ Location access governor
-- ❌ Network request report
-- ❌ Resource and battery governor
-- ❌ Stop saving search history
-- ❌ Look like the store app
+- ✅ Hide Play Store update offer
+- ✅ Enable voice comments
+- ✅ Stop on-device AI profiling
+- ✅ In-app browser privacy guard
+- ✅ Camera and microphone indicator
+- ✅ Block contact list access
+- ✅ Device privacy guard
+- ✅ Block installed app scanning
+- ✅ Location access governor
+- ✅ Network request report
+- ✅ Resource and battery governor
+- ✅ Stop saving search history
+- ✅ Look like the store app
 - ✅ Hide floating promotions
 - ✅ Hide profile shortcuts
 - ❌ Clone app
@@ -532,7 +532,7 @@ Patch source: hushfacebook — v0.7.0 ([v0.7.0](https://github.com/SysAdminDoc/H
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 49/65 applied</summary>
+<summary>🩹 Patches — 52/65 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -548,7 +548,7 @@ Architecture: arm64-v8a
 - ✅ Open Messenger from the top bar
 - ✅ Install beside Meta's apps
 - ❌ Default comment order
-- ❌ Tag suggestions only after @
+- ✅ Tag suggestions only after @
 - ✅ Download any reel
 - ✅ Download any story
 - ✅ Download any video
@@ -567,10 +567,10 @@ Architecture: arm64-v8a
 - ❌ AMOLED black theme
 - ✅ Force dark mode
 - ❌ Material You theme
-- ❌ Default playback quality
+- ✅ Default playback quality
 - ✅ Keep the reel speed
 - ✅ Resume long videos
-- ❌ Tap to play
+- ✅ Tap to play
 - ✅ Hide Menu promotions
 - ✅ Hushfacebook in the Menu
 - ✅ Open links in external browser
@@ -699,7 +699,7 @@ Patch source: hushgram — v0.0.4 ([v0.0.4](https://github.com/SysAdminDoc/HushG
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 36/51 applied</summary>
+<summary>🩹 Patches — 47/51 applied</summary>
 
 - ✅ Hide ads
 - ✅ Download any reel
@@ -709,7 +709,7 @@ Architecture: arm64-v8a
 - ✅ Start Home on Following
 - ✅ Hide Reels in the feed
 - ✅ Hide suggested posts
-- ❌ Stop swipe to create
+- ✅ Stop swipe to create
 - ✅ Default playback quality
 - ✅ Resume long videos
 - ✅ Tap to play
@@ -718,8 +718,8 @@ Architecture: arm64-v8a
 - ✅ Disable analytics
 - ✅ Remove the empty space at the bottom
 - ✅ Remove build expired popup
-- ❌ Copy comment
-- ❌ Save comment photo
+- ✅ Copy comment
+- ✅ Save comment photo
 - ✅ Open developer options
 - ✅ Open links in external browser
 - ✅ Restore trust on re-signed builds
@@ -728,24 +728,24 @@ Architecture: arm64-v8a
 - ✅ Pure black dark mode
 - ✅ Start on x86 devices
 - ✅ Show if a profile follows you
-- ❌ Hide highlights
-- ❌ Hide suggested people on profiles
-- ❌ Keep Reels auto scroll on
+- ✅ Hide highlights
+- ✅ Hide suggested people on profiles
+- ✅ Keep Reels auto scroll on
 - ✅ Clean up Reels
 - ✅ Turn off double tap to like
-- ❌ Stop Reels scrolling
-- ❌ Keep a seek bar on Reels
+- ✅ Stop Reels scrolling
+- ✅ Keep a seek bar on Reels
 - ✅ Keep the reel speed
-- ❌ Hide suggested accounts in Reels
+- ✅ Hide suggested accounts in Reels
 - ✅ Hide the Reels tab
 - ✅ Don't send reel watch history
 - ✅ Hide the Repost button
 - ✅ Hide group buttons on the share sheet
 - ✅ Stop Story auto-advance
-- ❌ Loop a story
+- ✅ Loop a story
 - ✅ Story ring size
 - ✅ View stories anonymously
-- ❌ Show a story's exact time
+- ✅ Show a story's exact time
 - ✅ Hide suggested stories
 - ❌ Clone app
 - ❌ Change installer source
