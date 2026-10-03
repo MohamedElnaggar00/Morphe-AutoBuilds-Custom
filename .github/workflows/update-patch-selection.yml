@@ -157,13 +157,13 @@ jobs:
               header = comments[0] if comments else f"# {key} patch selection"
               lines = [header]
               lines.extend(f"{sign} {name}" for name, sign in selection.items())
-              new_content = "\\n".join(lines) + "\\n"
+              new_content = "\n".join(lines) + "\n"
               old_content = path.read_text(encoding="utf-8")
 
               added = [name for name in selection if name not in existing]
               removed = [name for name in existing if name not in selection]
 
-              print(f"\\n=== {key} ===")
+              print(f"\n=== {key} ===")
               print(f"Upstream version: {version}")
               print(f"Upstream patches: {len(upstream)}")
               print(f"Selected patches:  {len(selection)}")
@@ -184,14 +184,14 @@ jobs:
                   print("  -> already synchronized")
 
           if dry_run:
-              print("\\nDRY RUN: no files were committed.")
+              print("\nDRY RUN: no files were committed.")
               raise SystemExit(0)
 
           if not changed_files:
-              print("\\nNo patch-selection changes detected; nothing to commit.")
+              print("\nNo patch-selection changes detected; nothing to commit.")
               raise SystemExit(0)
 
-          print("\\nFiles changed:")
+          print("\nFiles changed:")
           for path, _ in changed_files:
               print(f"  - {path}")
           PY
