@@ -63,15 +63,27 @@ jobs:
           for source_repo in "${sources[@]}"; do
             echo "Checking ${source_repo}..."
 
-            release_json="$(gh api               -H "Accept: application/vnd.github+json"               "/repos/${source_repo}/releases?per_page=1")"
+            # IMPORTANT: /releases?per_page=1 can return a pre-release.
+            # The /releases/latest endpoint explicitly returns the latest
+            # non-draft, non-pre-release release only.
+            if ! release_json="$(gh api \
+              -H "Accept: application/vnd.github+json" \
+              "/repos/${source_repo}/releases/latest")"; then
+              echo "No latest stable release found for ${source_repo}; skipping."
+              continue
+            fi
 
-            release_id="$(jq -r '.[0].id // empty' <<<"${release_json}")"
-            tag_name="$(jq -r '.[0].tag_name // empty' <<<"${release_json}")"
-            published_at="$(jq -r '.[0].published_at // empty' <<<"${release_json}")"
-            html_url="$(jq -r '.[0].html_url // empty' <<<"${release_json}")"
+            release_id="$(jq -r '.id // empty' <<<"${release_json}")"
+            tag_name="$(jq -r '.tag_name // empty' <<<"${release_json}")"
+            published_at="$(jq -r '.published_at // empty' <<<"${release_json}")"
+            html_url="$(jq -r '.html_url // empty' <<<"${release_json}")"
+            is_prerelease="$(jq -r '.prerelease // false' <<<"${release_json}")"
+            is_draft="$(jq -r '.draft // false' <<<"${release_json}")"
 
-            if [ -z "${release_id}" ]; then
-              echo "No published releases found for ${source_repo}; skipping."
+            # Defensive check: the endpoint above should already guarantee this,
+            # but never dispatch a build for a pre-release or draft.
+            if [ -z "${release_id}" ] || [ "${is_prerelease}" = "true" ] || [ "${is_draft}" = "true" ]; then
+              echo "Ignoring non-stable release for ${source_repo}; skipping."
               continue
             fi
 
