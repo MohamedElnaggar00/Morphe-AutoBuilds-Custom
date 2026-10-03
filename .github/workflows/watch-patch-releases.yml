@@ -56,6 +56,7 @@ jobs:
           )
 
           changed=0
+          changed_releases='[]'
 
           for source_repo in "${sources[@]}"; do
             echo "Checking ${source_repo}..."
@@ -81,15 +82,26 @@ jobs:
 
             echo "NEW PATCH RELEASE: ${source_repo} @ ${tag_name}"
 
-            gh api               --method POST               -H "Accept: application/vnd.github+json"               "/repos/${REPOSITORY}/dispatches"               -f event_type="patch-release"               -F client_payload[patch_repository]="${source_repo}"               -F client_payload[release_id]="${release_id}"               -f client_payload[tag_name]="${tag_name}"               -f client_payload[published_at]="${published_at}"               -f client_payload[release_url]="${html_url}"
+            changed_releases="$(jq -c               --arg repo "${source_repo}"               --argjson id "${release_id}"               --arg tag "${tag_name}"               --arg published "${published_at}"               --arg url "${html_url}"               '. + [{
+                patch_repository: $repo,
+                release_id: $id,
+                tag_name: $tag,
+                published_at: $published,
+                release_url: $url
+              }]' <<<"${changed_releases}")"
 
-            changed=1
-            echo "Dispatched patch-release for ${source_repo} @ ${tag_name}"
+            changed=$((changed + 1))
+            echo "Queued new patch release: ${source_repo} @ ${tag_name}"
           done
 
-          if [ "${changed}" -eq 1 ]; then
-            echo "New patch release event(s) dispatched: ${changed}"
-            echo "The Auto Build workflow is responsible for recording the release state on main after successful processing."
+          if [ "${changed}" -gt 0 ]; then
+            echo "New patch releases detected: ${changed}"
+            echo "Dispatching ONE patch-release event for all detected releases..."
+
+            jq -n               --argjson releases "${changed_releases}"               '{event_type: "patch-release", client_payload: {patch_releases: $releases}}'               | gh api                   --method POST                   -H "Accept: application/vnd.github+json"                   "/repos/${REPOSITORY}/dispatches"                   --input -
+
+            echo "Single patch-release dispatch sent successfully."
+            echo "The Auto Build workflow is responsible for processing all detected releases and recording their state on main after successful processing."
           else
             echo "No new patch releases detected."
           fi
