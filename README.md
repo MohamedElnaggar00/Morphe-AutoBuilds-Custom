@@ -4,7 +4,7 @@
 - Patch Source Watcher checks every 3 hours and triggers Auto Build when a new patch-source release is detected
 - Manual updates available via workflow dispatch
 
-## YouTube — App v— — Patch v1.45.0
+## YouTube — App v21.16.256 — Patch v1.45.0
 Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
@@ -110,7 +110,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Reddit — App v— — Patch v1.45.0
+## Reddit — App v2026.24.0 — Patch v1.45.0
 Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
@@ -144,7 +144,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v— — Patch v3.49.0
+## X — App v12.29.1-prod.01 — Patch v3.49.0
 Patch source: piko-newx — v3.49.0 ([v3.49.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
@@ -206,7 +206,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Gboard — App v— — Patch v3.11.0
+## Gboard — App v18.0.3.954559732-release-arm64-v8a — Patch v3.11.0
 Patch source: jasonwu1994 — v3.11.0 ([v3.11.0](https://github.com/jasonwu1994/Gboard-patches))
 Architecture: arm64-v8a
 
@@ -263,7 +263,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v— — Patch v1.39.0
+## vpnify — App v2.3.0 — Patch v1.39.0
 Patch source: hxreborn — v1.39.0 ([v1.39.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
@@ -280,7 +280,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v— — Patch v0.67.0
+## TikTok — App v47.1.4 — Patch v0.67.0
 Patch source: hushfeed — v0.67.0 ([v0.67.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
@@ -401,7 +401,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok (Metra) — App v— — Patch v0.8.0
+## TikTok (Metra) — App v46.2.3 — Patch v0.8.0
 Patch source: metra — v0.8.0 ([v0.8.0](https://github.com/icysymmetra/tiktok-patches-for-morphe))
 Architecture: arm64-v8a
 
@@ -458,7 +458,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## CamScanner — App v— — Patch v1.46.0
+## CamScanner — App v7.20.0.2606230000 — Patch v1.46.0
 Patch source: hoodles — v1.46.0 ([v1.46.0](https://github.com/hoo-dles/morphe-patches))
 Architecture: arm64-v8a
 
@@ -480,7 +480,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — App v— — Patch v0.14.0
+## Messenger — App v580.0.0.49.91 — Patch v0.14.0
 Patch source: hushmessenger — v0.14.0 ([v0.14.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
@@ -527,7 +527,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v— — Patch v0.7.0
+## Facebook — App v581.0.0.45.58 — Patch v0.7.0
 Patch source: hushfacebook — v0.7.0 ([v0.7.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
@@ -602,7 +602,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Excel — App v— — Patch v1.22.0
+## Excel — App v16.0.20228.20090 — Patch v1.22.0
 Patch source: rushi-excel — v1.22.0 ([v1.22.0](https://github.com/rushiranpise/morphe-patches))
 Architecture: arm64-v8a
 
@@ -625,7 +625,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Usbhotspot — App v— — Patch v1.22.0
+## Usbhotspot — App v1.7 — Patch v1.22.0
 Patch source: rushi-usbhotspot — v1.22.0 ([v1.22.0](https://github.com/rushiranpise/morphe-patches))
 Architecture: arm64-v8a
 
@@ -694,7 +694,7 @@ Exception in thread "main" java.lang.NoSuchMethodError: 'app.morphe.patcher.patc
 
 </details>
 
-## Instagram — App v— — Patch v0.0.4
+## Instagram — App v449.0.0.52.84 — Patch v0.0.4
 Patch source: hushgram — v0.0.4 ([v0.0.4](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
