@@ -206,6 +206,20 @@ Architecture: arm64-v8a
 
 </details>
 
+## Instagram — Piko
+Patch source: piko-instagram — crimera/piko
+Architecture: arm64-v8a
+Patch selection: source defaults + universal **Disable Play Store updates**
+
+</details>
+
+## Instagram — HushGram
+Patch source: hushgram — SysAdminDoc/HushGram
+Architecture: arm64-v8a
+Patch selection: source defaults + universal **Disable Play Store updates**
+
+</details>
+
 ## Gboard — App v— — Patch v3.11.0
 Patch source: jasonwu1994 — v3.11.0 ([v3.11.0](https://github.com/jasonwu1994/Gboard-patches))
 Architecture: arm64-v8a
