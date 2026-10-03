@@ -288,11 +288,12 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         pass
 
     if is_bundle_app:
-        # Native APKM/APKS bundle sources remain authoritative for bundle apps.
-        # gplaydl is intentionally not inserted here because --no-splits would
-        # turn a bundle download into a base APK that is not equivalent to the
-        # native Morphe bundle.
+        # Bundle apps may be downloaded from Google Play as a complete split set
+        # and merged by gplaydl into one installable APK. Keep gplaydl first,
+        # then exact Archive artifacts, then native bundle providers.
         download_methods = [
+            downloader.download_gplaydl,
+            downloader.download_archive,
             downloader.download_apkmirror,
             downloader.download_apkcombo,
         ]
@@ -377,6 +378,13 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
         pinned_version = _configured_version(app_name)
         if pinned_version:
             explicit_target_versions = [pinned_version]
+        elif supported_versions:
+            # The patch bundle may expose supported app versions through Morphe
+            # CLI without publishing machine-readable source target metadata.
+            # In that case this is still an ordered compatibility list.
+            # Hold each target version fixed and give EVERY provider a chance
+            # before moving to the next (older) version.
+            explicit_target_versions = list(supported_versions)
 
     provider_attempted = False
 
@@ -398,7 +406,8 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                 if not input_apk:
                     continue
 
-                if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"}:
+                is_gplaydl_artifact = method == downloader.download_gplaydl
+                if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"} and not is_gplaydl_artifact:
                     logging.warning(
                         f"REJECT provider={method.__name__} artifact={input_apk.name}: "
                         f"bundle-configured app requires a native bundle."
@@ -426,11 +435,11 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                         arch,
                         verify_signature=not is_gplaydl_artifact,
                         verify_sha256=not is_gplaydl_artifact,
-                        # USB Hotspot's source contract currently declares XAPK,
-                        # but Google Play serves its App Bundle as base + config
+                        # Google Play serves App Bundles as base + config
                         # APK splits. gplaydl merges those splits into one APK.
-                        # Keep this exception narrowly scoped to that provider/app.
-                        allow_merged_play_apk=(is_gplaydl_artifact and app_name == "usbhotspot"),
+                        # Allow that packaging transition only for the gplaydl
+                        # provider; native bundle providers remain strict.
+                        allow_merged_play_apk=is_gplaydl_artifact,
                     )
                     if not valid:
                         logging.warning(
@@ -462,7 +471,8 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             if not input_apk:
                 continue
 
-            if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"}:
+            is_gplaydl_artifact = method == downloader.download_gplaydl
+            if is_bundle_app and input_apk.suffix.lower() not in {".apkm", ".apks", ".xapk"} and not is_gplaydl_artifact:
                 logging.warning(
                     f"REJECT provider={method.__name__} artifact={input_apk.name}: "
                     f"bundle-configured app requires a native bundle."
