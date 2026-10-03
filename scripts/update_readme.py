@@ -176,13 +176,31 @@ def _published_release_versions() -> dict[tuple[str, str, str], str]:
                 continue
 
             version = field("Application version")
+
+            # Generated releases carry the exact version in their body, but
+            # keep two independent fallbacks because README must not regress to
+            # "—" if a release body is edited or an older release is malformed.
             if not version:
                 for asset in release.get("assets") or []:
                     asset_name = str(asset.get("name") or "")
-                    match = re.search(r"-app-v(.+)\\.apk$", asset_name)
+                    match = re.search(r"-patch-v.+-app-v(.+)\\.apk$", asset_name, re.IGNORECASE)
                     if match:
                         version = match.group(1).strip()
                         break
+
+            if not version:
+                tag = str(release.get("tag_name") or "")
+                # Generated tags use:
+                # build-APP-vAPP_VERSION-patch-vPATCH-SOURCE-RUN
+                safe_app = re.escape(re.sub(r"[^A-Za-z0-9._-]+", "-", str(app)).strip("-"))
+                match = re.search(
+                    rf"^build-{safe_app}-v(.+?)-patch-v",
+                    tag,
+                    re.IGNORECASE,
+                )
+                if match:
+                    version = match.group(1).strip()
+
             if version:
                 _published_release_versions_cache.setdefault((app, source, arch), version)
 
