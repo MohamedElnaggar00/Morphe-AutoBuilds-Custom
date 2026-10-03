@@ -163,7 +163,7 @@ def _published_release_versions() -> dict[tuple[str, str, str], str]:
 
             def field(name: str) -> str:
                 match = re.search(
-                    rf"^- \\*\\*{re.escape(name)}:\\*\\* (.+)$",
+                    rf"^- \*\*{re.escape(name)}:\*\* (.+)$",
                     body,
                     re.MULTILINE,
                 )
@@ -183,7 +183,7 @@ def _published_release_versions() -> dict[tuple[str, str, str], str]:
             if not version:
                 for asset in release.get("assets") or []:
                     asset_name = str(asset.get("name") or "")
-                    match = re.search(r"-patch-v.+-app-v(.+)\\.apk$", asset_name, re.IGNORECASE)
+                    match = re.search(r"-patch-v.+-app-v(.+)\.apk$", asset_name, re.IGNORECASE)
                     if match:
                         version = match.group(1).strip()
                         break
