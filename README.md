@@ -144,12 +144,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v— — Patch v3.48.0
-Patch source: piko-newx — v3.48.0 ([v3.48.0](https://github.com/crimera/piko-newx))
+## X — App v— — Patch v3.49.0
+Patch source: piko-newx — v3.49.0 ([v3.49.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 43/51 applied</summary>
+<summary>🩹 Patches — 44/52 applied</summary>
 
 - ✅ NewX: Remove ads
 - ✅ NewX: Disable blur effects
@@ -192,6 +192,7 @@ Architecture: arm64-v8a
 - ✅ NewX: Hide Spaces bar
 - ✅ NewX: Hide timeline tabs bar
 - ✅ NewX: Hide who to follow
+- ✅ NewX: Restore pinned home tab
 - ✅ NewX: Restore timeline position
 - ✅ NewX: Show poll results
 - ✅ NewX: Show sensitive media
@@ -279,12 +280,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v— — Patch v0.66.0
-Patch source: hushfeed — v0.66.0 ([v0.66.0](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v— — Patch v0.67.0
+Patch source: hushfeed — v0.67.0 ([v0.67.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 40/107 applied</summary>
+<summary>🩹 Patches — 42/111 applied</summary>
 
 - ❌ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -304,6 +305,7 @@ Architecture: arm64-v8a
 - ✅ Hide feed save button
 - ✅ Hide feed follow button
 - ❌ Mute feed videos
+- ❌ Feed text sizes
 - ✅ Hide feed LIVE button
 - ✅ Hide feed search button
 - ❌ Double-tap controls
@@ -352,18 +354,19 @@ Architecture: arm64-v8a
 - ❌ Hide suggested accounts
 - ❌ Hide inbox items
 - ❌ Notification controls
+- ✅ Block suggested video notifications
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
 - ❌ Limit background traffic
+- ❌ Skip the splash ad
 - ❌ Drop the animated image cache
 - ❌ Skip update checks
-- ❌ Skip the splash ad
-- ❌ Remove creation tools
 - ❌ Remove content credential and card scanner assets
 - ❌ Remove unused language packs
-- ❌ Remove LIVE extras
+- ❌ Remove creation tools
 - ❌ Block P2P video relay
+- ❌ Remove LIVE extras
 - ❌ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ❌ Diagnostic tools
@@ -386,8 +389,10 @@ Architecture: arm64-v8a
 - ❌ Location access governor
 - ❌ Network request report
 - ❌ Resource and battery governor
+- ❌ Stop saving search history
 - ❌ Look like the store app
 - ✅ Hide floating promotions
+- ✅ Hide profile shortcuts
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
@@ -475,12 +480,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — App v— — Patch v0.8.0
-Patch source: hushmessenger — v0.8.0 ([v0.8.0](https://github.com/SysAdminDoc/HushMessenger))
+## Messenger — App v— — Patch v0.14.0
+Patch source: hushmessenger — v0.14.0 ([v0.14.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 23/36 applied</summary>
+<summary>🩹 Patches — 24/37 applied</summary>
 
 - ❌ Install beside Meta apps
 - ❌ Restore screens on re-signed builds
@@ -512,6 +517,7 @@ Architecture: arm64-v8a
 - ❌ Keep unsent messages
 - ✅ View stories anonymously
 - ✅ Save any story
+- ✅ Slide chats in and out
 - ✅ Open settings from menu
 - ❌ Clone app
 - ❌ Change installer source
@@ -521,12 +527,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v— — Patch v0.6.0
-Patch source: hushfacebook — v0.6.0 ([v0.6.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v— — Patch v0.7.0
+Patch source: hushfacebook — v0.7.0 ([v0.7.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 48/64 applied</summary>
+<summary>🩹 Patches — 49/65 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -559,6 +565,7 @@ Architecture: arm64-v8a
 - ✅ Hide posts by words
 - ❌ Use the system font
 - ❌ AMOLED black theme
+- ✅ Force dark mode
 - ❌ Material You theme
 - ❌ Default playback quality
 - ✅ Keep the reel speed
