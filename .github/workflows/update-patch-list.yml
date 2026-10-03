@@ -260,8 +260,10 @@ jobs:
           # until they are actually applied.
           if not DRY_RUN:
               STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+              new_state = dict(old_state)
+              new_state.update(state_updates)
               STATE_FILE.write_text(
-                  json.dumps(state_updates, indent=2, ensure_ascii=False) + "\n",
+                  json.dumps(new_state, indent=2, ensure_ascii=False) + "\n",
                   encoding="utf-8",
               )
 
