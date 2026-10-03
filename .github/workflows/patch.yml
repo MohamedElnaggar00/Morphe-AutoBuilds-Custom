@@ -14,6 +14,11 @@ on:
         type: boolean
         required: false
         default: false
+      cleanup_old_releases:
+        description: "Delete older generated releases; keep only the newest per app/source/architecture"
+        type: boolean
+        required: false
+        default: false
   # schedule:
   #   - cron: '0 6 * * *' # Daily fallback check at 6:00 AM UTC
 
@@ -561,6 +566,132 @@ jobs:
           done < <(find ./all-records -type f -name "*.json" -print)
 
           echo "Independent releases published: $published"
+
+      - name: Enforce Release Retention (Dry Run by Default)
+        if: success()
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          CLEANUP_OLD_RELEASES: ${{ inputs.cleanup_old_releases || 'false' }}
+        run: |
+          set -euo pipefail
+
+          python - <<'PY'
+          import json
+          import os
+          import re
+          import subprocess
+          import sys
+
+          repo = os.environ["GH_REPO"]
+          dry_run = os.environ.get("CLEANUP_OLD_RELEASES", "false").lower() != "true"
+
+          print("Release retention policy: keep exactly one newest generated release per")
+          print("  (Application, Patch source, Architecture)")
+          print(f"Mode: {'DRY RUN — no releases will be deleted' if dry_run else 'LIVE — older releases will be deleted'}")
+
+          cmd = [
+              "gh", "api", "--paginate", "--slurp",
+              f"/repos/{repo}/releases?per_page=100",
+          ]
+          result = subprocess.run(cmd, check=True, capture_output=True, text=True)
+          pages = json.loads(result.stdout or "[]")
+          releases = [release for page in pages for release in page]
+
+          field_patterns = {
+              "app": r"^- \\*\\*Application:\\*\\* (.+)$",
+              "source": r"^- \\*\\*Patch source:\\*\\* (.+)$",
+              "arch": r"^- \\*\\*Architecture:\\*\\* (.+)$",
+          }
+
+          groups = {}
+          skipped = 0
+          generated = 0
+
+          for release in releases:
+              tag = release.get("tag_name") or ""
+              if not tag.startswith("build-") or release.get("draft"):
+                  continue
+
+              generated += 1
+              body = release.get("body") or ""
+              values = {}
+              for key, pattern in field_patterns.items():
+                  match = re.search(pattern, body, re.MULTILINE)
+                  if match:
+                      values[key] = match.group(1).strip()
+
+              if len(values) != 3:
+                  skipped += 1
+                  print(f"::warning::Skipping generated release with incomplete retention metadata: {tag}")
+                  continue
+
+              group = (values["app"], values["source"], values["arch"])
+              groups.setdefault(group, []).append(release)
+
+          print(f"Generated releases inspected: {generated}")
+          print(f"Retention groups found: {len(groups)}")
+          print(f"Releases skipped due to missing metadata: {skipped}")
+
+          deletions = []
+          for group, items in sorted(groups.items()):
+              def sort_key(item):
+                  return (item.get("published_at") or item.get("created_at") or "", int(item.get("id") or 0))
+
+              items.sort(key=sort_key, reverse=True)
+              keep = items[0]
+              app, source, arch = group
+              print(f"\n[{app} | {source} | {arch}]")
+              print(f"  KEEP: {keep['tag_name']} — {keep.get('name') or 'unnamed release'}")
+
+              for old in items[1:]:
+                  tag = old["tag_name"]
+                  if old.get("is_immutable"):
+                      print(f"  SKIP (immutable): {tag}")
+                      continue
+
+                  deletions.append((group, tag, old.get("name") or "unnamed release"))
+                  if dry_run:
+                      print(f"  WOULD DELETE: {tag} — {old.get('name') or 'unnamed release'}")
+                  else:
+                      print(f"  DELETE: {tag} — {old.get('name') or 'unnamed release'}")
+                      subprocess.run(
+                          ["gh", "release", "delete", tag, "--repo", repo, "--yes", "--cleanup-tag"],
+                          check=True,
+                      )
+
+          if dry_run:
+              print(f"\nDry-run complete. Releases that would be deleted: {len(deletions)}")
+              print("No GitHub Release or tag was modified.")
+              sys.exit(0)
+
+          verify = subprocess.run(cmd, check=True, capture_output=True, text=True)
+          verify_pages = json.loads(verify.stdout or "[]")
+          remaining = [release for page in verify_pages for release in page]
+          remaining_groups = {}
+          for release in remaining:
+              tag = release.get("tag_name") or ""
+              if not tag.startswith("build-") or release.get("draft"):
+                  continue
+              body = release.get("body") or ""
+              values = {}
+              for key, pattern in field_patterns.items():
+                  match = re.search(pattern, body, re.MULTILINE)
+                  if match:
+                      values[key] = match.group(1).strip()
+              if len(values) == 3:
+                  remaining_groups.setdefault((values["app"], values["source"], values["arch"]), []).append(tag)
+
+          violations = {group: tags for group, tags in remaining_groups.items() if len(tags) > 1}
+          if violations:
+              for group, tags in violations.items():
+                  print(f"::error::Retention violation for {group}: {tags}")
+              sys.exit(1)
+
+          print(f"\nLive retention complete. Deleted releases: {len(deletions)}")
+          print("Verified: no retention group has more than one generated release.")
+          PY
 
       - name: Show Published Releases
         env:
