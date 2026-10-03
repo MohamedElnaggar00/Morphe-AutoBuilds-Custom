@@ -47,6 +47,7 @@ jobs:
           PATCH_CONFIG = ROOT / "patch-config.json"
           SOURCES_DIR = ROOT / "sources"
           PATCHES_DIR = ROOT / "patches"
+          STATE_FILE = ROOT / ".github" / "patch-list-state.json"
 
           TOKEN = os.environ.get("GITHUB_TOKEN", "")
           DRY_RUN = os.environ.get("DRY_RUN", "false").lower() == "true"
@@ -169,7 +170,17 @@ jobs:
           configured = config.get("patch_list", [])
 
           changed_files = []
+          state_updates = {}
           skipped = 0
+
+          old_state = {}
+          if STATE_FILE.exists():
+              try:
+                  old_state = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+              except Exception as exc:
+                  print(f"WARNING: could not read {STATE_FILE}: {exc}")
+          else:
+              print("No patch-list baseline found. The first real run will create the baseline without treating existing upstream patches as new.")
 
           for item in configured:
               if not isinstance(item, dict):
@@ -182,7 +193,6 @@ jobs:
               patch_file = find_patch_file(source_id)
               if patch_file is None:
                   print(f"SKIP {source_id}: no matching local patch-selection file")
-                  skipped += 1
                   continue
 
               upstream = load_upstream_patches(source_id)
@@ -190,51 +200,72 @@ jobs:
                   skipped += 1
                   continue
 
-              current, passthrough = parse_selection(patch_file)
               upstream_set = set(upstream)
               exclusions = AUTO_ENABLE_EXCLUSIONS.get(source_id, set())
+              previous = set(old_state.get(source_id, {}).get("patches", []))
 
-              # Compare the upstream list with the patches already present locally.
-              # Existing + / - choices are never changed.
-              added = [
-                  name for name in upstream
-                  if name not in current and name not in exclusions
-              ]
+              # Compare upstream against the LAST SUCCESSFUL SNAPSHOT, not against
+              # the local selection file. A local file may intentionally contain
+              # only a small subset of the upstream patches, so "not in local"
+              # does not mean "new upstream".
+              if source_id not in old_state:
+                  print(f"BASELINE {source_id}: {len(upstream)} current upstream patches recorded; no existing patches treated as new")
+                  new_upstream = []
+              else:
+                  new_upstream = [
+                      name for name in upstream
+                      if name not in previous and name not in exclusions
+                  ]
+
+              # Patches removed upstream are informational only. Never delete a
+              # user's local selection automatically.
               removed_upstream = [
-                  name for name in current
+                  name for name in previous
                   if name not in upstream_set and name not in exclusions
               ]
 
-              if not added:
-                  print(f"OK {patch_file.name}: no new patches")
+              state_updates[source_id] = {
+                  "repository": old_state.get(source_id, {}).get("repository", ""),
+                  "version": old_state.get(source_id, {}).get("version"),
+                  "patches": upstream,
+              }
+
+              if not new_upstream:
+                  print(f"OK {patch_file.name}: no newly discovered upstream patches")
                   if removed_upstream:
                       print(
-                          f"  Note: {len(removed_upstream)} local patch(es) are no longer "
-                          "listed upstream; they were left untouched."
+                          f"  Note: {len(removed_upstream)} patch(es) disappeared upstream; "
+                          "local selections were left untouched."
                       )
                   continue
 
-              print(f"NEW PATCHES — {patch_file.name}")
-              for name in added:
+              print(f"NEW UPSTREAM PATCHES — {patch_file.name}")
+              for name in new_upstream:
                   print(f"  + {name}")
 
-              if removed_upstream:
-                  print(
-                      f"  Note: {len(removed_upstream)} local patch(es) are no longer "
-                      "listed upstream; they were left untouched."
-                  )
+              if DRY_RUN:
+                  continue
 
-              # Append only genuinely new patches. Do not rebuild/reorder the file,
-              # so a dry run reports differences without making the whole selection
-              # file look changed.
+              # Add only patches that are genuinely new upstream and are not
+              # intentionally excluded. Existing + / - choices stay untouched.
               old_text = patch_file.read_text(encoding="utf-8")
               base = old_text.rstrip()
               suffix = "\n" if base else ""
-              new_text = base + suffix + "\n".join(f"+ {name}" for name in added) + "\n"
+              new_text = base + suffix + "\n".join(f"+ {name}" for name in new_upstream) + "\n"
 
               changed_files.append((patch_file, new_text))
 
-              if not DRY_RUN:
+          # Persist the upstream snapshot only on a real run. This makes Preview
+          # completely non-mutating and allows the same changes to appear again
+          # until they are actually applied.
+          if not DRY_RUN:
+              STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+              STATE_FILE.write_text(
+                  json.dumps(state_updates, indent=2, ensure_ascii=False) + "\n",
+                  encoding="utf-8",
+              )
+
+              for patch_file, new_text in changed_files:
                   patch_file.write_text(new_text, encoding="utf-8")
 
           if DRY_RUN:
@@ -242,9 +273,9 @@ jobs:
               print("DRY RUN: no files were changed and no commit was created.")
               raise SystemExit(0)
 
-          if not changed_files:
+          if not changed_files and not state_updates:
               print("")
-              print("No patch-selection changes detected. Nothing to commit.")
+              print("No patch-list changes detected. Nothing to commit.")
               raise SystemExit(0)
 
           subprocess.run(["git", "config", "user.name", "github-actions[bot]"], check=True)
@@ -252,7 +283,7 @@ jobs:
               ["git", "config", "user.email", "41898282+github-actions[bot]@users.noreply.github.com"],
               check=True,
           )
-          subprocess.run(["git", "add", "patches/*.txt"], check=True)
+          subprocess.run(["git", "add", "patches/*.txt", ".github/patch-list-state.json"], check=True)
           subprocess.run(
               ["git", "commit", "-m", "chore: update patch selections"],
               check=True,
