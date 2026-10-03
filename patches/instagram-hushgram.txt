@@ -1,2 +1,37 @@
-# Use HushGram's default patch selection.
+# All HushGram v0.0.3 patches for Instagram
++ Clean up Reels
++ Default playback quality
++ Disable analytics
++ Don't send reel watch history
++ Download any reel
++ Download any story
++ Download any video
++ Hide Meta AI
++ Hide Reels in the feed
++ Hide ads
++ Hide group buttons on the share sheet
++ Hide suggested posts
++ Hide suggested stories
++ Hide the Explore grid
++ Hide the Reels tab
++ Hide the Repost button
++ HushGram settings
++ Keep the reel speed
++ Open developer options
++ Open links in external browser
++ Pure black dark mode
++ Remove build expired popup
++ Remove the advertising ID
++ Remove the empty space at the bottom
++ Restore trust on re-signed builds
++ Resume long videos
++ Sanitize sharing links
++ Show if a profile follows you
++ Start Home on Following
++ Start on x86 devices
++ Stop Story auto-advance
++ Story ring size
++ Tap to play
++ Turn off double tap to like
++ View stories anonymously
 # The universal "Disable Play Store updates" patch is enabled automatically by the builder.
