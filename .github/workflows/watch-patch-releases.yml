@@ -98,7 +98,7 @@ jobs:
             echo "New patch releases detected: ${changed}"
             echo "Dispatching ONE patch-release event for all detected releases..."
 
-            jq -n               --argjson releases "${changed_releases}"               '{event_type: "patch-release", client_payload: {patch_releases: $releases}}'               | gh api                   --method POST                   -H "Accept: application/vnd.github+json"                   "/repos/${REPOSITORY}/dispatches"                   --input -
+            jq -n               --argjson releases "${changed_releases}"               '{event_type: "patch-release", client_payload: {patch_releases: $releases}}'               | gh api                   --method POST                   -H "Accept: application/vnd.github+json"                   -H "Content-Type: application/json"                   "/repos/${REPOSITORY}/dispatches"                   --input -
 
             echo "Single patch-release dispatch sent successfully."
             echo "The Auto Build workflow is responsible for processing all detected releases and recording their state on main after successful processing."
