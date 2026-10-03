@@ -85,16 +85,119 @@ def _patch_source_version(source: str) -> str:
         return ""
 
 
-def _release_already_has_build(app_name: str, arch: str, patch_version: str, version: str) -> bool:
-    """
-    Avoid rebuilding an APK that is already published for the exact app,
-    architecture, and Morphe-supported version.
+def _source_asset_names(source: str) -> list[str]:
+    """Return configured source IDs/names used by published APK filenames."""
+    names = {str(source).strip()}
+    path = Path("sources") / f"{source}.json"
+    try:
+        if path.exists():
+            with path.open(encoding="utf-8") as fh:
+                entries = json.load(fh)
+            if isinstance(entries, list) and entries and isinstance(entries[0], dict):
+                display_name = str(entries[0].get("name") or "").strip()
+                if display_name:
+                    names.add(display_name)
+    except Exception:
+        pass
+    return [name for name in names if name]
 
-    Every build run publishes a NEW release containing only the APKs it
-    rebuilt, so an unchanged app lives in an older release. GitHub Actions
-    starts from a clean checkout, so local output files cannot be used for
-    this decision: check the assets of ALL published releases instead.
-    If GitHub metadata is unavailable, fail open and let the normal build run.
+
+def _release_metadata(release: dict) -> dict:
+    """Read exact app/source/arch identity from generated release notes."""
+    body = release.get("body") or ""
+    patterns = {
+        "app_name": r"^- \*\*Application:\*\* (.+)$",
+        "source": r"^- \*\*Patch source:\*\* (.+)$",
+        "arch": r"^- \*\*Architecture:\*\* (.+)$",
+    }
+    values = {}
+    for key, pattern in patterns.items():
+        match = re.search(pattern, body, re.MULTILINE)
+        if match:
+            values[key] = match.group(1).strip()
+    return values
+
+
+def _release_has_exact_build(
+    release: dict,
+    app_name: str,
+    source: str,
+    arch: str,
+    patch_version: str,
+    version: str,
+) -> tuple[bool, str]:
+    """Check one release for an exact source-aware build identity."""
+    metadata = _release_metadata(release)
+    assets = [
+        str(asset.get("name") or "").strip()
+        for asset in release.get("assets", [])
+        if str(asset.get("name") or "").strip().lower().endswith(".apk")
+    ]
+
+    # Preferred path: every generated release now records exact identity in
+    # the release body. This prevents one patch source from hiding another.
+    if all(key in metadata for key in ("app_name", "source", "arch")):
+        if (
+            metadata["app_name"] != app_name
+            or metadata["source"] != source
+            or metadata["arch"] != arch
+        ):
+            return False, ""
+
+        expected_suffix = f"-app-v{version}.apk" if patch_version else f"-v{version}.apk"
+        expected_marker = f"-patch-v{patch_version}-" if patch_version else ""
+        for name in assets:
+            if (
+                name.endswith(expected_suffix)
+                and (not expected_marker or expected_marker in name)
+            ):
+                return True, name
+        return False, ""
+
+    # Compatibility path for older generated releases with no exact metadata.
+    # Require the configured source (or its display name) in the APK filename;
+    # if a generated tag is present, also require its exact source component.
+    source_names = _source_asset_names(source)
+    safe_source = re.sub(r"[^A-Za-z0-9._-]+", "-", str(source)).strip("-")
+    tag = str(release.get("tag_name") or "")
+    if tag and f"-{safe_source}-" not in tag:
+        return False, ""
+
+    expected_suffix = f"-app-v{version}.apk" if patch_version else f"-v{version}.apk"
+    expected_marker = f"-patch-v{patch_version}-" if patch_version else ""
+    expected_prefix = f"{app_name}-{arch}-"
+
+    for name in assets:
+        if not name.startswith(expected_prefix):
+            continue
+        if not any(
+            name.startswith(f"{expected_prefix}{source_name}-")
+            for source_name in source_names
+        ):
+            continue
+        if not name.endswith(expected_suffix):
+            continue
+        if expected_marker and expected_marker not in name:
+            continue
+        return True, name
+
+    return False, ""
+
+
+def _release_already_has_build(
+    app_name: str,
+    source: str,
+    arch: str,
+    patch_version: str,
+    version: str,
+) -> bool:
+    """
+    Avoid rebuilding an APK already published for the exact
+    (app, source, architecture, patch, app version).
+
+    GitHub release metadata is the preferred source identity. Legacy releases
+    are matched through their source-aware APK filename/tag. If GitHub metadata
+    is unavailable, fail open and let the normal build run.
     """
     token = getenv("GITHUB_TOKEN") or getenv("GH_TOKEN")
     repo = getenv("GITHUB_REPOSITORY")
@@ -102,10 +205,6 @@ def _release_already_has_build(app_name: str, arch: str, patch_version: str, ver
         return False
 
     import urllib.request
-
-    expected_prefix = f"{app_name}-{arch}-"
-    expected_patch_marker = f"-patch-v{patch_version}-"
-    expected_suffix = f"-app-v{version}.apk" if patch_version else f"-v{version}.apk"
 
     max_pages = 10  # 100 releases per page
     for page in range(1, max_pages + 1):
@@ -133,29 +232,30 @@ def _release_already_has_build(app_name: str, arch: str, patch_version: str, ver
         for release in releases:
             if release.get("draft"):
                 continue
-            for asset in release.get("assets", []):
-                name = str(asset.get("name") or "")
-                if (
-                    name.startswith(expected_prefix)
-                    and name.endswith(expected_suffix)
-                    and (not patch_version or expected_patch_marker in name)
-                ):
-                    logging.info(
-                        "⏭️ %s %s is already published in release %s as %s; skipping rebuild.",
-                        app_name,
-                        arch,
-                        release.get("tag_name"),
-                        name,
-                    )
-                    Path(".build-skipped").touch()
-                    return True
+
+            matched, asset_name = _release_has_exact_build(
+                release,
+                app_name,
+                source,
+                arch,
+                patch_version,
+                version,
+            )
+            if matched:
+                logging.info(
+                    "⏭️ %s %s is already published in release %s as %s; skipping rebuild.",
+                    app_name,
+                    arch,
+                    release.get("tag_name"),
+                    asset_name,
+                )
+                Path(".build-skipped").touch()
+                return True
 
         if len(releases) < 100:
             break
 
     return False
-
-
 def run_build(app_name: str, source: str, arch: str = "universal") -> str:
     """Build APK for specific architecture"""
     download_files, name = downloader.download_required(source)
@@ -268,7 +368,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
 
     if supported_versions and os.environ.get("MORPHE_TEST_FORCE_REBUILD", "").lower() not in {"1", "true", "yes"}:
         latest_supported = supported_versions[0]
-        if _release_already_has_build(app_name, arch, patch_version, latest_supported):
+        if _release_already_has_build(app_name, source, arch, patch_version, latest_supported):
             print(f"⏭️ Skipping {app_name}: {latest_supported} is already built and published.")
             return None
     elif supported_versions:
