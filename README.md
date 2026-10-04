@@ -208,12 +208,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Gboard — App v18.0.3.954559732-release-arm64-v8a — Patch v3.11.0
-Patch source: jasonwu1994 — v3.11.0 ([v3.11.0](https://github.com/jasonwu1994/Gboard-patches))
+## Gboard — App v18.0.3.954559732-release-arm64-v8a — Patch v3.12.0
+Patch source: jasonwu1994 — v3.12.0 ([v3.12.0](https://github.com/jasonwu1994/Gboard-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 43/47 applied</summary>
+<summary>🩹 Patches — 44/48 applied</summary>
 
 - ✅ English QWERTY Up-Flick Uppercase
 - ✅ Long-Press Editing Shortcuts
@@ -230,6 +230,7 @@ Architecture: arm64-v8a
 - ✅ Enable split keyboard
 - ✅ Enable accessibility layout
 - ✅ Rounded Keyboard Panel
+- ✅ Frosted Glass
 - ✅ Top Toolbar Item Count
 - ✅ Close Proactive Suggestions
 - ✅ Hyperspeed Typing Animation
@@ -265,8 +266,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.39.0
-Patch source: hxreborn — v1.39.0 ([v1.39.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.40.0
+Patch source: hxreborn — v1.40.0 ([v1.40.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
