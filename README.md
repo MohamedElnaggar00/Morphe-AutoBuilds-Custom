@@ -144,12 +144,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.29.1-prod.01 — Patch v3.49.0
-Patch source: piko-newx — v3.49.0 ([v3.49.0](https://github.com/crimera/piko-newx))
+## X — App v12.29.1-prod.01 — Patch v3.50.0
+Patch source: piko-newx — v3.50.0 ([v3.50.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 44/52 applied</summary>
+<summary>🩹 Patches — 45/53 applied</summary>
 
 - ✅ NewX: Remove ads
 - ✅ NewX: Disable blur effects
@@ -174,6 +174,7 @@ Architecture: arm64-v8a
 - ✅ NewX: Hide post reply bar
 - ✅ NewX: Customize post menu items
 - ✅ NewX: Set default profile post sorting
+- ✅ NewX: Customize profile tabs
 - ✅ NewX: Set default reply sorting
 - ❌ NewX: Server error logging
 - ✅ NewX: Share post as image
@@ -280,8 +281,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v47.1.4 — Patch v0.67.0
-Patch source: hushfeed — v0.67.0 ([v0.67.0](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v47.1.4 — Patch v0.67.1
+Patch source: hushfeed — v0.67.1 ([v0.67.1](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
@@ -362,11 +363,11 @@ Architecture: arm64-v8a
 - ✅ Limit background traffic
 - ✅ Drop the animated image cache
 - ✅ Skip update checks
-- ✅ Remove content credential and card scanner assets
 - ✅ Remove unused language packs
 - ✅ Remove LIVE extras
 - ✅ Remove creation tools
 - ✅ Block P2P video relay
+- ✅ Remove content credential and card scanner assets
 - ✅ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ✅ Diagnostic tools
@@ -527,8 +528,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v581.0.0.45.58 — Patch v0.7.0
-Patch source: hushfacebook — v0.7.0 ([v0.7.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v581.0.0.45.58 — Patch v0.7.1
+Patch source: hushfacebook — v0.7.1 ([v0.7.1](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
@@ -694,14 +695,16 @@ Exception in thread "main" java.lang.NoSuchMethodError: 'app.morphe.patcher.patc
 
 </details>
 
-## Instagram — App v449.0.0.52.84 — Patch v0.0.4
-Patch source: hushgram — v0.0.4 ([v0.0.4](https://github.com/SysAdminDoc/HushGram))
+## Instagram — App v449.0.0.52.84 — Patch v0.0.5
+Patch source: hushgram — v0.0.5 ([v0.0.5](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 47/51 applied</summary>
+<summary>🩹 Patches — 49/53 applied</summary>
 
 - ✅ Hide ads
+- ✅ Hide the notes row
+- ✅ View DM photos and videos anonymously
 - ✅ Download any reel
 - ✅ Download any story
 - ✅ Download any video
