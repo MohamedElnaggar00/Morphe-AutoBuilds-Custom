@@ -19,6 +19,7 @@
 + Hide the Explore grid
 + Hide the Reels tab
 + Hide the Repost button
++ Hide the notes row
 + HushGram settings
 + Keep Reels auto scroll on
 + Keep a seek bar on Reels
