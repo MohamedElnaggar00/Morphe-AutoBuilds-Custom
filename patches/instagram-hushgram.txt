@@ -47,3 +47,4 @@
 + Turn off double tap to like
 + View DM photos and videos anonymously
 + View stories anonymously
++ Hide the notes row

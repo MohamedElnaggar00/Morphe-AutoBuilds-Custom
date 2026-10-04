@@ -1,3 +1,4 @@
 # hxreborn Morphe patches for vpnify
 + Disable rating prompt
 + Unlock premium
++ Resume videos opened from other apps
