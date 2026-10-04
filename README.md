@@ -144,18 +144,19 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.29.1-prod.01 — Patch v3.50.0
-Patch source: piko-newx — v3.50.0 ([v3.50.0](https://github.com/crimera/piko-newx))
+## X — App v12.29.1-prod.01 — Patch v3.51.0
+Patch source: piko-newx — v3.51.0 ([v3.51.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 45/53 applied</summary>
+<summary>🩹 Patches — 45/54 applied</summary>
 
 - ✅ NewX: Remove ads
 - ✅ NewX: Disable blur effects
 - ❌ NewX: Restore Twitter branding
 - ❌ NewX: Browse tweet object
 - ✅ NewX: Open canonical URLs
+- ❌ NewX: Clone
 - ✅ NewX: Crash logs
 - ✅ NewX: Custom font
 - ✅ NewX: Custom sharing domain
