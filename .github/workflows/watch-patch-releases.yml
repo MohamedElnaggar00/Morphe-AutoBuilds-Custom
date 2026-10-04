@@ -2,10 +2,8 @@ name: Watch Patch Source Releases
 
 on:
   schedule:
-    # GitHub schedules can be delayed under load; this is intentionally a
-    # frequent fallback because external repositories cannot directly trigger
-    # this repository without a webhook/dispatch sender.
-    - cron: "0 */3 * * *"
+    # Check patch sources once every 24 hours, at minute 43.
+    - cron: "43 0 * * *"
   workflow_dispatch:
 
 permissions:
