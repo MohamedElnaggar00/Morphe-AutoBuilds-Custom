@@ -461,8 +461,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## CamScanner — App v7.20.0.2606230000 — Patch v1.46.0
-Patch source: hoodles — v1.46.0 ([v1.46.0](https://github.com/hoo-dles/morphe-patches))
+## CamScanner — App v7.20.0.2606230000 — Patch v1.47.0
+Patch source: hoodles — v1.47.0 ([v1.47.0](https://github.com/hoo-dles/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
