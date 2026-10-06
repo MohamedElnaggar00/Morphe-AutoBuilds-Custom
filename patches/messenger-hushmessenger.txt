@@ -22,7 +22,7 @@
 +Hide typing indicator
 +Install beside Meta apps
 +Keep unsent messages
-+Material You theme
+-Material You theme
 +Open settings from menu
 +Open web links externally
 +Restore screens on re-signed builds
@@ -31,4 +31,4 @@
 +Slide chats in and out
 +Use system emoji
 +View stories anonymously
--Amoled theme
+-Material You theme
