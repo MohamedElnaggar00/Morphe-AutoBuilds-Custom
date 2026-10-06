@@ -31,4 +31,3 @@
 +Slide chats in and out
 +Use system emoji
 +View stories anonymously
--Material You theme
