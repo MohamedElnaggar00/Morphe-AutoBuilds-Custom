@@ -238,25 +238,23 @@ jobs:
               # the upstream default selection exactly. For those sources, the
               # local +/- file is regenerated from each patch's `use` value on
               # every real run, so upstream default changes are followed forever.
-              if item.get("sync_defaults"):
+              if item.get("sync_all"):
                   desired = [
-                      f"{'+' if upstream_defaults.get(name, False) else '-'}{name}"
+                      f"+{name}"
                       for name in upstream
                       if name not in exclusions
                   ]
                   desired_text = "\n".join(desired) + "\n"
                   current_text = patch_file.read_text(encoding="utf-8")
                   if current_text != desired_text:
-                      print(f"DEFAULT SYNC — {patch_file.name}: syncing selections to upstream `use` defaults")
+                      print(f"ALL PATCHES SYNC — {patch_file.name}: enabling every available upstream patch")
                       if DRY_RUN:
-                          print(f"  Would update {sum(1 for name in upstream if upstream_defaults.get(name, False) and name not in exclusions)} enabled patch(es)")
-                          print(f"  Would update {sum(1 for name in upstream if not upstream_defaults.get(name, False) and name not in exclusions)} disabled patch(es)")
+                          print(f"  Would enable {len(desired)} patch(es)")
                       else:
                           changed_files.append((patch_file, desired_text))
                   else:
-                      print(f"OK {patch_file.name}: matches upstream `use` defaults")
+                      print(f"OK {patch_file.name}: all available upstream patches are enabled")
                   continue
-
               if not new_upstream:
                   print(f"OK {patch_file.name}: no newly discovered upstream patches")
                   if removed_upstream:
