@@ -2,8 +2,8 @@ name: Watch Patch Source Releases
 
 on:
   schedule:
-    # Check patch sources once every 24 hours, at minute 43.
-    - cron: "43 0 * * *"
+    # Check patch sources every 12 hours, at minute 43.
+    - cron: "43 */12 * * *"
   workflow_dispatch:
 
 permissions:
@@ -38,8 +38,6 @@ jobs:
             exit 1
           fi
 
-          # These are the patch repositories currently referenced by
-          # patch-config.json. Duplicate sources are intentionally listed once.
           sources=(
             "MorpheApp/morphe-patches"
             "crimera/piko-newx"
@@ -61,9 +59,6 @@ jobs:
           for source_repo in "${sources[@]}"; do
             echo "Checking ${source_repo}..."
 
-            # IMPORTANT: /releases?per_page=1 can return a pre-release.
-            # The /releases/latest endpoint explicitly returns the latest
-            # non-draft, non-pre-release release only.
             if ! release_json="$(gh api \
               -H "Accept: application/vnd.github+json" \
               "/repos/${source_repo}/releases/latest")"; then
@@ -78,8 +73,6 @@ jobs:
             is_prerelease="$(jq -r '.prerelease // false' <<<"${release_json}")"
             is_draft="$(jq -r '.draft // false' <<<"${release_json}")"
 
-            # Defensive check: the endpoint above should already guarantee this,
-            # but never dispatch a build for a pre-release or draft.
             if [ -z "${release_id}" ] || [ "${is_prerelease}" = "true" ] || [ "${is_draft}" = "true" ]; then
               echo "Ignoring non-stable release for ${source_repo}; skipping."
               continue
@@ -94,7 +87,13 @@ jobs:
 
             echo "NEW PATCH RELEASE: ${source_repo} @ ${tag_name}"
 
-            changed_releases="$(jq -c               --arg repo "${source_repo}"               --argjson id "${release_id}"               --arg tag "${tag_name}"               --arg published "${published_at}"               --arg url "${html_url}"               '. + [{
+            changed_releases="$(jq -c \
+              --arg repo "${source_repo}" \
+              --argjson id "${release_id}" \
+              --arg tag "${tag_name}" \
+              --arg published "${published_at}" \
+              --arg url "${html_url}" \
+              '. + [{
                 patch_repository: $repo,
                 release_id: $id,
                 tag_name: $tag,
@@ -110,7 +109,15 @@ jobs:
             echo "New patch releases detected: ${changed}"
             echo "Dispatching ONE patch-release event for all detected releases..."
 
-            jq -n               --argjson releases "${changed_releases}"               '{event_type: "patch-release", client_payload: {patch_releases: $releases}}'               | gh api                   --method POST                   -H "Accept: application/vnd.github+json"                   -H "Content-Type: application/json"                   "/repos/${REPOSITORY}/dispatches"                   --input -
+            jq -n \
+              --argjson releases "${changed_releases}" \
+              '{event_type: "patch-release", client_payload: {patch_releases: $releases}}' \
+              | gh api \
+                  --method POST \
+                  -H "Accept: application/vnd.github+json" \
+                  -H "Content-Type: application/json" \
+                  "/repos/${REPOSITORY}/dispatches" \
+                  --input -
 
             echo "Single patch-release dispatch sent successfully."
             echo "The Auto Build workflow is responsible for processing all detected releases and recording their state on main after successful processing."
