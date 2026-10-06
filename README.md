@@ -4,12 +4,12 @@
 - Patch Source Watcher checks every 3 hours and triggers Auto Build when a new patch-source release is detected
 - Manual updates available via workflow dispatch
 
-## YouTube — App v21.16.256 — Patch v1.45.0
-Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
+## YouTube — App v21.16.256 — Patch v1.46.0
+Patch source: morphe — v1.46.0 ([v1.46.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 90/96 applied</summary>
+<summary>🩹 Patches — 92/98 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
@@ -37,6 +37,7 @@ Architecture: arm64-v8a
 - ✅ Navigation bar
 - ✅ Hide player overlay buttons
 - ✅ Captions
+- ✅ DeArrow
 - ✅ Disable layout updates
 - ✅ Disable auto feed refresh
 - ✅ Add to queue
@@ -81,7 +82,6 @@ Architecture: arm64-v8a
 - ✅ Change start page
 - ✅ Hide status bar
 - ✅ Theme
-- ✅ Alternative thumbnails
 - ✅ Bypass image region restrictions
 - ✅ Wide search bar
 - ✅ Remove background playback restrictions
@@ -99,8 +99,10 @@ Architecture: arm64-v8a
 - ✅ Spoof video streams
 - ✅ Spoof app version
 - ✅ Spoof device dimensions
+- ✅ Channel whitelist
 - ✅ Disable DRC audio
 - ✅ Force original audio
+- ✅ Skip silence
 - ✅ Playback buffer
 - ✅ Disable video codecs
 - ✅ Remember live stream playback position
@@ -110,8 +112,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Reddit — App v2026.24.0 — Patch v1.45.0
-Patch source: morphe — v1.45.0 ([v1.45.0](https://github.com/MorpheApp/morphe-patches))
+## Reddit — App v2026.24.0 — Patch v1.46.0
+Patch source: morphe — v1.46.0 ([v1.46.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -144,8 +146,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.29.1-prod.01 — Patch v3.52.0
-Patch source: piko-newx — v3.52.0 ([v3.52.0](https://github.com/crimera/piko-newx))
+## X — App v12.29.1-prod.01 — Patch v3.53.0
+Patch source: piko-newx — v3.53.0 ([v3.53.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -266,8 +268,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.42.0
-Patch source: hxreborn — v1.42.0 ([v1.42.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.43.0
+Patch source: hxreborn — v1.43.0 ([v1.43.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -283,8 +285,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v47.1.4 — Patch v0.67.1
-Patch source: hushfeed — v0.67.1 ([v0.67.1](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v47.1.4 — Patch v0.68.0
+Patch source: hushfeed — v0.68.0 ([v0.68.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
@@ -362,9 +364,9 @@ Architecture: arm64-v8a
 - ✅ Fix Google login
 - ✅ Feed tab navigation
 - ✅ Skip the splash ad
-- ✅ Skip update checks
 - ✅ Limit background traffic
 - ✅ Drop the animated image cache
+- ✅ Skip update checks
 - ✅ Remove unused language packs
 - ✅ Remove LIVE extras
 - ✅ Remove creation tools
@@ -531,15 +533,16 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v581.0.0.45.58 — Patch v0.7.1
-Patch source: hushfacebook — v0.7.1 ([v0.7.1](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v580.0.0.51.74 — Patch v0.7.2
+Patch source: hushfacebook — v0.7.2 ([v0.7.2](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 52/65 applied</summary>
+<summary>🩹 Patches — 55/75 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
+- ✅ Block Instant Games ads
 - ✅ Block background ad prefetch
 - ✅ Hide sponsored Marketplace listings
 - ✅ Hide sponsored posts
@@ -571,21 +574,30 @@ Architecture: arm64-v8a
 - ❌ AMOLED black theme
 - ✅ Force dark mode
 - ❌ Material You theme
+- ❌ Turn off HDR brightness
+- ❌ Picture-in-picture
 - ✅ Default playback quality
 - ✅ Keep the reel speed
 - ✅ Resume long videos
 - ✅ Tap to play
 - ✅ Hide Menu promotions
 - ✅ Hushfacebook in the Menu
+- ❌ Hold back analytics uploads
 - ✅ Open links in external browser
+- ❌ Turn off haptics
 - ✅ Restore screens on re-signed builds
+- ❌ Allow screenshots
+- ❌ Block screenshot detection
 - ✅ Hushfacebook settings
 - ✅ Sanitize sharing links
+- ❌ Turn off screen transitions
 - ✅ Start on x86 devices
 - ✅ Tab bar at the bottom
+- ✅ Hide tabs
 - ✅ Marketplace only
 - ✅ Hide the Reels tab
 - ✅ Hide the Reels tab dot
+- ✅ Show View profile on Marketplace sellers
 - ❌ Open on a chosen tab
 - ✅ Block promotional notifications
 - ✅ Clean up Reels
