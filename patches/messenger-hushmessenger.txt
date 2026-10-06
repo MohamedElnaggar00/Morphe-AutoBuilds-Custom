@@ -1,14 +1,34 @@
--Disable typing indicator
--Hide inbox ads
--Hide inbox subtabs
--Hide Facebook buttons
--Remove Meta AI
--Open links externally
--Spoof package version
 -Allow chat bubbles
--Allow screenshots
--Hide read receipts
--Keep unsent messages
--Open web links externally
--Install beside Meta apps
--Restore screens on re-signed builds
++Allow screenshots
++Hide AI sticker tools
++Hide Chat Moments
++Hide Facebook shortcuts
++Hide Meta AI
++Hide People You May Know
++Hide Reels badge
++Hide avatar stickers
++Hide business reply suggestions
++Hide business typing suggestions
++Hide chat promotions
++Hide event prompts
++Hide friend request cards
++Hide growth prompts
++Hide inbox ads
++Hide inbox promotions
++Hide inbox tabs
++Hide joined community chats
++Hide read receipts
++Hide stories and notes
++Hide typing indicator
++Install beside Meta apps
++Keep unsent messages
++Material You theme
++Open settings from menu
++Open web links externally
++Restore screens on re-signed builds
++Save any story
++Send photos at original quality
++Slide chats in and out
++Use system emoji
++View stories anonymously
+-Amoled theme
