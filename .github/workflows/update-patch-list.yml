@@ -55,6 +55,7 @@ jobs:
           # These patches are intentionally never selected automatically.
           AUTO_ENABLE_EXCLUSIONS = {
               "hushfeed": {"AMOLED dark theme"},
+              "hushfacebook": {"AMOLED theme", "AMOLED black theme"},
           }
 
           def github_json(url):
