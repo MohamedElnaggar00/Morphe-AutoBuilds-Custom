@@ -39,7 +39,7 @@
     {
       "app_name": "facebook",
       "source": "hushfacebook",
-      "sync_defaults": true
+      "sync_all": true
     },
     {
       "app_name": "excel",
