@@ -38,7 +38,8 @@
     },
     {
       "app_name": "facebook",
-      "source": "hushfacebook"
+      "source": "hushfacebook",
+      "sync_defaults": true
     },
     {
       "app_name": "excel",
