@@ -364,9 +364,9 @@ Architecture: arm64-v8a
 - ✅ Fix Google login
 - ✅ Feed tab navigation
 - ✅ Skip the splash ad
-- ✅ Limit background traffic
 - ✅ Drop the animated image cache
 - ✅ Skip update checks
+- ✅ Limit background traffic
 - ✅ Remove unused language packs
 - ✅ Remove LIVE extras
 - ✅ Remove creation tools
@@ -538,7 +538,7 @@ Patch source: hushfacebook — v0.7.2 ([v0.7.2](https://github.com/SysAdminDoc/H
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 55/75 applied</summary>
+<summary>🩹 Patches — 71/75 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -554,12 +554,12 @@ Architecture: arm64-v8a
 - ✅ Hide the Get Messenger card
 - ✅ Open Messenger from the top bar
 - ✅ Install beside Meta's apps
-- ❌ Default comment order
+- ✅ Default comment order
 - ✅ Tag suggestions only after @
 - ✅ Download any reel
 - ✅ Download any story
 - ✅ Download any video
-- ❌ Use the phone's emoji
+- ✅ Use the phone's emoji
 - ✅ Hide AI-detected posts
 - ✅ Hide the Feeds header
 - ✅ Hide Meta AI questions under posts
@@ -570,27 +570,27 @@ Architecture: arm64-v8a
 - ✅ Hide Stories tray
 - ✅ Hide suggested and promoted posts
 - ✅ Hide posts by words
-- ❌ Use the system font
-- ❌ AMOLED black theme
+- ✅ Use the system font
+- ✅ AMOLED black theme
 - ✅ Force dark mode
-- ❌ Material You theme
-- ❌ Turn off HDR brightness
-- ❌ Picture-in-picture
+- ✅ Material You theme
+- ✅ Turn off HDR brightness
+- ✅ Picture-in-picture
 - ✅ Default playback quality
 - ✅ Keep the reel speed
 - ✅ Resume long videos
 - ✅ Tap to play
 - ✅ Hide Menu promotions
 - ✅ Hushfacebook in the Menu
-- ❌ Hold back analytics uploads
+- ✅ Hold back analytics uploads
 - ✅ Open links in external browser
-- ❌ Turn off haptics
+- ✅ Turn off haptics
 - ✅ Restore screens on re-signed builds
-- ❌ Allow screenshots
-- ❌ Block screenshot detection
+- ✅ Allow screenshots
+- ✅ Block screenshot detection
 - ✅ Hushfacebook settings
 - ✅ Sanitize sharing links
-- ❌ Turn off screen transitions
+- ✅ Turn off screen transitions
 - ✅ Start on x86 devices
 - ✅ Tab bar at the bottom
 - ✅ Hide tabs
@@ -598,16 +598,16 @@ Architecture: arm64-v8a
 - ✅ Hide the Reels tab
 - ✅ Hide the Reels tab dot
 - ✅ Show View profile on Marketplace sellers
-- ❌ Open on a chosen tab
+- ✅ Open on a chosen tab
 - ✅ Block promotional notifications
 - ✅ Clean up Reels
 - ✅ Turn off double tap to like
 - ✅ Hold a reel for 2x
 - ✅ Hide reel interest prompts
-- ❌ Don't send reel watch history
+- ✅ Don't send reel watch history
 - ✅ Hide Meta AI in search
-- ❌ Stop Story auto-advance
-- ❌ View stories anonymously
+- ✅ Stop Story auto-advance
+- ✅ View stories anonymously
 - ✅ Hide suggested stories
 - ✅ Stop update prompts
 - ❌ Clone app
