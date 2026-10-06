@@ -1,15 +1,26 @@
++AMOLED black theme
++Allow screenshots
 +Block Instant Games ads
 +Block ad telemetry
 +Block background ad prefetch
++Block background-return feed refresh
 +Block promotional notifications
++Block screenshot detection
++Clean up Reels
++Default comment order
++Default playback quality
 +Disable Audience Network
++Don't send reel watch history
 +Download any reel
 +Download any story
++Download any video
 +Force dark mode
 +Hide AI-detected posts
 +Hide Menu promotions
 +Hide Meta AI in search
 +Hide Meta AI questions under posts
++Hide Reels in the feed
++Hide Stories tray
 +Hide affiliate product links
 +Hide post prompts
 +Hide posts by words
@@ -25,46 +36,35 @@
 +Hide tabs
 +Hide the Feeds header
 +Hide the Get Messenger card
++Hide the Reels tab
 +Hide the Reels tab dot
++Hold a reel for 2x
++Hold back analytics uploads
 +Hushfacebook in the Menu
 +Hushfacebook settings
 +Install beside Meta's apps
 +Keep post dates
 +Keep the reel speed
 +Marketplace only
++Material You theme
 +Open Messenger from the top bar
 +Open links in external browser
++Open on a chosen tab
++Picture-in-picture
 +Restore screens on re-signed builds
 +Resume long videos
 +Sanitize sharing links
 +Show View profile on Marketplace sellers
 +Start on x86 devices
++Stop Story auto-advance
 +Stop update prompts
 +Tab bar at the bottom
--AMOLED black theme
--Allow screenshots
--Block background-return feed refresh
--Block screenshot detection
--Clean up Reels
--Default comment order
--Default playback quality
--Don't send reel watch history
--Download any video
--Hide Reels in the feed
--Hide Stories tray
--Hide the Reels tab
--Hold a reel for 2x
--Hold back analytics uploads
--Material You theme
--Open on a chosen tab
--Picture-in-picture
--Stop Story auto-advance
--Tag suggestions only after @
--Tap to play
--Turn off HDR brightness
--Turn off double tap to like
--Turn off haptics
--Turn off screen transitions
--Use the phone's emoji
--Use the system font
--View stories anonymously
++Tag suggestions only after @
++Tap to play
++Turn off HDR brightness
++Turn off double tap to like
++Turn off haptics
++Turn off screen transitions
++Use the phone's emoji
++Use the system font
++View stories anonymously
