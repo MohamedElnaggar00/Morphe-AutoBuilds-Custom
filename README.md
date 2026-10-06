@@ -266,8 +266,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.40.0
-Patch source: hxreborn — v1.40.0 ([v1.40.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.41.0
+Patch source: hxreborn — v1.41.0 ([v1.41.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -483,12 +483,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — App v580.0.0.49.91 — Patch v0.14.0
-Patch source: hushmessenger — v0.14.0 ([v0.14.0](https://github.com/SysAdminDoc/HushMessenger))
+## Messenger — App v581.0.0.49.91 — Patch v0.21.0
+Patch source: hushmessenger — v0.21.0 ([v0.21.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 24/37 applied</summary>
+<summary>🩹 Patches — 25/38 applied</summary>
 
 - ❌ Install beside Meta apps
 - ❌ Restore screens on re-signed builds
@@ -496,6 +496,7 @@ Architecture: arm64-v8a
 - ❌ Hide inbox ads
 - ✅ Hide People You May Know
 - ✅ Hide friend request cards
+- ✅ Hide joined community chats
 - ✅ Hide growth prompts
 - ✅ Hide inbox promotions
 - ✅ Hide stories and notes
