@@ -538,7 +538,7 @@ Patch source: hushfacebook — v0.7.2 ([v0.7.2](https://github.com/SysAdminDoc/H
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 71/75 applied</summary>
+<summary>🩹 Patches — 70/75 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -571,7 +571,7 @@ Architecture: arm64-v8a
 - ✅ Hide suggested and promoted posts
 - ✅ Hide posts by words
 - ✅ Use the system font
-- ✅ AMOLED black theme
+- ❌ AMOLED black theme
 - ✅ Force dark mode
 - ✅ Material You theme
 - ✅ Turn off HDR brightness
