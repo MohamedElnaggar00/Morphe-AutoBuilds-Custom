@@ -144,8 +144,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.29.1-prod.01 — Patch v3.51.0
-Patch source: piko-newx — v3.51.0 ([v3.51.0](https://github.com/crimera/piko-newx))
+## X — App v12.29.1-prod.01 — Patch v3.52.0
+Patch source: piko-newx — v3.52.0 ([v3.52.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -266,8 +266,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.41.0
-Patch source: hxreborn — v1.41.0 ([v1.41.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.42.0
+Patch source: hxreborn — v1.42.0 ([v1.42.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -362,9 +362,9 @@ Architecture: arm64-v8a
 - ✅ Fix Google login
 - ✅ Feed tab navigation
 - ✅ Skip the splash ad
+- ✅ Skip update checks
 - ✅ Limit background traffic
 - ✅ Drop the animated image cache
-- ✅ Skip update checks
 - ✅ Remove unused language packs
 - ✅ Remove LIVE extras
 - ✅ Remove creation tools
@@ -488,12 +488,12 @@ Patch source: hushmessenger — v0.21.0 ([v0.21.0](https://github.com/SysAdminDo
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 25/38 applied</summary>
+<summary>🩹 Patches — 32/38 applied</summary>
 
-- ❌ Install beside Meta apps
-- ❌ Restore screens on re-signed builds
+- ✅ Install beside Meta apps
+- ✅ Restore screens on re-signed builds
 - ❌ Material You theme
-- ❌ Hide inbox ads
+- ✅ Hide inbox ads
 - ✅ Hide People You May Know
 - ✅ Hide friend request cards
 - ✅ Hide joined community chats
@@ -512,13 +512,13 @@ Architecture: arm64-v8a
 - ✅ Hide business typing suggestions
 - ✅ Hide event prompts
 - ✅ Hide typing indicator
-- ❌ Open web links externally
+- ✅ Open web links externally
 - ❌ Allow chat bubbles
 - ✅ Use system emoji
 - ✅ Send photos at original quality
-- ❌ Allow screenshots
-- ❌ Hide read receipts
-- ❌ Keep unsent messages
+- ✅ Allow screenshots
+- ✅ Hide read receipts
+- ✅ Keep unsent messages
 - ✅ View stories anonymously
 - ✅ Save any story
 - ✅ Slide chats in and out
