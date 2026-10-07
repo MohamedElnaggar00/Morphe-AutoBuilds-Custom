@@ -146,8 +146,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.29.1-prod.01 — Patch v3.53.0
-Patch source: piko-newx — v3.53.0 ([v3.53.0](https://github.com/crimera/piko-newx))
+## X — App v12.29.1-prod.01 — Patch v3.53.1
+Patch source: piko-newx — v3.53.1 ([v3.53.1](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -538,7 +538,7 @@ Patch source: hushfacebook — v0.7.2 ([v0.7.2](https://github.com/SysAdminDoc/H
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 70/75 applied</summary>
+<summary>🩹 Patches — 69/75 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -573,7 +573,7 @@ Architecture: arm64-v8a
 - ✅ Use the system font
 - ❌ AMOLED black theme
 - ✅ Force dark mode
-- ✅ Material You theme
+- ❌ Material You theme
 - ✅ Turn off HDR brightness
 - ✅ Picture-in-picture
 - ✅ Default playback quality
