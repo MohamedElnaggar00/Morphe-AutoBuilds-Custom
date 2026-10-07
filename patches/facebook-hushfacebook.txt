@@ -45,7 +45,7 @@
 +Keep post dates
 +Keep the reel speed
 +Marketplace only
-+Material You theme
+-Material You theme
 +Open Messenger from the top bar
 +Open links in external browser
 +Open on a chosen tab
