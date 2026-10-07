@@ -710,24 +710,45 @@ Exception in thread "main" java.lang.NoSuchMethodError: 'app.morphe.patcher.patc
 
 </details>
 
-## Instagram — App v449.0.0.52.84 — Patch v0.0.5
-Patch source: hushgram — v0.0.5 ([v0.0.5](https://github.com/SysAdminDoc/HushGram))
+## Instagram — App v450.0.0.50.77 — Patch v0.0.6
+Patch source: hushgram — v0.0.6 ([v0.0.6](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 49/53 applied</summary>
+<summary>🩹 Patches — 71/80 applied</summary>
 
 - ✅ Hide ads
+- ✅ Ask before a call
+- ✅ Hide Instants
+- ✅ Keep in chat
+- ✅ Lock your messages
 - ✅ Hide the notes row
+- ✅ Allow screenshots
+- ✅ Don't report screenshots
+- ❌ Read messages without the seen receipt
 - ✅ View DM photos and videos anonymously
+- ❌ Hide that you're typing
+- ✅ Save profile picture
 - ✅ Download any reel
 - ✅ Download any story
 - ✅ Download any video
+- ✅ Download voice messages
 - ✅ Hide the Explore grid
+- ✅ Don't save recent searches
+- ✅ Hide comments
+- ✅ Ask before a like
+- ✅ Ask before a refresh
 - ✅ Start Home on Following
+- ✅ Hide the home feed
+- ✅ Change the like animation
+- ✅ Full resolution photos
 - ✅ Hide Reels in the feed
 - ✅ Hide suggested posts
 - ✅ Stop swipe to create
+- ✅ Stop swiping between tabs
+- ❌ Show a post's exact time
+- ✅ Turn off HDR brightness boosts
+- ✅ Data saver
 - ✅ Default playback quality
 - ✅ Resume long videos
 - ✅ Tap to play
@@ -736,15 +757,19 @@ Architecture: arm64-v8a
 - ✅ Disable analytics
 - ✅ Remove the empty space at the bottom
 - ✅ Remove build expired popup
+- ✅ Clear the media cache
 - ✅ Copy comment
 - ✅ Save comment photo
 - ✅ Open developer options
 - ✅ Open links in external browser
+- ❌ Spoof location
+- ✅ Group Instagram's notifications
 - ✅ Restore trust on re-signed builds
 - ✅ HushGram settings
 - ✅ Sanitize sharing links
 - ✅ Pure black dark mode
 - ✅ Start on x86 devices
+- ❌ Change version code
 - ✅ Show if a profile follows you
 - ✅ Hide highlights
 - ✅ Hide suggested people on profiles
@@ -758,8 +783,10 @@ Architecture: arm64-v8a
 - ✅ Hide the Reels tab
 - ✅ Don't send reel watch history
 - ✅ Hide the Repost button
+- ✅ Hide the Share button
 - ✅ Hide group buttons on the share sheet
 - ✅ Stop Story auto-advance
+- ✅ View live anonymously
 - ✅ Loop a story
 - ✅ Story ring size
 - ✅ View stories anonymously
