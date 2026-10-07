@@ -37,7 +37,6 @@ jobs:
           python <<'PY'
           import json
           import os
-          import re
           import subprocess
           import urllib.error
           import urllib.request
@@ -55,7 +54,11 @@ jobs:
           # These patches are intentionally never selected automatically.
           AUTO_ENABLE_EXCLUSIONS = {
               "hushfeed": {"AMOLED dark theme"},
-              "hushfacebook": {"AMOLED theme", "AMOLED black theme"},
+              "hushfacebook": {
+                  "AMOLED theme",
+                  "AMOLED black theme",
+                  "Material You theme",
+              },
           }
 
           def github_json(url):
@@ -79,7 +82,6 @@ jobs:
               config = json.loads(source_file.read_text(encoding="utf-8"))
               entries = config if isinstance(config, list) else config.get("sources", [])
 
-              # Use the last configured remote patch repository, excluding Morphe CLI.
               remote = None
               for entry in entries:
                   if not isinstance(entry, dict):
@@ -104,8 +106,6 @@ jobs:
                   else:
                       raise ValueError("patches-list.json content was not returned")
               except (urllib.error.HTTPError, urllib.error.URLError, ValueError, json.JSONDecodeError) as exc:
-                  # Some repositories expose the file through raw.githubusercontent.com
-                  # even when the Contents endpoint is unavailable.
                   raw_url = f"https://raw.githubusercontent.com/{user}/{repo}/HEAD/patches-list.json"
                   try:
                       request = urllib.request.Request(
@@ -141,25 +141,6 @@ jobs:
               print(f"{source_id}: upstream patch list contains {len(names)} patches ({user}/{repo})")
               return names, defaults
 
-          def parse_selection(path):
-              entries = {}
-              passthrough = []
-
-              for raw_line in path.read_text(encoding="utf-8").splitlines():
-                  line = raw_line.strip()
-                  if not line or line.startswith("#") or line.startswith("@"):
-                      passthrough.append(raw_line)
-                      continue
-                  if line[0] in "+-" and len(line) > 1:
-                      name = line[1:].strip()
-                      if name:
-                          entries[name] = line[0]
-                      continue
-                  # Keep unknown/comment-like lines instead of destroying user content.
-                  passthrough.append(raw_line)
-
-              return entries, passthrough
-
           def find_patch_file(source_id):
               candidates = sorted(PATCHES_DIR.glob("*.txt"))
               suffix = f"-{source_id}"
@@ -175,9 +156,8 @@ jobs:
 
           changed_files = []
           state_updates = {}
-          skipped = 0
-
           old_state = {}
+
           if STATE_FILE.exists():
               try:
                   old_state = json.loads(STATE_FILE.read_text(encoding="utf-8"))
@@ -201,7 +181,6 @@ jobs:
 
               upstream_data = load_upstream_patches(source_id)
               if upstream_data is None:
-                  skipped += 1
                   continue
 
               upstream, upstream_defaults = upstream_data
@@ -209,10 +188,6 @@ jobs:
               exclusions = AUTO_ENABLE_EXCLUSIONS.get(source_id, set())
               previous = set(old_state.get(source_id, {}).get("patches", []))
 
-              # Compare upstream against the LAST SUCCESSFUL SNAPSHOT, not against
-              # the local selection file. A local file may intentionally contain
-              # only a small subset of the upstream patches, so "not in local"
-              # does not mean "new upstream".
               if source_id not in old_state:
                   print(f"BASELINE {source_id}: {len(upstream)} current upstream patches recorded; no existing patches treated as new")
                   new_upstream = []
@@ -222,8 +197,6 @@ jobs:
                       if name not in previous and name not in exclusions
                   ]
 
-              # Patches removed upstream are informational only. Never delete a
-              # user's local selection automatically.
               removed_upstream = [
                   name for name in previous
                   if name not in upstream_set and name not in exclusions
@@ -235,34 +208,30 @@ jobs:
                   "patches": upstream,
               }
 
-              # Some sources (currently HushFacebook) are configured to mirror
-              # the upstream default selection exactly. For those sources, the
-              # local +/- file is regenerated from each patch's `use` value on
-              # every real run, so upstream default changes are followed forever.
               if item.get("sync_all"):
                   desired = [
                       f"+{name}"
                       for name in upstream
                       if name not in exclusions
                   ]
-                  desired_text = "\n".join(desired) + "\n"
+                  desired_text = "
+".join(desired) + "
+"
                   current_text = patch_file.read_text(encoding="utf-8")
                   if current_text != desired_text:
-                      print(f"ALL PATCHES SYNC — {patch_file.name}: enabling every available upstream patch")
+                      print(f"ALL PATCHES SYNC — {patch_file.name}: enabling every available upstream patch except configured exclusions")
                       if DRY_RUN:
                           print(f"  Would enable {len(desired)} patch(es)")
                       else:
                           changed_files.append((patch_file, desired_text))
                   else:
-                      print(f"OK {patch_file.name}: all available upstream patches are enabled")
+                      print(f"OK {patch_file.name}: all available upstream patches are enabled except configured exclusions")
                   continue
+
               if not new_upstream:
                   print(f"OK {patch_file.name}: no newly discovered upstream patches")
                   if removed_upstream:
-                      print(
-                          f"  Note: {len(removed_upstream)} patch(es) disappeared upstream; "
-                          "local selections were left untouched."
-                      )
+                      print(f"  Note: {len(removed_upstream)} patch(es) disappeared upstream; local selections were left untouched.")
                   continue
 
               print(f"NEW UPSTREAM PATCHES — {patch_file.name}")
@@ -272,24 +241,22 @@ jobs:
               if DRY_RUN:
                   continue
 
-              # Add only patches that are genuinely new upstream and are not
-              # intentionally excluded. Existing + / - choices stay untouched.
               old_text = patch_file.read_text(encoding="utf-8")
               base = old_text.rstrip()
-              suffix = "\n" if base else ""
-              new_text = base + suffix + "\n".join(f"+ {name}" for name in new_upstream) + "\n"
-
+              suffix = "
+" if base else ""
+              new_text = base + suffix + "
+".join(f"+ {name}" for name in new_upstream) + "
+"
               changed_files.append((patch_file, new_text))
 
-          # Persist the upstream snapshot only on a real run. This makes Preview
-          # completely non-mutating and allows the same changes to appear again
-          # until they are actually applied.
           if not DRY_RUN:
               STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
               new_state = dict(old_state)
               new_state.update(state_updates)
               STATE_FILE.write_text(
-                  json.dumps(new_state, indent=2, ensure_ascii=False) + "\n",
+                  json.dumps(new_state, indent=2, ensure_ascii=False) + "
+",
                   encoding="utf-8",
               )
 
