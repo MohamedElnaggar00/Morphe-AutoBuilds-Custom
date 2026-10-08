@@ -268,8 +268,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.44.0
-Patch source: hxreborn — v1.44.0 ([v1.44.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.45.0
+Patch source: hxreborn — v1.45.0 ([v1.45.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -710,12 +710,12 @@ Exception in thread "main" java.lang.NoSuchMethodError: 'app.morphe.patcher.patc
 
 </details>
 
-## Instagram — App v450.0.0.50.77 — Patch v0.0.6
-Patch source: hushgram — v0.0.6 ([v0.0.6](https://github.com/SysAdminDoc/HushGram))
+## Instagram — App v450.0.0.50.77 — Patch v0.0.7
+Patch source: hushgram — v0.0.7 ([v0.0.7](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 71/80 applied</summary>
+<summary>🩹 Patches — 73/83 applied</summary>
 
 - ✅ Hide ads
 - ✅ Ask before a call
@@ -761,6 +761,7 @@ Architecture: arm64-v8a
 - ✅ Copy comment
 - ✅ Save comment photo
 - ✅ Open developer options
+- ✅ Emoji style
 - ✅ Open links in external browser
 - ❌ Spoof location
 - ✅ Group Instagram's notifications
@@ -773,6 +774,7 @@ Architecture: arm64-v8a
 - ✅ Show if a profile follows you
 - ✅ Hide highlights
 - ✅ Hide suggested people on profiles
+- ✅ Hide the Threads button
 - ✅ Keep Reels auto scroll on
 - ✅ Clean up Reels
 - ✅ Turn off double tap to like
@@ -788,6 +790,7 @@ Architecture: arm64-v8a
 - ✅ Stop Story auto-advance
 - ✅ View live anonymously
 - ✅ Loop a story
+- ❌ See who a story mentions
 - ✅ Story ring size
 - ✅ View stories anonymously
 - ✅ Show a story's exact time
