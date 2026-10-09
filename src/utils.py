@@ -584,14 +584,14 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
                         if not has_structured_codes:
                             description = str(item.get("description") or "")
                             build_match = re.search(
-                                r"\\bArm64 builds?\\s+([^;]+)",
+                                r"\bArm64 builds?\s+([^;]+)",
                                 description,
                                 flags=re.IGNORECASE,
                             )
                             if build_match:
                                 codes = [
                                     int(value)
-                                    for value in re.findall(r"\\b\\d{5,}\\b", build_match.group(1))
+                                    for value in re.findall(r"\b\d{5,}\b", build_match.group(1))
                                 ]
                                 if codes:
                                     item["version_codes_by_arch"] = {
