@@ -564,6 +564,41 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
                         item["version"] = version
                         item["signatures"] = package_signatures
                         item["apk_file_types"] = [apk_file_type] if apk_file_type else []
+
+                        # Some patch catalogs provide build codes in the
+                        # human-readable target description while leaving
+                        # versionCodes null. Only treat an explicit
+                        # "Arm64 builds ..." list as ARM64 version-code
+                        # metadata; do not guess codes from arbitrary text.
+                        raw_codes = item.get("version_codes")
+                        if raw_codes is None:
+                            raw_codes = item.get("versionCodes")
+                        has_structured_codes = bool(
+                            raw_codes
+                            and (
+                                isinstance(raw_codes, dict)
+                                or isinstance(raw_codes, list)
+                                or str(raw_codes).isdigit()
+                            )
+                        )
+                        if not has_structured_codes:
+                            description = str(item.get("description") or "")
+                            build_match = re.search(
+                                r"\\bArm64 builds?\\s+([^;]+)",
+                                description,
+                                flags=re.IGNORECASE,
+                            )
+                            if build_match:
+                                codes = [
+                                    int(value)
+                                    for value in re.findall(r"\\b\\d{5,}\\b", build_match.group(1))
+                                ]
+                                if codes:
+                                    item["version_codes_by_arch"] = {
+                                        "ARM64_V8A": codes
+                                    }
+                                    item["version_codes"] = codes
+
                         declarations.setdefault(version, []).append(item)
 
                 for value in node.values():
