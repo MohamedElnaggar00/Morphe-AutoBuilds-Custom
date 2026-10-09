@@ -385,11 +385,11 @@ Architecture: arm64-v8a
 - ✅ Limit background traffic
 - ✅ Drop the animated image cache
 - ✅ Skip update checks
+- ✅ Remove creation tools
 - ✅ Block P2P video relay
 - ✅ Remove content credential and card scanner assets
 - ✅ Remove unused language packs
 - ✅ Remove LIVE extras
-- ✅ Remove creation tools
 - ✅ Block popups
 - ❌ Network proxy
 - ✅ Keep the screen's refresh rate
