@@ -220,6 +220,87 @@ class VersionSelectionTests(unittest.TestCase):
 
     @patch("src.utils.fetch_json")
     @patch("src.utils.detect_release")
+    def test_source_description_provides_arm64_codes_when_version_codes_are_null(
+        self, mock_detect_release, mock_fetch_json
+    ):
+        mock_detect_release.return_value = {"tag_name": "v0.22.0"}
+        mock_fetch_json.return_value = {
+            "patches": [
+                {
+                    "compatiblePackages": [
+                        {
+                            "packageName": "com.facebook.orca",
+                            "apkFileType": "APK",
+                            "signatures": ["AA:BB"],
+                            "targets": [
+                                {
+                                    "version": "581.0.0.49.91",
+                                    "versionCodes": None,
+                                    "isExperimental": False,
+                                    "minSdk": 28,
+                                    "description": (
+                                        "Arm64 builds 346213494, 346213498, 346213510, "
+                                        "346213514 and 346213528; checked again during patching"
+                                    ),
+                                }
+                            ],
+                        }
+                    ]
+                }
+            ]
+        }
+
+        selected = utils.get_source_supported_targets(
+            "com.facebook.orca", "hushmessenger"
+        )
+
+        self.assertEqual(len(selected), 1)
+        self.assertEqual(selected[0]["version"], "581.0.0.49.91")
+        self.assertEqual(
+            selected[0]["version_codes_by_arch"]["ARM64_V8A"],
+            [346213494, 346213498, 346213510, 346213514, 346213528],
+        )
+        self.assertEqual(
+            selected[0]["version_codes"],
+            [346213494, 346213498, 346213510, 346213514, 346213528],
+        )
+        self.assertEqual(selected[0]["signatures"], ["aa:bb"])
+
+    @patch("src.utils.fetch_json")
+    @patch("src.utils.detect_release")
+    def test_unstructured_description_does_not_guess_version_codes(
+        self, mock_detect_release, mock_fetch_json
+    ):
+        mock_detect_release.return_value = {"tag_name": "v0.22.0"}
+        mock_fetch_json.return_value = {
+            "patches": [
+                {
+                    "compatiblePackages": [
+                        {
+                            "packageName": "com.facebook.orca",
+                            "targets": [
+                                {
+                                    "version": "581.0.0.49.91",
+                                    "versionCodes": None,
+                                    "isExperimental": False,
+                                    "description": "Supports recent Messenger builds.",
+                                }
+                            ],
+                        }
+                    ]
+                }
+            ]
+        }
+
+        selected = utils.get_source_supported_targets(
+            "com.facebook.orca", "hushmessenger"
+        )
+
+        self.assertEqual(selected[0]["version_codes"], [])
+        self.assertNotIn("version_codes_by_arch", selected[0])
+
+    @patch("src.utils.fetch_json")
+    @patch("src.utils.detect_release")
     def test_source_contract_preserves_arch_codes_and_constraints(
         self, mock_detect_release, mock_fetch_json
     ):
