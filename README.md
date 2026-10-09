@@ -146,8 +146,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.29.1-prod.01 — Patch v3.53.1
-Patch source: piko-newx — v3.53.1 ([v3.53.1](https://github.com/crimera/piko-newx))
+## X — App v12.30.0-prod.01 — Patch v3.54.0
+Patch source: piko-newx — v3.54.0 ([v3.54.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -285,12 +285,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v47.1.4 — Patch v0.68.0
-Patch source: hushfeed — v0.68.0 ([v0.68.0](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v47.1.4 — Patch v0.69.0
+Patch source: hushfeed — v0.69.0 ([v0.69.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 106/111 applied</summary>
+<summary>🩹 Patches — 120/135 applied</summary>
 
 - ✅ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -303,9 +303,12 @@ Architecture: arm64-v8a
 - ✅ Subtitle tools
 - ✅ Remember clear display
 - ✅ Confirm feed interactions
+- ✅ Copy bio and IDs
 - ✅ Advanced downloads
 - ✅ Downloads
 - ✅ Allow Duet and Stitch
+- ❌ Show engagement rate
+- ✅ Show exact counts
 - ✅ Keep the Favorites tab
 - ✅ Hide feed save button
 - ✅ Hide feed follow button
@@ -317,17 +320,25 @@ Architecture: arm64-v8a
 - ✅ Long-press controls
 - ✅ Swipe-left controls
 - ✅ Ghost mode
+- ❌ Turn off haptics
+- ✅ Always upload in HD
+- ✅ LIVE controls
 - ✅ Automatic video advance
 - ✅ Stay on the video in full screen
 - ✅ Stop video looping
+- ✅ Story controls
 - ✅ Not interested button
 - ✅ Custom offline videos limit
+- ✅ Picture-in-picture
 - ✅ Always show publish date
+- ✅ Prefer H.264 playback
 - ✅ Playback quality
+- ✅ Play SDR instead of HDR
 - ✅ Disable the long press quick share
 - ✅ Disable the long press repost
 - ✅ Hide comment typing suggestions
 - ✅ Resume videos after scrolling
+- ✅ Stop search autoplay
 - ✅ Use non-personalized search
 - ✅ Show LIVE search
 - ✅ Hide search suggestions
@@ -336,13 +347,19 @@ Architecture: arm64-v8a
 - ✅ Hide already seen videos
 - ✅ Skip content warnings
 - ✅ Share sheet tools
+- ✅ Keep pulled sounds
 - ✅ Hold-and-slide 2x lock
 - ✅ Playback speed
 - ✅ Use system font
+- ❌ Turn off screen transitions
 - ✅ Fit the video to the screen
+- ✅ Remove avatar rings
 - ✅ Hide video overlays
 - ✅ Change app name
+- ❌ Custom launcher icon
+- ❌ Run beside the store app
 - ✅ Copy comments without username
+- ✅ Lift text length limits
 - ✅ Comment publish diagnostics
 - ✅ Comment send fix
 - ✅ Comment sort controls
@@ -363,15 +380,18 @@ Architecture: arm64-v8a
 - ✅ Disable login requirement
 - ✅ Fix Google login
 - ✅ Feed tab navigation
+- ❌ Skip first-launch setup
 - ✅ Skip the splash ad
+- ✅ Limit background traffic
 - ✅ Drop the animated image cache
 - ✅ Skip update checks
-- ✅ Limit background traffic
+- ✅ Block P2P video relay
+- ✅ Remove content credential and card scanner assets
 - ✅ Remove unused language packs
 - ✅ Remove LIVE extras
 - ✅ Remove creation tools
-- ✅ Block P2P video relay
-- ✅ Remove content credential and card scanner assets
+- ✅ Block popups
+- ❌ Network proxy
 - ✅ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ✅ Diagnostic tools
@@ -386,6 +406,7 @@ Architecture: arm64-v8a
 - ✅ Hide Play Store update offer
 - ✅ Enable voice comments
 - ✅ Stop on-device AI profiling
+- ❌ App lock
 - ✅ In-app browser privacy guard
 - ✅ Camera and microphone indicator
 - ✅ Block contact list access
@@ -396,6 +417,9 @@ Architecture: arm64-v8a
 - ✅ Resource and battery governor
 - ✅ Stop saving search history
 - ✅ Look like the store app
+- ❌ Trust user certificates
+- ❌ Stop recording watch history
+- ✅ Show follow status
 - ✅ Hide floating promotions
 - ✅ Hide profile shortcuts
 - ❌ Clone app
@@ -485,13 +509,14 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — App v581.0.0.49.91 — Patch v0.21.0
-Patch source: hushmessenger — v0.21.0 ([v0.21.0](https://github.com/SysAdminDoc/HushMessenger))
+## Messenger — App v581.0.0.49.91 — Patch v0.22.0
+Patch source: hushmessenger — v0.22.0 ([v0.22.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 32/38 applied</summary>
+<summary>🩹 Patches — 39/48 applied</summary>
 
+- ❌ Clone install under another package name
 - ✅ Install beside Meta apps
 - ✅ Restore screens on re-signed builds
 - ❌ Material You theme
@@ -509,6 +534,8 @@ Architecture: arm64-v8a
 - ✅ Hide Reels badge
 - ✅ Hide AI sticker tools
 - ✅ Hide avatar stickers
+- ✅ Restore old emoji drawer
+- ✅ Keep emoji search on emoji
 - ✅ Hide chat promotions
 - ✅ Hide business reply suggestions
 - ✅ Hide business typing suggestions
@@ -518,13 +545,20 @@ Architecture: arm64-v8a
 - ❌ Allow chat bubbles
 - ✅ Use system emoji
 - ✅ Send photos at original quality
+- ✅ Send videos without re-encoding
+- ✅ Keep a message log
+- ✅ Use the phone's camera app
+- ✅ Stop analytics uploads
 - ✅ Allow screenshots
 - ✅ Hide read receipts
 - ✅ Keep unsent messages
+- ✅ Unlock app icons
 - ✅ View stories anonymously
 - ✅ Save any story
 - ✅ Slide chats in and out
 - ✅ Open settings from menu
+- ❌ Custom new-message sound
+- ❌ Spoof package version
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
@@ -533,12 +567,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v580.0.0.51.74 — Patch v0.7.2
-Patch source: hushfacebook — v0.7.2 ([v0.7.2](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v580.0.0.51.74 — Patch v0.8.0
+Patch source: hushfacebook — v0.8.0 ([v0.8.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 69/75 applied</summary>
+<summary>🩹 Patches — 77/89 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -551,31 +585,43 @@ Architecture: arm64-v8a
 - ✅ Hide sponsored search results
 - ✅ Hide sponsored stories
 - ✅ Block ad telemetry
+- ✅ Clean up Facebook's chat list
 - ✅ Hide the Get Messenger card
+- ❌ Hide read receipts
+- ❌ Hide typing indicator
 - ✅ Open Messenger from the top bar
+- ✅ Send chat photos and videos at original quality
 - ✅ Install beside Meta's apps
 - ✅ Default comment order
+- ❌ Comment sheet options
+- ✅ Hide Meta AI comment summaries
 - ✅ Tag suggestions only after @
+- ✅ Download any photo
 - ✅ Download any reel
 - ✅ Download any story
 - ✅ Download any video
 - ✅ Use the phone's emoji
 - ✅ Hide AI-detected posts
+- ✅ Turn off auto-translation
 - ✅ Hide the Feeds header
+- ✅ Following feed on Home
 - ✅ Hide Meta AI questions under posts
 - ✅ Keep post dates
 - ✅ Hide post prompts
 - ✅ Hide Reels in the feed
 - ✅ Block background-return feed refresh
+- ❌ Hide seen posts
 - ✅ Hide Stories tray
 - ✅ Hide suggested and promoted posts
 - ✅ Hide posts by words
 - ✅ Use the system font
+- ❌ Accent color
 - ❌ AMOLED black theme
 - ✅ Force dark mode
 - ❌ Material You theme
 - ✅ Turn off HDR brightness
 - ✅ Picture-in-picture
+- ✅ Keep the progress bar
 - ✅ Default playback quality
 - ✅ Keep the reel speed
 - ✅ Resume long videos
@@ -592,6 +638,7 @@ Architecture: arm64-v8a
 - ✅ Sanitize sharing links
 - ✅ Turn off screen transitions
 - ✅ Start on x86 devices
+- ❌ Hide Meta upsells
 - ✅ Tab bar at the bottom
 - ✅ Hide tabs
 - ✅ Marketplace only
@@ -599,6 +646,7 @@ Architecture: arm64-v8a
 - ✅ Hide the Reels tab dot
 - ✅ Show View profile on Marketplace sellers
 - ✅ Open on a chosen tab
+- ✅ Hide tab badges
 - ✅ Block promotional notifications
 - ✅ Clean up Reels
 - ✅ Turn off double tap to like
@@ -610,11 +658,11 @@ Architecture: arm64-v8a
 - ✅ View stories anonymously
 - ✅ Hide suggested stories
 - ✅ Stop update prompts
+- ✅ Disable Play Store updates
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
 - ❌ Spoof signature
-- ✅ Disable Play Store updates
 
 </details>
 
