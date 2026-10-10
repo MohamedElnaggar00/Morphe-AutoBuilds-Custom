@@ -382,9 +382,9 @@ Architecture: arm64-v8a
 - ✅ Feed tab navigation
 - ❌ Skip first-launch setup
 - ✅ Skip the splash ad
+- ✅ Limit background traffic
 - ✅ Drop the animated image cache
 - ✅ Skip update checks
-- ✅ Limit background traffic
 - ✅ Block P2P video relay
 - ✅ Remove content credential and card scanner assets
 - ✅ Remove unused language packs
