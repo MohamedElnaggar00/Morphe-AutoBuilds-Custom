@@ -952,12 +952,45 @@ def get_source_recommended_version(package_name: str, source: str) -> str:
     return get_highest_version(stable) or ""
 
 
-def get_source_supported_version_codes(package_name: str, source: str) -> dict[str, list[int]]:
-    """Return version codes for automatic candidates, preferring stable targets."""
-    return {
-        target["version"]: target["version_codes"]
-        for target in get_source_supported_targets(package_name, source)
-    }
+def get_source_supported_version_codes(
+    package_name: str,
+    source: str,
+    arch: str | None = None,
+) -> dict[str, list[int]]:
+    """Return source-declared version codes, scoped to the requested ABI when known.
+
+    If the source explicitly publishes ABI-specific codes, never return codes
+    belonging to a different ABI. An empty list means that target has no code
+    declared for the requested ABI; callers must not substitute another ABI's
+    code from generic metadata.
+    """
+    arch_key = {
+        "arm64-v8a": "ARM64_V8A",
+        "armeabi-v7a": "ARMEABI_V7A",
+        "x86_64": "X86_64",
+        "x86": "X86",
+    }.get((arch or "").lower())
+
+    result: dict[str, list[int]] = {}
+    for target in get_source_supported_targets(package_name, source):
+        version = str(target.get("version") or "").strip()
+        if not version:
+            continue
+
+        by_arch = target.get("version_codes_by_arch") or {}
+        if arch_key and by_arch:
+            # The presence of an ABI map makes it authoritative. If the
+            # requested ABI is absent, return no codes rather than falling
+            # back to the union of other ABIs' codes.
+            codes = by_arch.get(arch_key, [])
+        else:
+            codes = target.get("version_codes") or []
+
+        result[version] = sorted({
+            int(code) for code in codes
+            if str(code).isdigit() and int(code) > 0
+        })
+    return result
 
 def get_supported_version(package_name: str, cli: str, patches: str) -> Optional[str]:
     """Backwards compatible helper: returns the highest compatible version, if any."""
