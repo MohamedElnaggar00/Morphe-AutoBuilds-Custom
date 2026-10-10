@@ -146,8 +146,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.30.0-prod.01 — Patch v3.54.1
-Patch source: piko-newx — v3.54.1 ([v3.54.1](https://github.com/crimera/piko-newx))
+## X — App v12.30.0-prod.01 — Patch v3.54.2
+Patch source: piko-newx — v3.54.2 ([v3.54.2](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -567,12 +567,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v580.0.0.51.74 — Patch v0.8.0
-Patch source: hushfacebook — v0.8.0 ([v0.8.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v580.0.0.51.74 — Patch v0.9.0
+Patch source: hushfacebook — v0.9.0 ([v0.9.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 77/89 applied</summary>
+<summary>🩹 Patches — 84/90 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -587,13 +587,13 @@ Architecture: arm64-v8a
 - ✅ Block ad telemetry
 - ✅ Clean up Facebook's chat list
 - ✅ Hide the Get Messenger card
-- ❌ Hide read receipts
-- ❌ Hide typing indicator
+- ✅ Hide read receipts
+- ✅ Hide typing indicator
 - ✅ Open Messenger from the top bar
 - ✅ Send chat photos and videos at original quality
 - ✅ Install beside Meta's apps
 - ✅ Default comment order
-- ❌ Comment sheet options
+- ✅ Comment sheet options
 - ✅ Hide Meta AI comment summaries
 - ✅ Tag suggestions only after @
 - ✅ Download any photo
@@ -610,12 +610,12 @@ Architecture: arm64-v8a
 - ✅ Hide post prompts
 - ✅ Hide Reels in the feed
 - ✅ Block background-return feed refresh
-- ❌ Hide seen posts
+- ✅ Hide seen posts
 - ✅ Hide Stories tray
 - ✅ Hide suggested and promoted posts
 - ✅ Hide posts by words
 - ✅ Use the system font
-- ❌ Accent color
+- ✅ Accent color
 - ❌ AMOLED black theme
 - ✅ Force dark mode
 - ❌ Material You theme
@@ -636,9 +636,10 @@ Architecture: arm64-v8a
 - ✅ Block screenshot detection
 - ✅ Hushfacebook settings
 - ✅ Sanitize sharing links
+- ✅ Share sheet items
 - ✅ Turn off screen transitions
 - ✅ Start on x86 devices
-- ❌ Hide Meta upsells
+- ✅ Hide Meta upsells
 - ✅ Tab bar at the bottom
 - ✅ Hide tabs
 - ✅ Marketplace only
@@ -689,49 +690,80 @@ Architecture: arm64-v8a
 
 </details>
 
-## Instagram — —
-Patch source: piko-instagram
+## Instagram — App v447.0.0.55.81 — Patch v3.10.0
+Patch source: piko-instagram — v3.10.0 ([v3.10.0](https://github.com/crimera/piko))
+Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — unavailable</summary>
+<summary>🩹 Patches — 53/67 applied</summary>
 
-> README refresh failed for this app: 
-Exception in thread "main" java.lang.NoSuchMethodError: 'app.morphe.patcher.patch.BytecodePatch app.morphe.patches.all.misc.fix.changepackageinstaller.ChangePackageInstallerPatchKt.changePackageInstallerPatch(kotlin.jvm.functions.Function0)'
-	at app.morphe.patches.all.misc.installer.ChangeInstallerSourceKt.changeInstallerSource$lambda$0(ChangeInstallerSource.kt:34)
-	at app.morphe.patcher.patch.PatchKt.buildPatch(Patch.kt:606)
-	at app.morphe.patcher.patch.PatchKt.resourcePatch(Patch.kt:816)
-	at app.morphe.patches.all.misc.installer.ChangeInstallerSourceKt.<clinit>(ChangeInstallerSource.kt:15)
-	at java.base/jdk.internal.misc.Unsafe.ensureClassInitialized0(Native Method)
-	at java.base/jdk.internal.misc.Unsafe.ensureClassInitialized(Unsafe.java:1160)
-	at java.base/jdk.internal.reflect.MethodHandleAccessorFactory.ensureClassInitialized(MethodHandleAccessorFactory.java:301)
-	at java.base/jdk.internal.reflect.MethodHandleAccessorFactory.newMethodAccessor(MethodHandleAccessorFactory.java:72)
-	at java.base/jdk.internal.reflect.ReflectionFactory.newMethodAccessor(ReflectionFactory.java:159)
-	at java.base/java.lang.reflect.Method.acquireMethodAccessor(Method.java:726)
-	at java.base/java.lang.reflect.Method.invoke(Method.java:577)
-	at app.morphe.patcher.patch.PatchLoader$Companion.getPatchMethods(Patch.kt:933)
-	at app.morphe.patcher.patch.PatchLoader$Companion.loadPatches$lambda$0$1(Patch.kt:957)
-	at kotlin.sequences.FlatteningSequence$iterator$1.ensureItemIterator(Sequences.kt:363)
-	at kotlin.sequences.FlatteningSequence$iterator$1.hasNext(Sequences.kt:351)
-	at kotlin.sequences.FilteringSequence$iterator$1.calcNext(Sequences.kt:202)
-	at kotlin.sequences.FilteringSequence$iterator$1.hasNext(Sequences.kt:227)
-	at kotlin.sequences.SequencesKt___SequencesKt.toSet(_Sequences.kt:1029)
-	at app.morphe.patcher.patch.PatchLoader$Companion.loadPatches(Patch.kt:960)
-	at app.morphe.patcher.patch.PatchLoader$Companion.access$loadPatches(Patch.kt:913)
-	at app.morphe.patcher.patch.PatchLoader.<init>(Patch.kt:858)
-	at app.morphe.patcher.patch.PatchLoader.<init>(Patch.kt)
-	at app.morphe.patcher.patch.PatchLoader$Jar.<init>(Patch.kt:867)
-	at app.morphe.patcher.patch.PatchKt.loadPatchesFromJar(Patch.kt:981)
-	at app.morphe.desktop.command.ListPatchesCommand.run(ListPatchesCommand.kt:217)
-	at picocli.CommandLine.executeUserObject(CommandLine.java:2045)
-	at picocli.CommandLine.access$1500(CommandLine.java:148)
-	at picocli.CommandLine$RunLast.executeUserObjectOfLastSubcommandWithSameParent(CommandLine.java:2469)
-	at picocli.CommandLine$RunLast.handle(CommandLine.java:2461)
-	at picocli.CommandLine$RunLast.handle(CommandLine.java:2423)
-	at picocli.CommandLine$AbstractParseResultHandler.execute(CommandLine.java:2277)
-	at picocli.CommandLine$RunLast.execute(CommandLine.java:2425)
-	at picocli.CommandLine.execute(CommandLine.java:2174)
-	at app.morphe.MorpheLauncherKt.main(MorpheLauncher.kt:85)
-
+- ✅ Disable ads
+- ✅ Hide suggested content
+- ✅ Filter stories
+- ✅ Custom sharing domain
+- ✅ Open links externally
+- ✅ Disable comments
+- ✅ Disable explore
+- ✅ Disable highlights
+- ✅ Disable stories
+- ❌ Disable analytics
+- ✅ Disable discover people
+- ✅ Hide reshare button
+- ✅ Hide save buttons
+- ✅ Hide share button
+- ✅ Disable typing status
+- ❌ View live anonymously
+- ❌ View stories anonymously
+- ✅ Sanitize share links
+- ✅ Change like animation
+- ❌ Clone
+- ✅ Copy comment
+- ✅ Save media comment
+- ✅ Custom font
+- ✅ Download voice message
+- ❌ Make ephemeral media permanent
+- ✅ Mark chat as read manually
+- ✅ Disable video autoplay
+- ✅ Disable swipe to create
+- ✅ Hide group creation button on sharesheet
+- ✅ Hide notes tray
+- ✅ Hide stories tray
+- ✅ Limit feed to following profiles
+- ✅ Disable double tap like
+- ✅ Focus Lock
+- ✅ Inbox lock
+- ✅ Save deleted messages
+- ✅ Download media
+- ✅ External downloader
+- ❌ View DMs anonymously
+- ✅ Improve image viewing
+- ✅ Save Instants
+- ✅ Recommended flags
+- ✅ Unlock developer options
+- ❌ Unlock employee options
+- ❌ Allow user network certificate
+- ✅ More options on post
+- ✅ Customize navigation bar
+- ❌ Disable screenshot detection
+- ✅ Disable Reels scrolling
+- ✅ Hide Reels follow button
+- ✅ Remove empty bottom space
+- ✅ Add settings
+- ✅ Customise story ring size
+- ✅ Customise story timestamp
+- ✅ Disable story flipping
+- ✅ Loop story
+- ✅ View story mentions
+- ✅ Theme
+- ❌ Unlock Plus benefits
+- ✅ Friendship status indicator
+- ✅ More options on profile
+- ✅ Change version code
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
 
 </details>
 
