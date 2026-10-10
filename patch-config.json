@@ -46,10 +46,6 @@
       "source": "rushi-excel"
     },
     {
-      "app_name": "usbhotspot",
-      "source": "rushi-usbhotspot"
-    },
-    {
       "app_name": "instagram",
       "source": "piko-instagram"
     },
