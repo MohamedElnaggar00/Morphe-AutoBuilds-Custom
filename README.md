@@ -268,8 +268,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.46.0
-Patch source: hxreborn — v1.46.0 ([v1.46.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.47.0
+Patch source: hxreborn — v1.47.0 ([v1.47.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -567,7 +567,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v580.0.0.51.74 — Patch v0.9.0
+## Facebook — App v582.0.0.50.54 — Patch v0.9.0
 Patch source: hushfacebook — v0.9.0 ([v0.9.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
