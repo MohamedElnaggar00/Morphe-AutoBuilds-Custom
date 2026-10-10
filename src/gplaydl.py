@@ -659,21 +659,19 @@ def download_app(
 
     for version in versions:
         codes = source_codes.get(version, []) if source_codes else supported.get(version, [])
-        if source_codes and not override_version:
-            if codes:
-                # Source codes have already been filtered to the requested ABI.
-                # Do not use an index into a flattened cross-ABI list.
-                candidates.extend((version, code) for code in codes)
-            else:
-                target = source_targets_by_version.get(version, {})
-                declared_by_arch = target.get("version_codes_by_arch") or {}
-                declared_codes = target.get("version_codes") or []
+        target = source_targets_by_version.get(version, {}) if source_codes else {}
+        declared_by_arch = target.get("version_codes_by_arch") or {}
+        declared_codes = target.get("version_codes") or []
 
-                # If the source declares ABI-specific or generic build codes,
-                # an empty ABI-filtered list means this ABI is not authorized.
-                # Only fall back to Morphe's mapping when the source publishes
-                # no versionCode metadata at all.
-                if declared_by_arch or declared_codes:
+        if source_codes:
+            if declared_by_arch:
+                # The source's ABI map is authoritative, and source_codes has
+                # already filtered it to this ABI. The resulting list may
+                # contain one or more valid codes, so do not index it using
+                # the old cross-ABI position.
+                if codes:
+                    candidates.extend((version, code) for code in codes)
+                else:
                     logging.info(
                         "gplaydl skipping %s for %s: source does not declare a "
                         "versionCode for arch %s.",
@@ -681,11 +679,21 @@ def download_app(
                         app_name,
                         arch,
                     )
-                    continue
+                continue
 
-                fallback_codes = supported.get(version, [])
-                if len(fallback_codes) > requested_code_index:
-                    candidates.append((version, fallback_codes[requested_code_index]))
+            if declared_codes:
+                # Legacy/generic source metadata has no ABI map. Preserve the
+                # previous ABI-index behavior instead of treating the whole
+                # generic list as ABI-specific.
+                if len(codes) > requested_code_index:
+                    candidates.append((version, codes[requested_code_index]))
+                continue
+
+            # Only fall back to Morphe's mapping when the source publishes
+            # the version but no versionCode metadata at all.
+            fallback_codes = supported.get(version, [])
+            if len(fallback_codes) > requested_code_index:
+                candidates.append((version, fallback_codes[requested_code_index]))
             continue
 
         if len(codes) > requested_code_index:
