@@ -426,6 +426,11 @@ def _download_with_compat_profiles(
     )
 
     for profile_name, profile in profiles:
+        # A failed profile may have left partial downloads behind. Each profile
+        # must be evaluated using only the files downloaded for that profile.
+        for stale_apk in output_dir.glob("*.apk"):
+            stale_apk.unlink(missing_ok=True)
+
         device = profile.get("UserReadableName", profile_name)
         try:
             logging.info(
@@ -460,16 +465,18 @@ def _download_with_compat_profiles(
 
             if profile_version_code != version_code:
                 logging.info(
-                    "gplaydl compatibility fallback: profile %s exposes the "
-                    "requested %s as versionCode %s (instead of %s); using the "
-                    "profile-specific code.",
+                    "gplaydl compatibility fallback: rejecting profile %s: "
+                    "version %s has versionCode %s, but the source-authorized "
+                    "code for arch %s is %s; trying the next profile.",
                     device,
                     target_version,
                     profile_version_code,
+                    arch,
                     version_code,
                 )
+                continue
 
-            effective_version_code = profile_version_code
+            effective_version_code = version_code
             delivery_token = purchase(package_name, effective_version_code, auth)
             delivery = get_delivery(
                 package_name,
@@ -509,10 +516,31 @@ def _download_with_compat_profiles(
             download_batch(specs)
 
             apks = sorted(output_dir.glob("*.apk"))
+            expected_base = output_dir / f"{package_name}-{version_code}.apk"
+            if not expected_base.is_file() or expected_base.stat().st_size == 0:
+                logging.info(
+                    "gplaydl compatibility fallback: profile %s did not produce "
+                    "the expected base APK for versionCode %s; trying next profile.",
+                    device,
+                    version_code,
+                )
+                for downloaded in apks:
+                    downloaded.unlink(missing_ok=True)
+                continue
+
+            # The download list must belong to the exact source-authorized
+            # versionCode; do not return stale or differently named components.
+            apks = [
+                path for path in apks
+                if path.name == expected_base.name
+                or path.name.startswith(f"{package_name}-{version_code}-")
+            ]
             if apks:
                 logging.info(
-                    "gplaydl compatibility fallback succeeded with profile %s: %s",
+                    "gplaydl compatibility fallback succeeded with profile %s "
+                    "using source-authorized versionCode %s: %s",
                     device,
+                    version_code,
                     ", ".join(p.name for p in apks),
                 )
                 return apks
@@ -580,9 +608,17 @@ def download_app(
         return None, None
 
     supported = _version_codes(package_name, cli, patches)
+    source_name = os.getenv("SOURCE", "")
+    source_targets = utils.get_source_supported_targets(package_name, source_name)
+    source_targets_by_version = {
+        str(target.get("version") or ""): target
+        for target in source_targets
+        if target.get("version")
+    }
     source_codes = utils.get_source_supported_version_codes(
         package_name,
-        os.getenv("SOURCE", ""),
+        source_name,
+        arch,
     )
 
     if override_version:
@@ -624,15 +660,29 @@ def download_app(
     for version in versions:
         codes = source_codes.get(version, []) if source_codes else supported.get(version, [])
         if source_codes and not override_version:
-            if codes and arch == "arm64-v8a":
-                # Every published arm64 build is a valid candidate. We try the
-                # exact codes from the patch developer, not a guessed/nearest
-                # Google Play release.
-                for code in codes:
-                    candidates.append((version, code))
-            elif not codes:
-                # Some sources publish the version but omit build codes.
-                # Preserve the existing Morphe CLI code mapping in that case.
+            if codes:
+                # Source codes have already been filtered to the requested ABI.
+                # Do not use an index into a flattened cross-ABI list.
+                candidates.extend((version, code) for code in codes)
+            else:
+                target = source_targets_by_version.get(version, {})
+                declared_by_arch = target.get("version_codes_by_arch") or {}
+                declared_codes = target.get("version_codes") or []
+
+                # If the source declares ABI-specific or generic build codes,
+                # an empty ABI-filtered list means this ABI is not authorized.
+                # Only fall back to Morphe's mapping when the source publishes
+                # no versionCode metadata at all.
+                if declared_by_arch or declared_codes:
+                    logging.info(
+                        "gplaydl skipping %s for %s: source does not declare a "
+                        "versionCode for arch %s.",
+                        version,
+                        app_name,
+                        arch,
+                    )
+                    continue
+
                 fallback_codes = supported.get(version, [])
                 if len(fallback_codes) > requested_code_index:
                     candidates.append((version, fallback_codes[requested_code_index]))
