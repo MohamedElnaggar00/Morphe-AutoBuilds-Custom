@@ -146,8 +146,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.30.0-prod.01 — Patch v3.54.0
-Patch source: piko-newx — v3.54.0 ([v3.54.0](https://github.com/crimera/piko-newx))
+## X — App v12.30.0-prod.01 — Patch v3.54.1
+Patch source: piko-newx — v3.54.1 ([v3.54.1](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -285,12 +285,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v47.1.4 — Patch v0.69.0
-Patch source: hushfeed — v0.69.0 ([v0.69.0](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v47.1.4 — Patch v0.70.0
+Patch source: hushfeed — v0.70.0 ([v0.70.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 120/135 applied</summary>
+<summary>🩹 Patches — 126/135 applied</summary>
 
 - ✅ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -307,7 +307,7 @@ Architecture: arm64-v8a
 - ✅ Advanced downloads
 - ✅ Downloads
 - ✅ Allow Duet and Stitch
-- ❌ Show engagement rate
+- ✅ Show engagement rate
 - ✅ Show exact counts
 - ✅ Keep the Favorites tab
 - ✅ Hide feed save button
@@ -320,7 +320,7 @@ Architecture: arm64-v8a
 - ✅ Long-press controls
 - ✅ Swipe-left controls
 - ✅ Ghost mode
-- ❌ Turn off haptics
+- ✅ Turn off haptics
 - ✅ Always upload in HD
 - ✅ LIVE controls
 - ✅ Automatic video advance
@@ -351,7 +351,7 @@ Architecture: arm64-v8a
 - ✅ Hold-and-slide 2x lock
 - ✅ Playback speed
 - ✅ Use system font
-- ❌ Turn off screen transitions
+- ✅ Turn off screen transitions
 - ✅ Fit the video to the screen
 - ✅ Remove avatar rings
 - ✅ Hide video overlays
@@ -382,16 +382,16 @@ Architecture: arm64-v8a
 - ✅ Feed tab navigation
 - ❌ Skip first-launch setup
 - ✅ Skip the splash ad
-- ✅ Limit background traffic
 - ✅ Drop the animated image cache
 - ✅ Skip update checks
-- ✅ Remove creation tools
+- ✅ Limit background traffic
 - ✅ Block P2P video relay
 - ✅ Remove content credential and card scanner assets
 - ✅ Remove unused language packs
 - ✅ Remove LIVE extras
+- ✅ Remove creation tools
 - ✅ Block popups
-- ❌ Network proxy
+- ✅ Network proxy
 - ✅ Keep the screen's refresh rate
 - ✅ Repost diagnostics
 - ✅ Diagnostic tools
@@ -406,7 +406,7 @@ Architecture: arm64-v8a
 - ✅ Hide Play Store update offer
 - ✅ Enable voice comments
 - ✅ Stop on-device AI profiling
-- ❌ App lock
+- ✅ App lock
 - ✅ In-app browser privacy guard
 - ✅ Camera and microphone indicator
 - ✅ Block contact list access
@@ -418,7 +418,7 @@ Architecture: arm64-v8a
 - ✅ Stop saving search history
 - ✅ Look like the store app
 - ❌ Trust user certificates
-- ❌ Stop recording watch history
+- ✅ Stop recording watch history
 - ✅ Show follow status
 - ✅ Hide floating promotions
 - ✅ Hide profile shortcuts
@@ -689,29 +689,6 @@ Architecture: arm64-v8a
 
 </details>
 
-## Usbhotspot — App v1.7 — Patch v1.22.0
-Patch source: rushi-usbhotspot — v1.22.0 ([v1.22.0](https://github.com/rushiranpise/morphe-patches))
-Architecture: arm64-v8a
-
-<details>
-<summary>🩹 Patches — 2/13 applied</summary>
-
-- ❌ Disable PairIP license check
-- ❌ Provide Original app certificate
-- ❌ Spoof Widevine / DRM level
-- ❌ Fix Firebase after re-signing
-- ❌ GmsCore support (MicroG)
-- ❌ Spoof install source
-- ❌ Spoof app signature
-- ✅ Unlock Pro
-- ❌ Clone app
-- ❌ Change installer source
-- ❌ Override certificate pinning
-- ❌ Spoof signature
-- ✅ Disable Play Store updates
-
-</details>
-
 ## Instagram — —
 Patch source: piko-instagram
 
@@ -758,12 +735,12 @@ Exception in thread "main" java.lang.NoSuchMethodError: 'app.morphe.patcher.patc
 
 </details>
 
-## Instagram — App v450.0.0.50.77 — Patch v0.0.7
-Patch source: hushgram — v0.0.7 ([v0.0.7](https://github.com/SysAdminDoc/HushGram))
+## Instagram — App v450.0.0.50.77 — Patch v0.0.8
+Patch source: hushgram — v0.0.8 ([v0.0.8](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 73/83 applied</summary>
+<summary>🩹 Patches — 79/84 applied</summary>
 
 - ✅ Hide ads
 - ✅ Ask before a call
@@ -773,9 +750,10 @@ Architecture: arm64-v8a
 - ✅ Hide the notes row
 - ✅ Allow screenshots
 - ✅ Don't report screenshots
-- ❌ Read messages without the seen receipt
+- ✅ Read messages without the seen receipt
 - ✅ View DM photos and videos anonymously
-- ❌ Hide that you're typing
+- ✅ Hide suggested accounts in DMs
+- ✅ Hide that you're typing
 - ✅ Save profile picture
 - ✅ Download any reel
 - ✅ Download any story
@@ -794,7 +772,7 @@ Architecture: arm64-v8a
 - ✅ Hide suggested posts
 - ✅ Stop swipe to create
 - ✅ Stop swiping between tabs
-- ❌ Show a post's exact time
+- ✅ Show a post's exact time
 - ✅ Turn off HDR brightness boosts
 - ✅ Data saver
 - ✅ Default playback quality
@@ -811,7 +789,7 @@ Architecture: arm64-v8a
 - ✅ Open developer options
 - ✅ Emoji style
 - ✅ Open links in external browser
-- ❌ Spoof location
+- ✅ Spoof location
 - ✅ Group Instagram's notifications
 - ✅ Restore trust on re-signed builds
 - ✅ HushGram settings
@@ -838,7 +816,7 @@ Architecture: arm64-v8a
 - ✅ Stop Story auto-advance
 - ✅ View live anonymously
 - ✅ Loop a story
-- ❌ See who a story mentions
+- ✅ See who a story mentions
 - ✅ Story ring size
 - ✅ View stories anonymously
 - ✅ Show a story's exact time
