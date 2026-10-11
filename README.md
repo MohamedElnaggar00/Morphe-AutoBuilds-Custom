@@ -382,9 +382,9 @@ Architecture: arm64-v8a
 - ✅ Feed tab navigation
 - ❌ Skip first-launch setup
 - ✅ Skip the splash ad
-- ✅ Limit background traffic
 - ✅ Drop the animated image cache
 - ✅ Skip update checks
+- ✅ Limit background traffic
 - ✅ Block P2P video relay
 - ✅ Remove content credential and card scanner assets
 - ✅ Remove unused language packs
@@ -567,12 +567,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v582.0.0.50.54 — Patch v0.9.0
-Patch source: hushfacebook — v0.9.0 ([v0.9.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v582.0.0.50.54 — Patch v0.10.0
+Patch source: hushfacebook — v0.10.0 ([v0.10.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 84/90 applied</summary>
+<summary>🩹 Patches — 85/91 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -629,6 +629,7 @@ Architecture: arm64-v8a
 - ✅ Hide Menu promotions
 - ✅ Hushfacebook in the Menu
 - ✅ Hold back analytics uploads
+- ✅ Unlock app icons
 - ✅ Open links in external browser
 - ✅ Turn off haptics
 - ✅ Restore screens on re-signed builds
