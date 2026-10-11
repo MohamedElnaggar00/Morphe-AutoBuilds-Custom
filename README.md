@@ -4,12 +4,12 @@
 - Patch Source Watcher checks every 3 hours and triggers Auto Build when a new patch-source release is detected
 - Manual updates available via workflow dispatch
 
-## YouTube — App v21.16.256 — Patch v1.46.0
-Patch source: morphe — v1.46.0 ([v1.46.0](https://github.com/MorpheApp/morphe-patches))
+## YouTube — App v21.20.405 — Patch v1.47.0
+Patch source: morphe — v1.47.0 ([v1.47.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 92/98 applied</summary>
+<summary>🩹 Patches — 96/102 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
@@ -18,6 +18,8 @@ Architecture: arm64-v8a
 - ✅ Disable Play Store updates
 - ✅ Hide ads
 - ✅ Channel search
+- ✅ Disable continue watching prompt
+- ✅ Copy text
 - ✅ Copy video link
 - ✅ Remove viewer discretion dialog
 - ✅ Disable double tap actions
@@ -41,6 +43,7 @@ Architecture: arm64-v8a
 - ✅ Disable layout updates
 - ✅ Disable auto feed refresh
 - ✅ Add to queue
+- ✅ Force system font
 - ✅ Change form factor
 - ✅ Ambient mode
 - ✅ Hide autoplay preview
@@ -84,6 +87,7 @@ Architecture: arm64-v8a
 - ✅ Theme
 - ✅ Bypass image region restrictions
 - ✅ Wide search bar
+- ✅ AI channel filter
 - ✅ Remove background playback restrictions
 - ✅ Enable debugging
 - ✅ Check watch history domain name resolution
@@ -112,8 +116,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Reddit — App v2026.24.0 — Patch v1.46.0
-Patch source: morphe — v1.46.0 ([v1.46.0](https://github.com/MorpheApp/morphe-patches))
+## Reddit — App v2026.24.0 — Patch v1.47.0
+Patch source: morphe — v1.47.0 ([v1.47.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -146,8 +150,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.30.0-prod.01 — Patch v3.54.2
-Patch source: piko-newx — v3.54.2 ([v3.54.2](https://github.com/crimera/piko-newx))
+## X — App v12.33.1-prod.01 — Patch v3.56.0
+Patch source: piko-newx — v3.56.0 ([v3.56.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -382,9 +386,9 @@ Architecture: arm64-v8a
 - ✅ Feed tab navigation
 - ❌ Skip first-launch setup
 - ✅ Skip the splash ad
+- ✅ Limit background traffic
 - ✅ Drop the animated image cache
 - ✅ Skip update checks
-- ✅ Limit background traffic
 - ✅ Block P2P video relay
 - ✅ Remove content credential and card scanner assets
 - ✅ Remove unused language packs
