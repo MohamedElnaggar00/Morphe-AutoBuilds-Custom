@@ -150,12 +150,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.33.1-prod.01 — Patch v3.56.0
-Patch source: piko-newx — v3.56.0 ([v3.56.0](https://github.com/crimera/piko-newx))
+## X — App v12.33.1-prod.01 — Patch v3.56.1
+Patch source: piko-newx — v3.56.1 ([v3.56.1](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 45/54 applied</summary>
+<summary>🩹 Patches — 44/54 applied</summary>
 
 - ✅ NewX: Remove ads
 - ✅ NewX: Disable blur effects
@@ -184,7 +184,7 @@ Architecture: arm64-v8a
 - ✅ NewX: Customize profile tabs
 - ✅ NewX: Set default reply sorting
 - ❌ NewX: Server error logging
-- ✅ NewX: Share post as image
+- ❌ NewX: Share post as image
 - ✅ NewX: Disable video player scrolling
 - ✅ NewX: Hide premium upsell
 - ✅ NewX: Unlock color customization
@@ -272,8 +272,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.47.0
-Patch source: hxreborn — v1.47.0 ([v1.47.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.48.0
+Patch source: hxreborn — v1.48.0 ([v1.48.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -289,12 +289,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v47.1.4 — Patch v0.70.0
-Patch source: hushfeed — v0.70.0 ([v0.70.0](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v47.1.4 — Patch v0.71.2
+Patch source: hushfeed — v0.71.2 ([v0.71.2](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 126/135 applied</summary>
+<summary>🩹 Patches — 128/137 applied</summary>
 
 - ✅ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -381,8 +381,10 @@ Architecture: arm64-v8a
 - ✅ Hide inbox items
 - ✅ Notification controls
 - ✅ Block suggested video notifications
+- ✅ Keep the app language
 - ✅ Disable login requirement
 - ✅ Fix Google login
+- ✅ Skip passkey sign-in
 - ✅ Feed tab navigation
 - ❌ Skip first-launch setup
 - ✅ Skip the splash ad
@@ -513,12 +515,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — App v581.0.0.49.91 — Patch v0.22.0
-Patch source: hushmessenger — v0.22.0 ([v0.22.0](https://github.com/SysAdminDoc/HushMessenger))
+## Messenger — App v582.0.0.61.92 — Patch v0.23.0
+Patch source: hushmessenger — v0.23.0 ([v0.23.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 39/48 applied</summary>
+<summary>🩹 Patches — 46/55 applied</summary>
 
 - ❌ Clone install under another package name
 - ✅ Install beside Meta apps
@@ -541,6 +543,7 @@ Architecture: arm64-v8a
 - ✅ Restore old emoji drawer
 - ✅ Keep emoji search on emoji
 - ✅ Hide chat promotions
+- ✅ Hide ad banners in business chats
 - ✅ Hide business reply suggestions
 - ✅ Hide business typing suggestions
 - ✅ Hide event prompts
@@ -550,13 +553,19 @@ Architecture: arm64-v8a
 - ✅ Use system emoji
 - ✅ Send photos at original quality
 - ✅ Send videos without re-encoding
+- ✅ Fix shared videos with xHE-AAC sound
+- ✅ Turn off the swipe up for disappearing messages
 - ✅ Keep a message log
+- ✅ Auto reply
 - ✅ Use the phone's camera app
 - ✅ Stop analytics uploads
+- ✅ Stop ad attribution uploads
+- ✅ Stop inbox and ad link logging
 - ✅ Allow screenshots
 - ✅ Hide read receipts
 - ✅ Keep unsent messages
 - ✅ Unlock app icons
+- ✅ Use your own font
 - ✅ View stories anonymously
 - ✅ Save any story
 - ✅ Slide chats in and out
@@ -571,12 +580,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v582.0.0.50.54 — Patch v0.10.0
-Patch source: hushfacebook — v0.10.0 ([v0.10.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v582.0.0.50.54 — Patch v0.11.0
+Patch source: hushfacebook — v0.11.0 ([v0.11.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 85/91 applied</summary>
+<summary>🩹 Patches — 86/92 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -623,6 +632,7 @@ Architecture: arm64-v8a
 - ❌ AMOLED black theme
 - ✅ Force dark mode
 - ❌ Material You theme
+- ✅ Frame step
 - ✅ Turn off HDR brightness
 - ✅ Picture-in-picture
 - ✅ Keep the progress bar
@@ -772,19 +782,22 @@ Architecture: arm64-v8a
 
 </details>
 
-## Instagram — App v450.0.0.50.77 — Patch v0.0.8
-Patch source: hushgram — v0.0.8 ([v0.0.8](https://github.com/SysAdminDoc/HushGram))
+## Instagram — App v450.0.0.50.77 — Patch v0.0.9
+Patch source: hushgram — v0.0.9 ([v0.0.9](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 79/84 applied</summary>
+<summary>🩹 Patches — 100/106 applied</summary>
 
 - ✅ Hide ads
+- ❌ Install next to Instagram
 - ✅ Ask before a call
 - ✅ Hide Instants
 - ✅ Keep in chat
 - ✅ Lock your messages
 - ✅ Hide the notes row
+- ✅ Hide your active status
+- ✅ Show when someone was last active
 - ✅ Allow screenshots
 - ✅ Don't report screenshots
 - ✅ Read messages without the seen receipt
@@ -798,18 +811,23 @@ Architecture: arm64-v8a
 - ✅ Download voice messages
 - ✅ Hide the Explore grid
 - ✅ Don't save recent searches
+- ✅ Back leaves Home
 - ✅ Hide comments
 - ✅ Ask before a like
 - ✅ Ask before a refresh
 - ✅ Start Home on Following
 - ✅ Hide the home feed
 - ✅ Change the like animation
+- ✅ Show hidden like counts
 - ✅ Full resolution photos
 - ✅ Hide Reels in the feed
+- ✅ Rounded post corners
+- ✅ Start feed videos with sound
 - ✅ Hide suggested posts
 - ✅ Stop swipe to create
 - ✅ Stop swiping between tabs
 - ✅ Show a post's exact time
+- ✅ Long press to zoom
 - ✅ Turn off HDR brightness boosts
 - ✅ Data saver
 - ✅ Default playback quality
@@ -826,26 +844,38 @@ Architecture: arm64-v8a
 - ✅ Open developer options
 - ✅ Emoji style
 - ✅ Open links in external browser
+- ✅ Glass tab bar
+- ✅ Stop background wake-ups
 - ✅ Spoof location
 - ✅ Group Instagram's notifications
+- ✅ Saved on your profile
 - ✅ Restore trust on re-signed builds
 - ✅ HushGram settings
 - ✅ Sanitize sharing links
+- ✅ Accent color
+- ✅ HushGram launch screen
 - ✅ Pure black dark mode
 - ✅ Start on x86 devices
 - ❌ Change version code
 - ✅ Show if a profile follows you
 - ✅ Hide highlights
+- ✅ Hide Notes on profile pictures
+- ✅ Profile posts as a list
 - ✅ Hide suggested people on profiles
 - ✅ Hide the Threads button
 - ✅ Keep Reels auto scroll on
+- ✅ Blur the bars around Reels
 - ✅ Clean up Reels
 - ✅ Turn off double tap to like
+- ✅ Full screen Reels and Home
+- ✅ Find the reel you came from
+- ✅ Hide paid partnership Reels
 - ✅ Stop Reels scrolling
 - ✅ Keep a seek bar on Reels
 - ✅ Keep the reel speed
 - ✅ Hide suggested accounts in Reels
 - ✅ Hide the Reels tab
+- ✅ Control taps and volume on Reels
 - ✅ Don't send reel watch history
 - ✅ Hide the Repost button
 - ✅ Hide the Share button
@@ -854,8 +884,10 @@ Architecture: arm64-v8a
 - ✅ View live anonymously
 - ✅ Loop a story
 - ✅ See who a story mentions
+- ✅ Upload stories at full quality
 - ✅ Story ring size
 - ✅ View stories anonymously
+- ✅ Start stories with sound
 - ✅ Show a story's exact time
 - ✅ Hide suggested stories
 - ❌ Clone app
