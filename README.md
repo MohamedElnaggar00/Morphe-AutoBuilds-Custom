@@ -272,8 +272,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.50.0
-Patch source: hxreborn — v1.50.0 ([v1.50.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.51.0
+Patch source: hxreborn — v1.51.0 ([v1.51.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -517,12 +517,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — App v582.0.0.61.92 — Patch v0.23.0
-Patch source: hushmessenger — v0.23.0 ([v0.23.0](https://github.com/SysAdminDoc/HushMessenger))
+## Messenger — App v583.0.0.29.95 — Patch v0.24.0
+Patch source: hushmessenger — v0.24.0 ([v0.24.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 46/55 applied</summary>
+<summary>🩹 Patches — 53/62 applied</summary>
 
 - ❌ Clone install under another package name
 - ✅ Install beside Meta apps
@@ -536,10 +536,14 @@ Architecture: arm64-v8a
 - ✅ Hide inbox promotions
 - ✅ Hide stories and notes
 - ✅ Hide inbox tabs
+- ✅ Hide Mark as read
+- ✅ Pin more chats
 - ✅ Hide Facebook shortcuts
 - ✅ Hide Meta AI
 - ✅ Hide Chat Moments
 - ✅ Hide Reels badge
+- ✅ Hide People tab
+- ✅ Hide Notifications tab
 - ✅ Hide AI sticker tools
 - ✅ Hide avatar stickers
 - ✅ Restore old emoji drawer
@@ -563,6 +567,8 @@ Architecture: arm64-v8a
 - ✅ Stop analytics uploads
 - ✅ Stop ad attribution uploads
 - ✅ Stop inbox and ad link logging
+- ✅ Stop MQTT logging
+- ✅ Stop nearby scans
 - ✅ Allow screenshots
 - ✅ Hide read receipts
 - ✅ Keep unsent messages
@@ -571,6 +577,7 @@ Architecture: arm64-v8a
 - ✅ View stories anonymously
 - ✅ Save any story
 - ✅ Slide chats in and out
+- ✅ Bold and italic text
 - ✅ Open settings from menu
 - ❌ Custom new-message sound
 - ❌ Spoof package version
@@ -582,8 +589,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v582.0.0.50.54 — Patch v0.12.0
-Patch source: hushfacebook — v0.12.0 ([v0.12.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v582.0.0.50.54 — Patch v0.13.0
+Patch source: hushfacebook — v0.13.0 ([v0.13.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
@@ -684,8 +691,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Excel — App v16.0.20228.20090 — Patch v1.22.0
-Patch source: rushi-excel — v1.22.0 ([v1.22.0](https://github.com/rushiranpise/morphe-patches))
+## Excel — App v16.0.20228.20090 — Patch v1.23.0
+Patch source: rushi-excel — v1.23.0 ([v1.23.0](https://github.com/rushiranpise/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
