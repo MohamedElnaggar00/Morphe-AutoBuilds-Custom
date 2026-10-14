@@ -272,8 +272,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.49.1
-Patch source: hxreborn — v1.49.1 ([v1.49.1](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.50.0
+Patch source: hxreborn — v1.50.0 ([v1.50.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -289,12 +289,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v47.1.4 — Patch v0.71.2
-Patch source: hushfeed — v0.71.2 ([v0.71.2](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v47.1.4 — Patch v0.72.0
+Patch source: hushfeed — v0.72.0 ([v0.72.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 128/137 applied</summary>
+<summary>🩹 Patches — 130/139 applied</summary>
 
 - ✅ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -362,6 +362,7 @@ Architecture: arm64-v8a
 - ✅ Change app name
 - ❌ Custom launcher icon
 - ❌ Run beside the store app
+- ✅ Show commenter handle and region
 - ✅ Copy comments without username
 - ✅ Lift text length limits
 - ✅ Comment publish diagnostics
@@ -425,6 +426,7 @@ Architecture: arm64-v8a
 - ✅ Look like the store app
 - ❌ Trust user certificates
 - ✅ Stop recording watch history
+- ✅ Profile background
 - ✅ Show follow status
 - ✅ Hide floating promotions
 - ✅ Hide profile shortcuts
@@ -580,8 +582,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v582.0.0.50.54 — Patch v0.11.0
-Patch source: hushfacebook — v0.11.0 ([v0.11.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v582.0.0.50.54 — Patch v0.12.0
+Patch source: hushfacebook — v0.12.0 ([v0.12.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
