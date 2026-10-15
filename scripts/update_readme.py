@@ -52,6 +52,27 @@ def latest_release(owner: str, repo: str) -> dict:
     return api_json(f"{API}/repos/{owner}/{repo}/releases/latest")
 
 
+def download_url(url: str, output: Path) -> str:
+    """Download a direct URL, including raw-hosted MPP bundles."""
+    r = requests.get(url, headers={"User-Agent": "Morphe-AutoBuilds-Custom"}, timeout=120)
+    r.raise_for_status()
+    output.write_bytes(r.content)
+    return str(output)
+
+
+def source_display_name(source: str) -> str:
+    """Return the source label shown in README and release-facing metadata."""
+    try:
+        data = json.loads((ROOT / "sources" / f"{source}.json").read_text(encoding="utf-8"))
+        if isinstance(data, list) and data and isinstance(data[0], dict):
+            return str(data[0].get("name") or source).strip()
+        if isinstance(data, dict):
+            return str(data.get("name") or source).strip()
+    except Exception:
+        pass
+    return source
+
+
 def download_asset(release: dict, suffix: str, output: Path) -> str:
     candidates = [
         a for a in release.get("assets", [])
@@ -348,10 +369,32 @@ def main():
         display = APP_NAMES.get(app, app.title())
         try:
             owner, repo = source_repo(source)
-            release = latest_release(owner, repo)
-            mpp = WORK / f"{source}-{release['tag_name'].lstrip('v')}.mpp"
-            if not mpp.exists():
-                download_asset(release, ".mpp", mpp)
+            source_config = json.loads(
+                (ROOT / "sources" / f"{source}.json").read_text(encoding="utf-8")
+            )
+            bundle_url = ""
+            if isinstance(source_config, list) and source_config and isinstance(source_config[0], dict):
+                bundle_url = str(source_config[0].get("bundle_url") or "").strip()
+
+            if bundle_url:
+                # Current-branch MPP manifest (used by PixelBoard) can be newer
+                # than its latest GitHub Release, so README must use its direct
+                # download_url and version rather than the release assets.
+                bundle_info = api_json(bundle_url)
+                source_version = str(bundle_info.get("version") or "latest").strip().lstrip("v")
+                mpp_url = str(bundle_info.get("download_url") or "").strip()
+                if not mpp_url.lower().split("?", 1)[0].endswith(".mpp"):
+                    raise RuntimeError("MPP bundle manifest has no valid download_url")
+                mpp = WORK / f"{source}-v{source_version}.mpp"
+                if not mpp.exists():
+                    download_url(mpp_url, mpp)
+                release = {"tag_name": f"v{source_version}"}
+            else:
+                release = latest_release(owner, repo)
+                mpp = WORK / f"{source}-{release['tag_name'].lstrip('v')}.mpp"
+                if not mpp.exists():
+                    download_asset(release, ".mpp", mpp)
+                source_version = str(release.get("tag_name", "latest")).lstrip("v")
 
             package = app_package(app)
             patch_inputs = [mpp]
@@ -399,7 +442,6 @@ def main():
                 cli,
                 mpp,
             )
-            source_version = str(release.get("tag_name", "latest")).lstrip("v")
             applied_count = sum(1 for _, value in final_rows if value)
 
             patch_repo_url = f"https://github.com/{owner}/{repo}"
@@ -407,7 +449,7 @@ def main():
 
             sections += [
                 f"## {display} — App v{md_escape(app_version)} — Patch v{md_escape(source_version)}",
-                f"Patch source: {md_escape(source)} — v{md_escape(source_version)} ({patch_version_link})",
+                f"Patch source: {md_escape(source_display_name(source))} — v{md_escape(source_version)} ({patch_version_link})",
                 f"Architecture: {md_escape(arch.get((app, source), '—'))}",
                 "",
                 "<details>",
