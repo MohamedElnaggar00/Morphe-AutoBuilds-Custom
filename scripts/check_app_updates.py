@@ -459,6 +459,16 @@ def _fetch_bundle_signature(bundle_url: str) -> str:
     if not isinstance(data, dict):
         return f"bundle:{bundle_url}@unparseable"
 
+    # MPP sources such as PixelBoard publish a manifest with a version and a
+    # direct MPP download URL, rather than ReVanced's patches/integrations list.
+    # Include the full manifest digest so updating its version or download
+    # metadata causes the normal incremental planner to rebuild that source.
+    if data.get("download_url") or data.get("version"):
+        canonical = json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()[:16]
+        version = str(data.get("version") or "unknown").strip()
+        return f"bundle:{version}@{digest}"
+
     tokens: List[str] = []
     for key in ("patches", "integrations"):
         for item in data.get(key, []) or []:
@@ -502,12 +512,22 @@ def get_source_signature(source: str) -> str:
         _source_sig_cache[source] = sig
         return sig
 
-    if isinstance(data, dict) and "bundle_url" in data:
-        sig = _fetch_bundle_signature(data["bundle_url"])
-        _source_sig_cache[source] = sig
-        return sig
+    bundle_url = ""
+    if isinstance(data, dict):
+        bundle_url = str(data.get("bundle_url") or "").strip()
+    elif isinstance(data, list) and data and isinstance(data[0], dict):
+        bundle_url = str(data[0].get("bundle_url") or "").strip()
 
     parts: List[str] = []
+    if bundle_url:
+        parts.append(_fetch_bundle_signature(bundle_url))
+        # A dict is a standalone bundle source; a list can additionally declare
+        # upstream repositories for patch-list synchronization and release events.
+        if isinstance(data, dict):
+            sig = ";".join(parts)
+            _source_sig_cache[source] = sig
+            return sig
+
     if isinstance(data, list):
         for entry in data:
             if not isinstance(entry, dict):
