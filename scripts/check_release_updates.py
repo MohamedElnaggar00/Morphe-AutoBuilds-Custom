@@ -236,6 +236,25 @@ def latest_build_for(app: str, source: str, arch: str,
     )
     return candidates[-1]
 def source_patch_version(source: str) -> str:
+    # Prefer the version advertised by an upstream MPP manifest. PixelBoard's
+    # current bundle may advance on its default branch before a GitHub Release
+    # is published, so its release tag is not the patch version.
+    source_file = ROOT / "sources" / f"{source}.json"
+    try:
+        source_data = json.loads(source_file.read_text(encoding="utf-8"))
+        entries = source_data if isinstance(source_data, list) else []
+        bundle_url = (
+            str(entries[0].get("bundle_url") or "").strip()
+            if entries and isinstance(entries[0], dict)
+            else ""
+        )
+        if bundle_url:
+            manifest = legacy.provider_utils.fetch_json(bundle_url)
+            if isinstance(manifest, dict) and manifest.get("version"):
+                return str(manifest["version"]).strip().lstrip("v")
+    except Exception as exc:
+        print(f"::warning::Could not read patch-bundle version for {source}: {exc}")
+
     sig = legacy.get_source_signature(source)
     effective = legacy._effective_patch_version_signature(sig)
     versions = []
