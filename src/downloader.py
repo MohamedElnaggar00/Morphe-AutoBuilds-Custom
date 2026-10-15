@@ -47,10 +47,24 @@ def download_required(source: str) -> tuple[list[Path], str]:
     with source_path.open() as json_file:
         repos_info = json.load(json_file)
 
-    # Handle bundle format
+    # PixelBoard-style metadata points at a versioned MPP manifest. Keep this
+    # separate from the ReVanced API-v4 bundle format handled below.
+    if (
+        isinstance(repos_info, list)
+        and repos_info
+        and isinstance(repos_info[0], dict)
+        and repos_info[0].get("bundle_url")
+        and not repos_info[0].get("patches")
+    ):
+        return download_from_mpp_manifest(
+            str(repos_info[0]["bundle_url"]),
+            str(repos_info[0].get("name") or source),
+        )
+
+    # Handle legacy ReVanced bundle format.
     if isinstance(repos_info, dict) and "bundle_url" in repos_info:
         return download_from_bundle(repos_info)
-    
+
     # Handle old list format
     name = repos_info[0]["name"]
     downloaded_files = []
@@ -114,6 +128,72 @@ def download_required(source: str) -> tuple[list[Path], str]:
             raise
 
     return downloaded_files, name
+
+def download_from_mpp_manifest(bundle_url: str, name: str) -> tuple[list[Path], str]:
+    """Download a hosted Morphe MPP through a versioned patches-bundle.json manifest.
+
+    PixelBoard maintains its current MPP on the default branch and exposes the
+    manifest at patches-bundle.json, which can be newer than its GitHub Releases.
+    """
+    logging.info("Downloading Morphe MPP manifest from %s", bundle_url)
+    response = session.get(bundle_url)
+    response.raise_for_status()
+    bundle_data = response.json()
+
+    mpp_url = str(bundle_data.get("download_url") or "").strip()
+    if not mpp_url.lower().split("?", 1)[0].endswith(".mpp"):
+        raise RuntimeError(
+            f"MPP manifest at {bundle_url} did not provide a valid .mpp download_url"
+        )
+
+    version = str(bundle_data.get("version") or "latest").strip()
+    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "-", name).strip("-") or "morphe-source"
+    mpp_name = f"{safe_name}-v{version}.mpp"
+    patch_bundle = download_resource(mpp_url, name=mpp_name)
+
+    # Morphe CLI and the shared universal bundle remain the same as for the
+    # standard source format, so this build still includes the required
+    # Disable Play Store updates patch and uses the normal Morphe patch pipeline.
+    cli_release = utils.detect_github_release("MorpheApp", "morphe-cli", "latest")
+    cli_asset = next(
+        (
+            asset for asset in cli_release.get("assets", [])
+            if str(asset.get("name") or "").lower().endswith(".jar")
+            and "dev" not in str(asset.get("name") or "").lower()
+        ),
+        None,
+    )
+    if cli_asset is None:
+        raise RuntimeError("No stable Morphe CLI JAR found in the latest release")
+    cli_path = download_resource(
+        str(cli_asset["browser_download_url"]),
+        name=str(cli_asset.get("name") or "morphe-cli.jar"),
+    )
+
+    universal_release = utils.detect_github_release("MorpheApp", "morphe-patches", "latest")
+    universal_asset = next(
+        (
+            asset for asset in universal_release.get("assets", [])
+            if str(asset.get("name") or "").lower().endswith(".mpp")
+            and not str(asset.get("name") or "").lower().endswith(".asc")
+        ),
+        None,
+    )
+    if universal_asset is None:
+        raise RuntimeError("No .mpp asset found in the latest MorpheApp/morphe-patches release")
+    universal_asset_name = str(universal_asset.get("name") or "morphe-universal.mpp")
+    universal_path = download_resource(
+        str(universal_asset["browser_download_url"]),
+        name=f"morphe-universal-{universal_asset_name}",
+    )
+
+    logging.info(
+        "Downloaded MPP source '%s' version %s with Morphe CLI and universal patches",
+        name,
+        version,
+    )
+    return [cli_path, patch_bundle, universal_path], name
+
 
 def download_from_bundle(bundle_info: dict) -> tuple[list[Path], str]:
     """Download resources from a bundle URL"""
