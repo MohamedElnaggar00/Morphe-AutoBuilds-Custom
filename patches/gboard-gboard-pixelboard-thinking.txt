@@ -1,0 +1,2 @@
+# Keep PixelBoard's upstream MPP defaults unless explicitly overridden.
+# Update Patch List records upstream patches and adds newly discovered patches.
