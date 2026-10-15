@@ -28,6 +28,13 @@
     ]
   },
   {
+    "app_name": "gboard",
+    "source": "gboard-pixelboard-thinking",
+    "arches": [
+      "arm64-v8a"
+    ]
+  },
+  {
     "app_name": "vpnify",
     "source": "hxreborn",
     "arches": [
