@@ -272,8 +272,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.51.0
-Patch source: hxreborn — v1.51.0 ([v1.51.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.52.0
+Patch source: hxreborn — v1.52.0 ([v1.52.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -289,12 +289,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v47.1.4 — Patch v0.72.0
-Patch source: hushfeed — v0.72.0 ([v0.72.0](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v47.1.4 — Patch v0.74.0
+Patch source: hushfeed — v0.74.0 ([v0.74.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 130/139 applied</summary>
+<summary>🩹 Patches — 130/140 applied</summary>
 
 - ✅ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -408,6 +408,7 @@ Architecture: arm64-v8a
 - ✅ Region spoof
 - ✅ SIM spoof
 - ✅ Disable telemetry
+- ❌ Accent color
 - ❌ AMOLED dark theme
 - ✅ Translate comments
 - ✅ Hide Play Store update offer
