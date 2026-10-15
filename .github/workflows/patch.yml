@@ -551,6 +551,7 @@ jobs:
             # patch source name in the visible title (e.g. piko-instagram -> piko).
             case "$source_name" in
               piko-instagram) source_display="piko" ;;
+              gboard-pixelboard-thinking) source_display="Gboard-PixelBoard @Thinking" ;;
               *) source_display="$source_name" ;;
             esac
 
