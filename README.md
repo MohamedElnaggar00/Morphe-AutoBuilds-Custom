@@ -151,7 +151,7 @@ Architecture: arm64-v8a
 </details>
 
 ## X — App v12.33.1-prod.01 — Patch v3.56.1
-Patch source: piko-newx — v3.56.1 ([v3.56.1](https://github.com/crimera/piko-newx))
+Patch source: piko-patches — v3.56.1 ([v3.56.1](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -215,7 +215,7 @@ Architecture: arm64-v8a
 </details>
 
 ## Gboard — App v18.0.3.954559732-release-arm64-v8a — Patch v3.12.0
-Patch source: jasonwu1994 — v3.12.0 ([v3.12.0](https://github.com/jasonwu1994/Gboard-patches))
+Patch source: morphe-patches — v3.12.0 ([v3.12.0](https://github.com/jasonwu1994/Gboard-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -264,6 +264,25 @@ Architecture: arm64-v8a
 - ✅ Package Rename
 - ✅ Add Gboard Signature Bypass
 - ✅ Zhuyin Slide Input
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ❌ Spoof signature
+- ✅ Disable Play Store updates
+
+</details>
+
+## Gboard — App v18.4.1.985164140-release-arm64-v8a — Patch v1.0.8
+Patch source: Gboard-PixelBoard @Thinking — v1.0.8 ([v1.0.8](https://github.com/Akshayykadam/PixelBoard))
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 5/9 applied</summary>
+
+- ✅ AI Writing Tools
+- ✅ Add Gboard Signature Bypass
+- ✅ Package Rename
+- ✅ Advanced Voice Typing
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
