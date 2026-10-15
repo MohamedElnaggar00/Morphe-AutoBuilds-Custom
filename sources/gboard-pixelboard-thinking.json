@@ -1,0 +1,16 @@
+[
+  {
+    "name": "Gboard-PixelBoard @Thinking",
+    "bundle_url": "https://raw.githubusercontent.com/Akshayykadam/PixelBoard/main/patches-bundle.json"
+  },
+  {
+    "user": "MorpheApp",
+    "repo": "morphe-cli",
+    "tag": "latest"
+  },
+  {
+    "user": "Akshayykadam",
+    "repo": "PixelBoard",
+    "tag": "latest"
+  }
+]
