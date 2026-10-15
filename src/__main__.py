@@ -67,6 +67,16 @@ def _patch_source_version(source: str) -> str:
     try:
         with source_path.open(encoding="utf-8") as fh:
             entries = json.load(fh)
+
+        # Custom MPP manifests may be newer than the repository's last formal
+        # GitHub Release. Prefer the version declared by the manifest when set.
+        if isinstance(entries, list) and entries and isinstance(entries[0], dict):
+            bundle_url = str(entries[0].get("bundle_url") or "").strip()
+            if bundle_url:
+                manifest = utils.fetch_json(bundle_url)
+                if isinstance(manifest, dict) and manifest.get("version"):
+                    return str(manifest["version"]).strip().lstrip("v")
+
         patch_entry = next(
             (
                 entry for entry in entries[1:]
