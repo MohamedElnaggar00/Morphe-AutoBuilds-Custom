@@ -811,12 +811,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Instagram — App v450.0.0.50.77 — Patch v0.0.9
-Patch source: hushgram — v0.0.9 ([v0.0.9](https://github.com/SysAdminDoc/HushGram))
+## Instagram — App v450.0.0.50.77 — Patch v0.0.11
+Patch source: hushgram — v0.0.11 ([v0.0.11](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 100/106 applied</summary>
+<summary>🩹 Patches — 104/110 applied</summary>
 
 - ✅ Hide ads
 - ❌ Install next to Instagram
@@ -855,6 +855,7 @@ Architecture: arm64-v8a
 - ✅ Hide suggested posts
 - ✅ Stop swipe to create
 - ✅ Stop swiping between tabs
+- ✅ Tap a feed video to pause it
 - ✅ Show a post's exact time
 - ✅ Long press to zoom
 - ✅ Turn off HDR brightness boosts
@@ -873,6 +874,7 @@ Architecture: arm64-v8a
 - ✅ Open developer options
 - ✅ Emoji style
 - ✅ Open links in external browser
+- ✅ Font
 - ✅ Glass tab bar
 - ✅ Stop background wake-ups
 - ✅ Spoof location
@@ -892,6 +894,7 @@ Architecture: arm64-v8a
 - ✅ Profile posts as a list
 - ✅ Hide suggested people on profiles
 - ✅ Hide the Threads button
+- ✅ Hide AI-labeled reels
 - ✅ Keep Reels auto scroll on
 - ✅ Blur the bars around Reels
 - ✅ Clean up Reels
@@ -905,6 +908,7 @@ Architecture: arm64-v8a
 - ✅ Hide suggested accounts in Reels
 - ✅ Hide the Reels tab
 - ✅ Control taps and volume on Reels
+- ✅ Show a reel's exact time
 - ✅ Don't send reel watch history
 - ✅ Hide the Repost button
 - ✅ Hide the Share button
