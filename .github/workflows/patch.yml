@@ -593,9 +593,9 @@ jobs:
               [.assets[].name] |
               (map(select(. == $filename)) | .[0]) //
               (map(select(. == ($filename | gsub(" "; ".")))) | .[0]) //
-              (map(select(. == ($filename | gsub("@"; "%40"))) | .[0]) //
-               (map(select(. == ($filename | gsub(" "; ".") | gsub("@"; "%40"))) | .[0]) //
-                empty)
+              (map(select(. == ($filename | gsub("@"; "%40")))) | .[0]) //
+              (map(select(. == ($filename | gsub(" "; ".") | gsub("@"; "%40")))) | .[0]) //
+              empty
             ' <<<"$assets_json")"
 
             if [ -n "$actual_asset" ]; then
