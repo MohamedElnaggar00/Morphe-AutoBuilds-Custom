@@ -586,15 +586,16 @@ jobs:
                 --target "$GITHUB_SHA"
             fi
 
-            # GitHub normalizes some characters in uploaded asset names (including
-            # spaces to dots). Verify against the uploaded asset's actual name first,
-            # then fall back to the original filename for assets without normalization.
+            # GitHub may normalize spaces to dots (and, in some cases, encode @ as %40).
+            # Compare explicit filename variants so real version dots are never changed.
             assets_json="$(gh release view "$tag" --repo "$GH_REPO" --json assets)"
             actual_asset="$(jq -r --arg filename "$filename" '
               [.assets[].name] |
               (map(select(. == $filename)) | .[0]) //
-              (map(select((gsub("\\."; " ") | gsub("%40"; "@")) == $filename)) | .[0]) //
-              empty
+              (map(select(. == ($filename | gsub(" "; "."))) | .[0]) //
+               (map(select(. == ($filename | gsub("@"; "%40"))) | .[0]) //
+                (map(select(. == ($filename | gsub(" "; ".") | gsub("@"; "%40"))) | .[0]) //
+                 empty))
             ' <<<"$assets_json")"
 
             if [ -n "$actual_asset" ]; then
