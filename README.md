@@ -150,7 +150,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.33.1-prod.01 — Patch v3.57.0
+## X — App v12.34.0-prod.01 — Patch v3.57.0
 Patch source: piko-patches — v3.57.0 ([v3.57.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
@@ -214,12 +214,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Gboard — App v18.0.3.954559732-release-arm64-v8a — Patch v3.12.0
-Patch source: morphe-patches — v3.12.0 ([v3.12.0](https://github.com/jasonwu1994/Gboard-patches))
+## Gboard — App v18.0.3.954559732-release-arm64-v8a — Patch v3.13.0
+Patch source: morphe-patches — v3.13.0 ([v3.13.0](https://github.com/jasonwu1994/Gboard-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 44/48 applied</summary>
+<summary>🩹 Patches — 45/49 applied</summary>
 
 - ✅ English QWERTY Up-Flick Uppercase
 - ✅ Long-Press Editing Shortcuts
@@ -228,6 +228,7 @@ Architecture: arm64-v8a
 - ✅ Toolbar Editing Buttons
 - ✅ Floating Web Search
 - ✅ Simple Calculator
+- ✅ Swipe Down to Dismiss Keyboard
 - ✅ Advanced Voice Typing
 - ✅ Use Bluetooth Microphone
 - ✅ Change emoji size
@@ -291,8 +292,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.52.0
-Patch source: hxreborn — v1.52.0 ([v1.52.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.53.0
+Patch source: hxreborn — v1.53.0 ([v1.53.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -811,7 +812,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Instagram — App v450.0.0.50.77 — Patch v0.0.11
+## Instagram — App v451.0.0.53.80 — Patch v0.0.11
 Patch source: hushgram — v0.0.11 ([v0.0.11](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
