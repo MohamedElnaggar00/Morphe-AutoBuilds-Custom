@@ -586,11 +586,25 @@ jobs:
                 --target "$GITHUB_SHA"
             fi
 
-            if gh release view "$tag" --repo "$GH_REPO" --json assets --jq '.assets[].name' | grep -Fxq "$filename"; then
-              echo "Published and verified: $filename"
+            # GitHub normalizes some characters in uploaded asset names (including
+            # spaces to dots). Verify against the uploaded asset's actual name first,
+            # then fall back to the original filename for assets without normalization.
+            assets_json="$(gh release view "$tag" --repo "$GH_REPO" --json assets)"
+            actual_asset="$(jq -r --arg filename "$filename" '
+              [.assets[].name] |
+              (map(select(. == $filename)) | .[0]) //
+              (map(select((gsub("\\."; " ") | gsub("%40"; "@")) == $filename)) | .[0]) //
+              empty
+            ' <<<"$assets_json")"
+
+            if [ -n "$actual_asset" ]; then
+              echo "Published and verified: $actual_asset (recorded filename: $filename)"
               published=$((published + 1))
             else
-              echo "::error::Release $tag was created but $filename is missing."
+              echo "::error::Release $tag was created but the expected APK asset was not found."
+              echo "Expected: $filename"
+              echo "Assets returned by GitHub:"
+              jq -r '.assets[].name' <<<"$assets_json"
               exit 1
             fi
           done < <(find ./all-records -type f -name "*.json" -print)
