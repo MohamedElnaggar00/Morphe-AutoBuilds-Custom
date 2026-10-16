@@ -150,12 +150,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.33.1-prod.01 — Patch v3.56.1
-Patch source: piko-patches — v3.56.1 ([v3.56.1](https://github.com/crimera/piko-newx))
+## X — App v12.33.1-prod.01 — Patch v3.57.0
+Patch source: piko-patches — v3.57.0 ([v3.57.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 44/54 applied</summary>
+<summary>🩹 Patches — 43/54 applied</summary>
 
 - ✅ NewX: Remove ads
 - ✅ NewX: Disable blur effects
@@ -173,7 +173,7 @@ Architecture: arm64-v8a
 - ✅ NewX: Customize inline actions
 - ✅ NewX: Inline download button
 - ✅ NewX: Redirect downloads to chosen folder
-- ✅ NewX: Force highest video/audio quality
+- ❌ NewX: Log HLS audio renditions
 - ✅ NewX: Customize media menu items
 - ✅ NewX: Set default media tab
 - ✅ NewX: Gallery profile Photos tab
@@ -272,8 +272,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Gboard — App v18.4.1.985164140-release-arm64-v8a — Patch v1.0.8
-Patch source: Gboard-PixelBoard @Thinking — v1.0.8 ([v1.0.8](https://github.com/Akshayykadam/PixelBoard))
+## Gboard — App v18.4.1.985164140-release-arm64-v8a — Patch v1.0.9
+Patch source: Gboard-PixelBoard @Thinking — v1.0.9 ([v1.0.9](https://github.com/Akshayykadam/PixelBoard))
 Architecture: arm64-v8a
 
 <details>
@@ -458,8 +458,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok (Metra) — App v46.2.3 — Patch v0.8.0
-Patch source: metra — v0.8.0 ([v0.8.0](https://github.com/icysymmetra/tiktok-patches-for-morphe))
+## TikTok (Metra) — App v46.2.3 — Patch v0.8.1
+Patch source: metra — v0.8.1 ([v0.8.1](https://github.com/icysymmetra/tiktok-patches-for-morphe))
 Architecture: arm64-v8a
 
 <details>
