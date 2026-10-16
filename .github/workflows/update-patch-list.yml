@@ -214,9 +214,7 @@ jobs:
                       for name in upstream
                       if name not in exclusions
                   ]
-                  desired_text = "
-".join(desired) + "
-"
+                  desired_text = "\n".join(desired) + "\n"
                   current_text = patch_file.read_text(encoding="utf-8")
                   if current_text != desired_text:
                       print(f"ALL PATCHES SYNC — {patch_file.name}: enabling every available upstream patch except configured exclusions")
@@ -243,11 +241,8 @@ jobs:
 
               old_text = patch_file.read_text(encoding="utf-8")
               base = old_text.rstrip()
-              suffix = "
-" if base else ""
-              new_text = base + suffix + "
-".join(f"+ {name}" for name in new_upstream) + "
-"
+              suffix = "\n" if base else ""
+              new_text = base + suffix + "\n".join(f"+ {name}" for name in new_upstream) + "\n"
               changed_files.append((patch_file, new_text))
 
           if not DRY_RUN:
@@ -255,8 +250,7 @@ jobs:
               new_state = dict(old_state)
               new_state.update(state_updates)
               STATE_FILE.write_text(
-                  json.dumps(new_state, indent=2, ensure_ascii=False) + "
-",
+                  json.dumps(new_state, indent=2, ensure_ascii=False) + "\n",
                   encoding="utf-8",
               )
 
