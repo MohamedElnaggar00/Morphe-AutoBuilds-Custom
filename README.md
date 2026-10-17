@@ -273,8 +273,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Gboard — App v18.4.1.985164140-release-arm64-v8a — Patch v1.0.9
-Patch source: Gboard-PixelBoard @Thinking — v1.0.9 ([v1.0.9](https://github.com/Akshayykadam/PixelBoard))
+## Gboard — App v18.4.1.985164140-release-arm64-v8a — Patch v1.1.0
+Patch source: Gboard-PixelBoard @Thinking — v1.1.0 ([v1.1.0](https://github.com/Akshayykadam/PixelBoard))
 Architecture: arm64-v8a
 
 <details>
@@ -292,8 +292,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.53.0
-Patch source: hxreborn — v1.53.0 ([v1.53.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.54.0
+Patch source: hxreborn — v1.54.0 ([v1.54.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
