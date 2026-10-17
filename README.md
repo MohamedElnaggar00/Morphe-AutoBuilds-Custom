@@ -150,8 +150,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.34.0-prod.01 — Patch v3.57.0
-Patch source: piko-patches — v3.57.0 ([v3.57.0](https://github.com/crimera/piko-newx))
+## X — App v12.35.0-prod.01 — Patch v3.57.1
+Patch source: piko-patches — v3.57.1 ([v3.57.1](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -309,8 +309,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v47.1.4 — Patch v0.74.0
-Patch source: hushfeed — v0.74.0 ([v0.74.0](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v47.1.4 — Patch v0.75.0
+Patch source: hushfeed — v0.75.0 ([v0.75.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
@@ -610,12 +610,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v582.0.0.50.54 — Patch v0.13.0
-Patch source: hushfacebook — v0.13.0 ([v0.13.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v583.0.0.39.55 — Patch v0.14.0
+Patch source: hushfacebook — v0.14.0 ([v0.14.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 86/92 applied</summary>
+<summary>🩹 Patches — 89/95 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -669,11 +669,13 @@ Architecture: arm64-v8a
 - ✅ Default playback quality
 - ✅ Keep the reel speed
 - ✅ Resume long videos
+- ✅ Skip silent parts
 - ✅ Tap to play
 - ✅ Hide Menu promotions
 - ✅ Hushfacebook in the Menu
 - ✅ Hold back analytics uploads
 - ✅ Unlock app icons
+- ✅ Hide carrier data banners
 - ✅ Open links in external browser
 - ✅ Turn off haptics
 - ✅ Restore screens on re-signed builds
@@ -703,6 +705,7 @@ Architecture: arm64-v8a
 - ✅ Stop Story auto-advance
 - ✅ View stories anonymously
 - ✅ Hide suggested stories
+- ✅ Upload Stories in HD
 - ✅ Stop update prompts
 - ✅ Disable Play Store updates
 - ❌ Clone app
@@ -812,12 +815,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Instagram — App v451.0.0.53.80 — Patch v0.0.11
-Patch source: hushgram — v0.0.11 ([v0.0.11](https://github.com/SysAdminDoc/HushGram))
+## Instagram — App v451.0.0.53.80 — Patch v0.0.12
+Patch source: hushgram — v0.0.12 ([v0.0.12](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 104/110 applied</summary>
+<summary>🩹 Patches — 105/111 applied</summary>
 
 - ✅ Hide ads
 - ❌ Install next to Instagram
@@ -898,6 +901,7 @@ Architecture: arm64-v8a
 - ✅ Hide AI-labeled reels
 - ✅ Keep Reels auto scroll on
 - ✅ Blur the bars around Reels
+- ✅ Hide reels by caption words
 - ✅ Clean up Reels
 - ✅ Turn off double tap to like
 - ✅ Full screen Reels and Home
