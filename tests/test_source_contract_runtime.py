@@ -267,5 +267,54 @@ class SourceContractRuntimeTests(unittest.TestCase):
             apkmirror._blocked_by_cloudflare = False
 
 
+    def test_source_targets_load_patches_list_release_asset(self):
+        package = "com.twitter.android"
+        source = "piko-newx"
+        asset_url = "https://downloads.example.invalid/patches-list.json"
+        manifest = {
+            "packages": [
+                {
+                    "packageName": package,
+                    "signatures": [],
+                    "apkFileType": "BUNDLE",
+                    "targets": [
+                        {
+                            "version": "12.35.0-prod.01",
+                            "description": "Arm64 builds 123456789",
+                        }
+                    ],
+                }
+            ]
+        }
+        release = {
+            "tag_name": "v3.59.0",
+            "assets": [
+                {
+                    "name": "patches-list.json",
+                    "browser_download_url": asset_url,
+                }
+            ],
+        }
+
+        def fake_fetch_json(url):
+            if url == asset_url:
+                return manifest
+            raise AssertionError(f"raw metadata fallback should not run, got: {url}")
+
+        with patch.dict(utils._source_supported_targets_cache, {}, clear=True), \
+             patch.object(utils, "detect_release", return_value=release), \
+             patch.object(utils, "fetch_json", side_effect=fake_fetch_json):
+            targets = utils.get_source_supported_targets(package, source)
+            self.assertEqual(len(targets), 1)
+            self.assertEqual(targets[0]["version"], "12.35.0-prod.01")
+            self.assertEqual(
+                targets[0]["version_codes_by_arch"]["ARM64_V8A"],
+                [123456789],
+            )
+            self.assertEqual(
+                utils.get_source_supported_version_codes(package, source, "arm64-v8a"),
+                {"12.35.0-prod.01": [123456789]},
+            )
+
 if __name__ == "__main__":
     unittest.main()

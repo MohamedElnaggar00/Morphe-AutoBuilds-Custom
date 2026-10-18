@@ -506,9 +506,11 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
             return []
 
         refs = []
+        release_assets = []
         try:
             release = detect_release(repo_entry)
             release_tag = str(release.get("tag_name") or "").strip()
+            release_assets = release.get("assets") or []
             if release_tag:
                 refs.append(release_tag)
         except Exception as exc:
@@ -519,7 +521,37 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
         else:
             refs.extend(["main", "master"])
 
+        # Some patch repositories publish patches-list.json only as a GitHub
+        # Release Asset, not as a file committed to the tag/branch. Prefer that
+        # canonical release metadata before trying raw.githubusercontent.com.
         data = None
+        asset_url = next(
+            (
+                str(asset.get("browser_download_url") or "").strip()
+                for asset in release_assets
+                if str(asset.get("name") or "").strip().lower() == "patches-list.json"
+                and str(asset.get("browser_download_url") or "").strip()
+            ),
+            "",
+        )
+        if asset_url:
+            try:
+                candidate = fetch_json(asset_url)
+                if isinstance(candidate, (list, dict)) and candidate:
+                    data = candidate
+                    logging.debug(
+                        "Loaded patch target metadata from release asset for %s/%s",
+                        user,
+                        repo,
+                    )
+            except Exception as exc:
+                logging.debug(
+                    "Could not read patches-list.json release asset for %s/%s: %s",
+                    user,
+                    repo,
+                    exc,
+                )
+
         seen_refs = set()
         for ref in refs:
             if not ref or ref in seen_refs:
