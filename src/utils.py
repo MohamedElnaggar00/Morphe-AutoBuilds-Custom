@@ -554,6 +554,10 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
 
         seen_refs = set()
         for ref in refs:
+            # The current release asset is authoritative when present. Do not
+            # replace it with potentially stale branch/tag copies of the file.
+            if data is not None:
+                break
             if not ref or ref in seen_refs:
                 continue
             seen_refs.add(ref)

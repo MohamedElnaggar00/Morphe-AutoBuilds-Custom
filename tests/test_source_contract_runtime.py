@@ -296,7 +296,10 @@ class SourceContractRuntimeTests(unittest.TestCase):
             ],
         }
 
+        fetch_calls = []
+
         def fake_fetch_json(url):
+            fetch_calls.append(url)
             if url == asset_url:
                 return manifest
             raise AssertionError(f"raw metadata fallback should not run, got: {url}")
@@ -305,6 +308,7 @@ class SourceContractRuntimeTests(unittest.TestCase):
              patch.object(utils, "detect_release", return_value=release), \
              patch.object(utils, "fetch_json", side_effect=fake_fetch_json):
             targets = utils.get_source_supported_targets(package, source)
+            self.assertEqual(fetch_calls, [asset_url])
             self.assertEqual(len(targets), 1)
             self.assertEqual(targets[0]["version"], "12.35.0-prod.01")
             self.assertEqual(
