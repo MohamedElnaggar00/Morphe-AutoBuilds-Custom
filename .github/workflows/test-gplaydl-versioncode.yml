@@ -5,6 +5,8 @@ on:
     paths:
       - "src/gplaydl.py"
       - "src/utils.py"
+      - "src/apkmirror.py"
+      - "src/downloader.py"
       - "tests/test_gplaydl_version_codes.py"
       - "tests/test_source_contract_runtime.py"
       - ".github/workflows/test-gplaydl-versioncode.yml"
@@ -13,6 +15,8 @@ on:
     paths:
       - "src/gplaydl.py"
       - "src/utils.py"
+      - "src/apkmirror.py"
+      - "src/downloader.py"
       - "tests/test_gplaydl_version_codes.py"
       - "tests/test_source_contract_runtime.py"
       - "requirements.txt"
