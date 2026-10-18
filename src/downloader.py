@@ -422,7 +422,11 @@ def download_platform(
                 continue
 
             try:
-                filepath = download_resource(download_link)
+                filepath = (
+                    apkmirror.download_resource(download_link)
+                    if platform == "apkmirror"
+                    else download_resource(download_link)
+                )
 
                 min_size_mb = config.get("min_size_mb")
                 if min_size_mb is not None:

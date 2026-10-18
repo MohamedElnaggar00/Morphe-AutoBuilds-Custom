@@ -5,7 +5,7 @@ import os
 from bs4 import BeautifulSoup
 from urllib.parse import quote, urljoin
 from curl_cffi import requests as curl_requests
-from src import session
+from src import session, utils
 
 base_url = "https://www.apkmirror.com"
 
@@ -14,10 +14,56 @@ base_url = "https://www.apkmirror.com"
 # fingerprint throughout the complete APKMirror flow.
 _apkmirror_session = curl_requests.Session(impersonate="chrome")
 _blocked_by_cloudflare = False
+# Direct file links sometimes require cookies/referer established by the
+# preceding variant and download-page requests. Keep that relationship so the
+# final binary request uses the same APKMirror client session.
+_direct_download_referers: dict[str, str] = {}
 
 
 class ApkMirrorBlocked(RuntimeError):
     """APKMirror declined this runner before it served an application page."""
+
+
+def download_resource(url: str, name: str = None) -> Path:
+    """Download a resolved APKMirror artifact using the session that found it.
+
+    APKMirror may bind a direct file URL to cookies and a Referer established
+    while resolving the variant/download pages. Use that same client session;
+    do not work around HTTP 403 or Cloudflare denials if the file remains blocked.
+    """
+    referer = _direct_download_referers.pop(url, f"{base_url}/")
+    response = _apkmirror_session.get(
+        url,
+        stream=True,
+        timeout=90,
+        headers={
+            "Referer": referer,
+            "Accept": "*/*",
+        },
+    )
+    response.raise_for_status()
+    final_url = response.url
+
+    if not name:
+        name = utils.extract_filename(response, fallback_url=final_url)
+
+    filepath = Path(name)
+    total_size = int(response.headers.get("content-length", 0))
+    downloaded_size = 0
+    with filepath.open("wb") as file:
+        for chunk in response.iter_content(chunk_size=8192):
+            if chunk:
+                file.write(chunk)
+                downloaded_size += len(chunk)
+
+    logging.info(
+        'APKMirror URL: %s [%s/%s] -> "%s"',
+        final_url,
+        downloaded_size,
+        total_size,
+        filepath,
+    )
+    return filepath
 
 
 def _app_slug_candidates(config: dict) -> list[str]:
@@ -468,6 +514,7 @@ def _download_from_variant_page(
             logging.info("API variant resolved an APKM artifact; trying next variant")
             return None, True
 
+        _direct_download_referers[file_url] = download_page_url
         logging.info("✓ APKMirror direct file link resolved: %s", file_url)
         return file_url, True
     except Exception as exc:

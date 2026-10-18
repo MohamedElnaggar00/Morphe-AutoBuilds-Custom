@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from src import apkmirror, gplaydl, utils
+from src import apkmirror, downloader, gplaydl, utils
 
 
 class SourceContractRuntimeTests(unittest.TestCase):
@@ -266,6 +266,82 @@ class SourceContractRuntimeTests(unittest.TestCase):
         finally:
             apkmirror._blocked_by_cloudflare = False
 
+
+    def test_apkmirror_binary_download_reuses_resolving_session_and_referer(self):
+        variant_url = "https://www.apkmirror.com/apk/example/variant/"
+        download_page_url = "https://www.apkmirror.com/apk/example/download/"
+        file_url = "https://download.apkmirror.com/files/example.apkm"
+        variant_response = __import__("types").SimpleNamespace(
+            content=(
+                b'<a class="downloadButton" href="/apk/example/download/">Download</a>'
+            ),
+            text="variant",
+            headers={},
+            url=variant_url,
+            raise_for_status=lambda: None,
+        )
+        download_response = __import__("types").SimpleNamespace(
+            content=(
+                b'<a id="download-link" href="https://download.apkmirror.com/files/example.apkm">File</a>'
+            ),
+            text="download",
+            headers={},
+            url=download_page_url,
+            raise_for_status=lambda: None,
+        )
+        binary_response = __import__("types").SimpleNamespace(
+            url=file_url,
+            headers={"content-length": "4"},
+            raise_for_status=lambda: None,
+            iter_content=lambda chunk_size: iter([b"test"]),
+        )
+
+        with tempfile.TemporaryDirectory() as tmp, \
+             patch.object(apkmirror, "_cf_get", side_effect=[variant_response, download_response]), \
+             patch.object(apkmirror, "_variant_matches_extra_criteria", return_value=True), \
+             patch.object(apkmirror._apkmirror_session, "get", return_value=binary_response) as get_file:
+            resolved, readable = apkmirror._download_from_variant_page(
+                variant_url,
+                {"type": "BUNDLE"},
+                "1.0.0",
+            )
+            self.assertEqual(resolved, file_url)
+            self.assertTrue(readable)
+
+            output = Path(tmp) / "example.apkm"
+            result = apkmirror.download_resource(file_url, name=str(output))
+
+            self.assertEqual(result, output)
+            self.assertEqual(output.read_bytes(), b"test")
+            self.assertEqual(
+                get_file.call_args.kwargs["headers"]["Referer"],
+                download_page_url,
+            )
+            self.assertTrue(get_file.call_args.kwargs["stream"])
+            self.assertGreaterEqual(get_file.call_args.kwargs["timeout"], 1)
+
+    def test_downloader_routes_apkmirror_binary_through_provider_session(self):
+        package_version = "12.35.0-prod.01"
+        file_url = "https://download.apkmirror.com/files/x.apkm"
+        output = Path("x-test.apkm")
+        try:
+            with patch.dict("os.environ", {"SOURCE": "piko-newx"}), \
+                 patch.object(utils, "get_source_supported_targets", return_value=[]), \
+                 patch.object(apkmirror, "get_download_link", return_value=file_url), \
+                 patch.object(apkmirror, "download_resource", return_value=output) as provider_download:
+                result = downloader.download_platform(
+                    "x",
+                    "apkmirror",
+                    "morphe-cli.jar",
+                    "patches-3.59.0.mpp",
+                    arch="arm64-v8a",
+                    override_version=package_version,
+                )
+
+            self.assertEqual(result, (output, package_version, [package_version]))
+            provider_download.assert_called_once_with(file_url)
+        finally:
+            output.unlink(missing_ok=True)
 
     def test_source_targets_load_patches_list_release_asset(self):
         package = "com.twitter.android"
