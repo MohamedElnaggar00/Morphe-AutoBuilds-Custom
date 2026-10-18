@@ -150,12 +150,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.35.0-prod.01 — Patch v3.58.0
-Patch source: piko-patches — v3.58.0 ([v3.58.0](https://github.com/crimera/piko-newx))
+## X — App v12.35.0-prod.01 — Patch v3.59.0
+Patch source: piko-patches — v3.59.0 ([v3.59.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 43/54 applied</summary>
+<summary>🩹 Patches — 44/55 applied</summary>
 
 - ✅ NewX: Remove ads
 - ✅ NewX: Disable blur effects
@@ -178,6 +178,7 @@ Architecture: arm64-v8a
 - ✅ NewX: Set default media tab
 - ✅ NewX: Gallery profile Photos tab
 - ✅ NewX: Customize navigation bar
+- ✅ NewX: Hide post author actions
 - ✅ NewX: Hide post reply bar
 - ✅ NewX: Customize post menu items
 - ✅ NewX: Set default profile post sorting
@@ -292,8 +293,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.54.0
-Patch source: hxreborn — v1.54.0 ([v1.54.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.55.0
+Patch source: hxreborn — v1.55.0 ([v1.55.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
