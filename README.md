@@ -539,12 +539,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — App v583.0.0.29.95 — Patch v0.24.0
-Patch source: hushmessenger — v0.24.0 ([v0.24.0](https://github.com/SysAdminDoc/HushMessenger))
+## Messenger — App v583.0.0.29.95 — Patch v0.25.0
+Patch source: hushmessenger — v0.25.0 ([v0.25.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 53/62 applied</summary>
+<summary>🩹 Patches — 57/66 applied</summary>
 
 - ❌ Clone install under another package name
 - ✅ Install beside Meta apps
@@ -566,6 +566,7 @@ Architecture: arm64-v8a
 - ✅ Hide Reels badge
 - ✅ Hide People tab
 - ✅ Hide Notifications tab
+- ✅ Hold stories at the end
 - ✅ Hide AI sticker tools
 - ✅ Hide avatar stickers
 - ✅ Restore old emoji drawer
@@ -581,18 +582,21 @@ Architecture: arm64-v8a
 - ✅ Use system emoji
 - ✅ Send photos at original quality
 - ✅ Send videos without re-encoding
-- ✅ Fix shared videos with xHE-AAC sound
+- ✅ Fix videos that won't send
 - ✅ Turn off the swipe up for disappearing messages
 - ✅ Keep a message log
 - ✅ Auto reply
 - ✅ Use the phone's camera app
+- ✅ Open your gallery app
 - ✅ Stop analytics uploads
 - ✅ Stop ad attribution uploads
 - ✅ Stop inbox and ad link logging
 - ✅ Stop MQTT logging
 - ✅ Stop nearby scans
+- ✅ Stop app list and device ID sharing
 - ✅ Allow screenshots
 - ✅ Hide read receipts
+- ✅ Mark as read button
 - ✅ Keep unsent messages
 - ✅ Unlock app icons
 - ✅ Use your own font
