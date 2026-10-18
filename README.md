@@ -150,8 +150,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.35.0-prod.01 — Patch v3.57.1
-Patch source: piko-patches — v3.57.1 ([v3.57.1](https://github.com/crimera/piko-newx))
+## X — App v12.35.0-prod.01 — Patch v3.58.0
+Patch source: piko-patches — v3.58.0 ([v3.58.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -273,8 +273,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Gboard — App v18.4.1.985164140-release-arm64-v8a — Patch v1.1.0
-Patch source: Gboard-PixelBoard @Thinking — v1.1.0 ([v1.1.0](https://github.com/Akshayykadam/PixelBoard))
+## Gboard — App v18.4.1.985164140-release-arm64-v8a — Patch v1.2.0
+Patch source: Gboard-PixelBoard @Thinking — v1.2.0 ([v1.2.0](https://github.com/Akshayykadam/PixelBoard))
 Architecture: arm64-v8a
 
 <details>
