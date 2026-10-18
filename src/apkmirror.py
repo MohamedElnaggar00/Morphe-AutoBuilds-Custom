@@ -3,6 +3,7 @@ import json
 import logging
 import os
 from bs4 import BeautifulSoup
+from pathlib import Path
 from urllib.parse import quote, urljoin
 from curl_cffi import requests as curl_requests
 from src import session, utils
