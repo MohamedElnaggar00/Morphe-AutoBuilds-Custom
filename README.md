@@ -310,8 +310,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v47.1.4 — Patch v0.75.0
-Patch source: hushfeed — v0.75.0 ([v0.75.0](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v47.4.3 — Patch v0.76.0
+Patch source: hushfeed — v0.76.0 ([v0.76.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
@@ -615,12 +615,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v583.0.0.39.55 — Patch v0.14.0
-Patch source: hushfacebook — v0.14.0 ([v0.14.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v583.0.0.39.55 — Patch v0.15.0
+Patch source: hushfacebook — v0.15.0 ([v0.15.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 89/95 applied</summary>
+<summary>🩹 Patches — 91/97 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -641,6 +641,7 @@ Architecture: arm64-v8a
 - ✅ Send chat photos and videos at original quality
 - ✅ Install beside Meta's apps
 - ✅ Default comment order
+- ✅ Open comments at full height
 - ✅ Comment sheet options
 - ✅ Hide Meta AI comment summaries
 - ✅ Tag suggestions only after @
@@ -703,6 +704,7 @@ Architecture: arm64-v8a
 - ✅ Block promotional notifications
 - ✅ Clean up Reels
 - ✅ Turn off double tap to like
+- ✅ Open comments with a gesture
 - ✅ Hold a reel for 2x
 - ✅ Hide reel interest prompts
 - ✅ Don't send reel watch history
@@ -820,12 +822,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Instagram — App v451.0.0.53.80 — Patch v0.0.12
-Patch source: hushgram — v0.0.12 ([v0.0.12](https://github.com/SysAdminDoc/HushGram))
+## Instagram — App v451.0.0.53.80 — Patch v0.0.13
+Patch source: hushgram — v0.0.13 ([v0.0.13](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 105/111 applied</summary>
+<summary>🩹 Patches — 108/114 applied</summary>
 
 - ✅ Hide ads
 - ❌ Install next to Instagram
@@ -853,6 +855,8 @@ Architecture: arm64-v8a
 - ✅ Hide comments
 - ✅ Ask before a like
 - ✅ Ask before a refresh
+- ✅ Hide the comment emoji row
+- ✅ Hide Follow on feed posts
 - ✅ Start Home on Following
 - ✅ Hide the home feed
 - ✅ Change the like animation
@@ -924,6 +928,7 @@ Architecture: arm64-v8a
 - ✅ Hide the Share button
 - ✅ Hide group buttons on the share sheet
 - ✅ Stop Story auto-advance
+- ✅ Hide Follow on stories
 - ✅ View live anonymously
 - ✅ Loop a story
 - ✅ See who a story mentions
