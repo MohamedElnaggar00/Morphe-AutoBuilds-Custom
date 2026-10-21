@@ -8,6 +8,16 @@ from src import apkmirror, downloader, gplaydl, utils
 
 
 class SourceContractRuntimeTests(unittest.TestCase):
+    def test_verified_asset_debloat_mismatch_is_narrowly_detected(self):
+        from src.__main__ import _is_verified_asset_debloat_mismatch
+
+        error = (
+            "FAILED: Remove content credential and card scanner assets\\n"
+            "Core Asset De-bloat: found 18 target files, but no reviewed path set matched"
+        )
+        self.assertTrue(_is_verified_asset_debloat_mismatch(error))
+        self.assertFalse(_is_verified_asset_debloat_mismatch("Patching aborted: fingerprint mismatch"))
+        self.assertFalse(_is_verified_asset_debloat_mismatch("no reviewed path set matched"))
     def test_aapt2_badging_parses_version_code_and_min_sdk(self):
         completed = subprocess.CompletedProcess(
             args=[],

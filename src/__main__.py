@@ -27,6 +27,18 @@ def _should_retry_with_older_version(output: str | None) -> bool:
         or "patching aborted" in t
     )
 
+
+def _is_verified_asset_debloat_mismatch(output: str | None) -> bool:
+    """Recognize only the reviewed TikTok asset-strip mismatch safe to retry without that patch."""
+    if not output:
+        return False
+    text = output.lower()
+    return (
+        "remove content credential and card scanner assets" in text
+        and "core asset de-bloat" in text
+        and "no reviewed path set matched" in text
+    )
+
 def _configured_package(app_name: str) -> str | None:
     """Resolve the Android package from the existing app configuration."""
     for platform in ("aptoide", "apkmirror", "uptodown", "apkpure", "apkcombo"):
@@ -755,13 +767,43 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                     ], capture=True, stream=True)
 
         except subprocess.CalledProcessError as e:
-            # Remove temp input apk; we'll re-download if retrying.
-            input_apk.unlink(missing_ok=True)
-            output_apk.unlink(missing_ok=True)
+            failure_output = getattr(e, "output", None)
+            if isinstance(failure_output, bytes):
+                failure_output = failure_output.decode("utf-8", errors="replace")
 
-            if attempt_idx < len(versions_to_try) - 1 and _should_retry_with_older_version(getattr(e, "output", None)):
-                continue
-            raise
+            # This one HushFeed patch intentionally refuses unknown TikTok resource
+            # layouts. Retry once without only that patch, preserving every other
+            # selected patch and the strict source/version validation.
+            if app_name == "tiktok" and _is_verified_asset_debloat_mismatch(failure_output):
+                retry_patch = "Remove content credential and card scanner assets"
+                retry_cmd = list(morphe_cmd)
+                try:
+                    out_index = retry_cmd.index("--out")
+                    retry_cmd[out_index:out_index] = ["-d", retry_patch]
+                except ValueError:
+                    input_apk.unlink(missing_ok=True)
+                    output_apk.unlink(missing_ok=True)
+                    raise
+
+                logging.warning(
+                    "TikTok resource layout did not match the reviewed asset-strip patch. "
+                    "Retrying once with only '%s' disabled; all other selected patches remain enabled.",
+                    retry_patch,
+                )
+                try:
+                    utils.run_process(retry_cmd, capture=True, stream=True)
+                except subprocess.CalledProcessError:
+                    input_apk.unlink(missing_ok=True)
+                    output_apk.unlink(missing_ok=True)
+                    raise
+            else:
+                # Keep the existing older-version retry behavior for other known
+                # compatibility failures; do not weaken validation or ignore errors.
+                input_apk.unlink(missing_ok=True)
+                output_apk.unlink(missing_ok=True)
+                if attempt_idx < len(versions_to_try) - 1 and _should_retry_with_older_version(failure_output):
+                    continue
+                raise
 
         # Patch succeeded -> cleanup input and sign.
         input_apk.unlink(missing_ok=True)
