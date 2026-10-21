@@ -785,10 +785,10 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             if isinstance(failure_output, bytes):
                 failure_output = failure_output.decode("utf-8", errors="replace")
 
-            # Some HushFeed resource-strip patches refuse APKs whose resource
-            # layout differs from the reviewed layout. Retry only this explicit
-            # mismatch, disabling the named patch each time. Never suppress other
-            # patch errors, and cap retries to the two guarded patches.
+            # These HushFeed resource-strip patches refuse unknown TikTok layouts.
+            # Retry only this explicit mismatch class; every retry disables only the
+            # exact failing patch and accumulates prior exclusions. Other failures
+            # remain fatal, and the retry count is bounded to the guarded patches.
             retry_count = 0
             max_resource_retries = 2
             current_error = e
@@ -830,28 +830,25 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                     input_apk.unlink(missing_ok=True)
                     output_apk.unlink(missing_ok=True)
 
-                    # Re-enter only for the next exact guarded mismatch.
-                    if (
-                        retry_count + 1 >= max_resource_retries
-                        or not _verified_asset_debloat_patch(retry_output)
-                    ):
+                    next_patch = _verified_asset_debloat_patch(retry_output)
+                    if not next_patch:
+                        raise
+                    if retry_count + 1 >= max_resource_retries:
                         raise
                     current_error = retry_error
                     failure_output = retry_output
                     retry_count += 1
                     continue
             else:
-                # For any other failure, preserve the previous older-version
-                # retry policy and otherwise fail the build.
+                # Non-guarded failures retain the previous older-version retry
+                # policy and otherwise fail rather than being silently accepted.
                 input_apk.unlink(missing_ok=True)
                 output_apk.unlink(missing_ok=True)
                 if attempt_idx < len(versions_to_try) - 1 and _should_retry_with_older_version(failure_output):
                     continue
                 raise
 
-            # A non-resource failure must not be mistaken for success merely
-            # because the bounded retry loop was entered and immediately stopped.
-            if not _verified_asset_debloat_patch(failure_output) and retry_count == 0:
+            if retry_count == 0 and not _verified_asset_debloat_patch(failure_output):
                 input_apk.unlink(missing_ok=True)
                 output_apk.unlink(missing_ok=True)
                 if attempt_idx < len(versions_to_try) - 1 and _should_retry_with_older_version(failure_output):
