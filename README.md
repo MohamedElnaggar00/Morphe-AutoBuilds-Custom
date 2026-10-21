@@ -616,12 +616,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v583.0.0.39.55 — Patch v0.15.0
-Patch source: hushfacebook — v0.15.0 ([v0.15.0](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v583.0.0.39.55 — Patch v0.16.1
+Patch source: hushfacebook — v0.16.1 ([v0.16.1](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 91/97 applied</summary>
+<summary>🩹 Patches — 92/98 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -710,6 +710,7 @@ Architecture: arm64-v8a
 - ✅ Hide reel interest prompts
 - ✅ Don't send reel watch history
 - ✅ Hide Meta AI in search
+- ✅ Don't save search history
 - ✅ Stop Story auto-advance
 - ✅ View stories anonymously
 - ✅ Hide suggested stories
