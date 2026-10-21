@@ -848,12 +848,14 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                     continue
                 raise
 
-            if retry_count == 0 and not _verified_asset_debloat_patch(failure_output):
+            # If an error reached this handler but was not the guarded mismatch,
+            # preserve the established fatal/older-version behavior.
+            if not _verified_asset_debloat_patch(getattr(e, "output", None)):
                 input_apk.unlink(missing_ok=True)
                 output_apk.unlink(missing_ok=True)
                 if attempt_idx < len(versions_to_try) - 1 and _should_retry_with_older_version(failure_output):
                     continue
-                raise current_error
+                raise e
 
         # Patch succeeded -> cleanup input and sign.
         input_apk.unlink(missing_ok=True)
