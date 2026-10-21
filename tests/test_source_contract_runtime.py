@@ -13,7 +13,7 @@ class SourceContractRuntimeTests(unittest.TestCase):
 
         asset_error = (
             "FAILED: Remove content credential and card scanner assets\\n"
-            "Core Asset De-bloat: found 18 target files, but no reviewed path set matched"
+            "Core Asset De-bloat: found 2 target files, but no reviewed path set matched"
         )
         creation_error = (
             "FAILED: Remove creation tools\\n"
@@ -29,6 +29,11 @@ class SourceContractRuntimeTests(unittest.TestCase):
         )
         self.assertIsNone(_verified_asset_debloat_patch("Patching aborted: fingerprint mismatch"))
         self.assertIsNone(_verified_asset_debloat_patch("no reviewed path set matched"))
+        self.assertIsNone(
+            _verified_asset_debloat_patch(
+                "FAILED: Playback quality\\nUnknown patch error: no reviewed path set matched"
+            )
+        )
     def test_aapt2_badging_parses_version_code_and_min_sdk(self):
         completed = subprocess.CompletedProcess(
             args=[],
