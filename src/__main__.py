@@ -777,6 +777,15 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             if app_name == "tiktok" and _is_verified_asset_debloat_mismatch(failure_output):
                 retry_patch = "Remove content credential and card scanner assets"
                 retry_cmd = list(morphe_cmd)
+                # Remove the original enable flag before adding the disable flag;
+                # do not rely on CLI ordering when the same patch is both enabled
+                # and disabled.
+                idx = 0
+                while idx < len(retry_cmd) - 1:
+                    if retry_cmd[idx] == "-e" and retry_cmd[idx + 1] == retry_patch:
+                        del retry_cmd[idx:idx + 2]
+                    else:
+                        idx += 1
                 try:
                     out_index = retry_cmd.index("--out")
                     retry_cmd[out_index:out_index] = ["-d", retry_patch]
