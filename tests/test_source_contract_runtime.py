@@ -43,7 +43,7 @@ class SourceContractRuntimeTests(unittest.TestCase):
         source = Path("src/__main__.py").read_text(encoding="utf-8")
         self.assertRegex(source, r"max_resource_retries\s*=\s*2")
         self.assertIn("_verified_asset_debloat_patch(retry_output)", source)
-        self.assertIn("not _verified_asset_debloat_patch(retry_output)", source)
+        self.assertIn("not next_patch", source)  # other patch errors must remain fatal
     def test_aapt2_badging_parses_version_code_and_min_sdk(self):
         completed = subprocess.CompletedProcess(
             args=[],
