@@ -310,12 +310,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v47.4.3 — Patch v0.76.0
-Patch source: hushfeed — v0.76.0 ([v0.76.0](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v47.4.3 — Patch v0.77.0
+Patch source: hushfeed — v0.77.0 ([v0.77.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 130/140 applied</summary>
+<summary>🩹 Patches — 130/141 applied</summary>
 
 - ✅ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -367,8 +367,8 @@ Architecture: arm64-v8a
 - ✅ Use non-personalized search
 - ✅ Show LIVE search
 - ✅ Hide search suggestions
-- ✅ Show the progress bar
 - ✅ Show the progress bar thumbnail
+- ✅ Show the progress bar
 - ✅ Hide already seen videos
 - ✅ Skip content warnings
 - ✅ Share sheet tools
@@ -417,6 +417,7 @@ Architecture: arm64-v8a
 - ✅ Remove content credential and card scanner assets
 - ✅ Remove unused language packs
 - ✅ Remove LIVE extras
+- ❌ Remove voice tools
 - ✅ Remove creation tools
 - ✅ Block popups
 - ✅ Network proxy
@@ -822,12 +823,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Instagram — App v451.0.0.53.80 — Patch v0.0.13
-Patch source: hushgram — v0.0.13 ([v0.0.13](https://github.com/SysAdminDoc/HushGram))
+## Instagram — App v452.0.0.48.64 — Patch v0.0.14
+Patch source: hushgram — v0.0.14 ([v0.0.14](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 108/114 applied</summary>
+<summary>🩹 Patches — 112/119 applied</summary>
 
 - ✅ Hide ads
 - ❌ Install next to Instagram
@@ -835,11 +836,13 @@ Architecture: arm64-v8a
 - ✅ Hide Instants
 - ✅ Keep in chat
 - ✅ Lock your messages
+- ✅ Message box buttons
 - ✅ Hide the notes row
 - ✅ Hide your active status
 - ✅ Show when someone was last active
 - ✅ Allow screenshots
 - ✅ Don't report screenshots
+- ✅ Hide the search bar in Messages
 - ✅ Read messages without the seen receipt
 - ✅ View DM photos and videos anonymously
 - ✅ Hide suggested accounts in DMs
@@ -851,7 +854,9 @@ Architecture: arm64-v8a
 - ✅ Download voice messages
 - ✅ Hide the Explore grid
 - ✅ Don't save recent searches
+- ✅ Show all recent searches
 - ✅ Back leaves Home
+- ✅ Open comments without the keyboard
 - ✅ Hide comments
 - ✅ Ask before a like
 - ✅ Ask before a refresh
@@ -878,13 +883,11 @@ Architecture: arm64-v8a
 - ✅ Tap to play
 - ✅ Hide Meta AI
 - ✅ Remove the advertising ID
-- ✅ Disable analytics
 - ✅ Remove the empty space at the bottom
 - ✅ Remove build expired popup
 - ✅ Clear the media cache
 - ✅ Copy comment
 - ✅ Save comment photo
-- ✅ Open developer options
 - ✅ Emoji style
 - ✅ Open links in external browser
 - ✅ Font
@@ -906,6 +909,7 @@ Architecture: arm64-v8a
 - ✅ Hide Notes on profile pictures
 - ✅ Profile posts as a list
 - ✅ Hide suggested people on profiles
+- ✅ Hide profile tabs
 - ✅ Hide the Threads button
 - ✅ Hide AI-labeled reels
 - ✅ Keep Reels auto scroll on
@@ -920,6 +924,7 @@ Architecture: arm64-v8a
 - ✅ Keep a seek bar on Reels
 - ✅ Keep the reel speed
 - ✅ Hide suggested accounts in Reels
+- ❌ Swipe left to open the profile
 - ✅ Hide the Reels tab
 - ✅ Control taps and volume on Reels
 - ✅ Show a reel's exact time
@@ -936,6 +941,7 @@ Architecture: arm64-v8a
 - ✅ Story ring size
 - ✅ View stories anonymously
 - ✅ Start stories with sound
+- ✅ Stop swipe up to reply
 - ✅ Show a story's exact time
 - ✅ Hide suggested stories
 - ❌ Clone app
