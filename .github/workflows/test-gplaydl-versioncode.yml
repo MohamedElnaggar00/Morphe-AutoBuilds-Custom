@@ -60,3 +60,5 @@ jobs:
           python -m unittest discover -s tests -p "test_source_contract_runtime.py" -v
           python -m unittest discover -s tests -p "test_release_identity.py" -v
           python -m unittest discover -s tests -p "test_pixelboard_mpp_source.py" -v
+          python -m unittest discover -s tests -p "test_release_identity.py" -v
+          python -m unittest discover -s tests -p "test_pixelboard_mpp_source.py" -v

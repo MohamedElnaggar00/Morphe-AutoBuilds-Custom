@@ -785,52 +785,77 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             if isinstance(failure_output, bytes):
                 failure_output = failure_output.decode("utf-8", errors="replace")
 
-            # These HushFeed resource-strip patches intentionally refuse unknown
-            # TikTok resource layouts. Retry at most once, disabling only the
-            # specific patch reported by Morphe; all other patches remain enabled.
-            retry_patch = (
-                _verified_asset_debloat_patch(failure_output)
-                if app_name == "tiktok"
-                else None
-            )
-            if retry_patch:
+            # These HushFeed resource-strip patches refuse unknown TikTok layouts.
+            # Retry only this explicit mismatch class; every retry disables only the
+            # exact failing patch and accumulates prior exclusions. Other failures
+            # remain fatal, and the retry count is bounded to the guarded patches.
+            retry_count = 0
+            max_resource_retries = 2
+            current_error = e
+            while app_name == "tiktok" and retry_count < max_resource_retries:
+                retry_patch = _verified_asset_debloat_patch(failure_output)
+                if not retry_patch:
+                    break
+
                 retry_cmd = list(morphe_cmd)
-                # Remove the original enable flag before adding the disable flag;
-                # do not rely on CLI ordering when the same patch is both enabled
-                # and disabled.
                 idx = 0
                 while idx < len(retry_cmd) - 1:
                     if retry_cmd[idx] == "-e" and retry_cmd[idx + 1] == retry_patch:
                         del retry_cmd[idx:idx + 2]
                     else:
                         idx += 1
+
                 try:
                     out_index = retry_cmd.index("--out")
                     retry_cmd[out_index:out_index] = ["-d", retry_patch]
                 except ValueError:
                     input_apk.unlink(missing_ok=True)
                     output_apk.unlink(missing_ok=True)
-                    raise
+                    raise current_error
 
                 logging.warning(
-                    "TikTok resource layout did not match the reviewed asset-strip patch. "
-                    "Retrying once with only '%s' disabled; all other selected patches remain enabled.",
+                    "TikTok resource layout did not match the reviewed patch. "
+                    "Retry %s/%s with only '%s' disabled.",
+                    retry_count + 1,
+                    max_resource_retries,
                     retry_patch,
                 )
                 try:
                     utils.run_process(retry_cmd, capture=True, stream=True)
-                except subprocess.CalledProcessError:
+                    break
+                except subprocess.CalledProcessError as retry_error:
+                    retry_output = getattr(retry_error, "output", None)
+                    if isinstance(retry_output, bytes):
+                        retry_output = retry_output.decode("utf-8", errors="replace")
                     input_apk.unlink(missing_ok=True)
                     output_apk.unlink(missing_ok=True)
-                    raise
+
+                    next_patch = _verified_asset_debloat_patch(retry_output)
+                    if not next_patch:
+                        raise
+                    if retry_count + 1 >= max_resource_retries:
+                        raise
+                    current_error = retry_error
+                    failure_output = retry_output
+                    retry_count += 1
+                    continue
             else:
-                # Keep the existing older-version retry behavior for other known
-                # compatibility failures; do not weaken validation or ignore errors.
+                # Non-guarded failures retain the previous older-version retry
+                # policy and otherwise fail rather than being silently accepted.
                 input_apk.unlink(missing_ok=True)
                 output_apk.unlink(missing_ok=True)
                 if attempt_idx < len(versions_to_try) - 1 and _should_retry_with_older_version(failure_output):
                     continue
                 raise
+
+            # If an error reached this handler but was not the guarded mismatch,
+            # preserve the established fatal/older-version behavior.
+            if not _verified_asset_debloat_patch(getattr(e, "output", None)):
+                input_apk.unlink(missing_ok=True)
+                output_apk.unlink(missing_ok=True)
+                if attempt_idx < len(versions_to_try) - 1 and _should_retry_with_older_version(failure_output):
+                    continue
+                raise e
 
         # Patch succeeded -> cleanup input and sign.
         input_apk.unlink(missing_ok=True)
