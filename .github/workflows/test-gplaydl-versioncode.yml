@@ -7,6 +7,7 @@ on:
       - "src/utils.py"
       - "src/apkmirror.py"
       - "src/downloader.py"
+      - "src/__main__.py"
       - "tests/test_gplaydl_version_codes.py"
       - "tests/test_source_contract_runtime.py"
       - ".github/workflows/test-gplaydl-versioncode.yml"
