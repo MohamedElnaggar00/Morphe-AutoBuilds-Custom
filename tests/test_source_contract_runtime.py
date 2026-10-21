@@ -8,16 +8,27 @@ from src import apkmirror, downloader, gplaydl, utils
 
 
 class SourceContractRuntimeTests(unittest.TestCase):
-    def test_verified_asset_debloat_mismatch_is_narrowly_detected(self):
-        from src.__main__ import _is_verified_asset_debloat_mismatch
+    def test_verified_asset_debloat_failure_identifies_only_matching_patch(self):
+        from src.__main__ import _verified_asset_debloat_patch
 
-        error = (
+        asset_error = (
             "FAILED: Remove content credential and card scanner assets\\n"
             "Core Asset De-bloat: found 18 target files, but no reviewed path set matched"
         )
-        self.assertTrue(_is_verified_asset_debloat_mismatch(error))
-        self.assertFalse(_is_verified_asset_debloat_mismatch("Patching aborted: fingerprint mismatch"))
-        self.assertFalse(_is_verified_asset_debloat_mismatch("no reviewed path set matched"))
+        creation_error = (
+            "FAILED: Remove creation tools\\n"
+            "Studio & Creation De-bloat: found 1 target files, but no reviewed path set matched"
+        )
+        self.assertEqual(
+            _verified_asset_debloat_patch(asset_error),
+            "Remove content credential and card scanner assets",
+        )
+        self.assertEqual(
+            _verified_asset_debloat_patch(creation_error),
+            "Remove creation tools",
+        )
+        self.assertIsNone(_verified_asset_debloat_patch("Patching aborted: fingerprint mismatch"))
+        self.assertIsNone(_verified_asset_debloat_patch("no reviewed path set matched"))
     def test_aapt2_badging_parses_version_code_and_min_sdk(self):
         completed = subprocess.CompletedProcess(
             args=[],

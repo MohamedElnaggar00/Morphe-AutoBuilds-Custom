@@ -28,16 +28,30 @@ def _should_retry_with_older_version(output: str | None) -> bool:
     )
 
 
-def _is_verified_asset_debloat_mismatch(output: str | None) -> bool:
-    """Recognize only the reviewed TikTok asset-strip mismatch safe to retry without that patch."""
+def _verified_asset_debloat_patch(output: str | None) -> str | None:
+    """Return the exact verified TikTok resource-strip patch that failed on an unknown layout."""
     if not output:
-        return False
+        return None
     text = output.lower()
-    return (
-        "remove content credential and card scanner assets" in text
-        and "core asset de-bloat" in text
-        and "no reviewed path set matched" in text
+    if "no reviewed path set matched" not in text:
+        return None
+
+    patch_errors = (
+        (
+            "Remove content credential and card scanner assets",
+            "core asset de-bloat",
+            "remove content credential and card scanner assets",
+        ),
+        (
+            "Remove creation tools",
+            "studio & creation de-bloat",
+            "remove creation tools",
+        ),
     )
+    for patch_name, error_signature, patch_signature in patch_errors:
+        if error_signature in text and patch_signature in text:
+            return patch_name
+    return None
 
 def _configured_package(app_name: str) -> str | None:
     """Resolve the Android package from the existing app configuration."""
@@ -771,11 +785,15 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
             if isinstance(failure_output, bytes):
                 failure_output = failure_output.decode("utf-8", errors="replace")
 
-            # This one HushFeed patch intentionally refuses unknown TikTok resource
-            # layouts. Retry once without only that patch, preserving every other
-            # selected patch and the strict source/version validation.
-            if app_name == "tiktok" and _is_verified_asset_debloat_mismatch(failure_output):
-                retry_patch = "Remove content credential and card scanner assets"
+            # These HushFeed resource-strip patches intentionally refuse unknown
+            # TikTok resource layouts. Retry at most once, disabling only the
+            # specific patch reported by Morphe; all other patches remain enabled.
+            retry_patch = (
+                _verified_asset_debloat_patch(failure_output)
+                if app_name == "tiktok"
+                else None
+            )
+            if retry_patch:
                 retry_cmd = list(morphe_cmd)
                 # Remove the original enable flag before adding the disable flag;
                 # do not rely on CLI ordering when the same patch is both enabled
