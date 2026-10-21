@@ -8,6 +8,15 @@ on:
       - "src/apkmirror.py"
       - "src/downloader.py"
       - "src/__main__.py"
+      - "scripts/check_release_updates.py"
+      - "scripts/check_app_updates.py"
+      - "tests/test_release_identity.py"
+      - "tests/test_pixelboard_mpp_source.py"
+      - "src/__main__.py"
+      - "scripts/check_release_updates.py"
+      - "scripts/check_app_updates.py"
+      - "tests/test_release_identity.py"
+      - "tests/test_pixelboard_mpp_source.py"
       - "tests/test_gplaydl_version_codes.py"
       - "tests/test_source_contract_runtime.py"
       - ".github/workflows/test-gplaydl-versioncode.yml"
@@ -48,3 +57,5 @@ jobs:
         run: |
           python -m unittest discover -s tests -p "test_gplaydl_version_codes.py" -v
           python -m unittest discover -s tests -p "test_source_contract_runtime.py" -v
+          python -m unittest discover -s tests -p "test_release_identity.py" -v
+          python -m unittest discover -s tests -p "test_pixelboard_mpp_source.py" -v
