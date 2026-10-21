@@ -65,6 +65,42 @@ class ReleaseIdentityTests(unittest.TestCase):
             "18.0.3.954559732-release-arm64-v8a",
         )
 
+    def test_pixelboard_release_is_found_when_github_normalizes_source_name(self):
+        release = {
+            "name": "Gboard - Gboard-PixelBoard @Thinking",
+            "tag_name": (
+                "build-gboard-v18.4.1.985164140-release-arm64-v8a-"
+                "patch-v1.2.0-gboard-pixelboard-thinking-187"
+            ),
+            "published_at": "2026-10-21T19:24:45Z",
+            "body": (
+                "- **Application:** gboard\\n"
+                "- **Application version:** 18.4.1.985164140-release-arm64-v8a\\n"
+                "- **Patch source:** gboard-pixelboard-thinking\\n"
+                "- **Patch version:** 1.2.0\\n"
+                "- **Architecture:** arm64-v8a\\n"
+                "- **APK:** gboard-arm64-v8a-Gboard-PixelBoard @Thinking-"
+                "patch-v1.2.0-app-v18.4.1.985164140-release-arm64-v8a.apk\\n"
+            ),
+            "assets": [{
+                "name": (
+                    "gboard-arm64-v8a-Gboard-PixelBoard.@Thinking-"
+                    "patch-v1.2.0-app-v18.4.1.985164140-release-arm64-v8a.apk"
+                )
+            }],
+        }
+
+        previous = planner.latest_build_for(
+            "gboard", "gboard-pixelboard-thinking", "arm64-v8a", [release]
+        )
+
+        self.assertIsNotNone(previous)
+        self.assertEqual(previous["patch_version"], "1.2.0")
+        self.assertEqual(
+            previous["app_version"],
+            "18.4.1.985164140-release-arm64-v8a",
+        )
+
     def test_same_app_patch_arch_from_another_source_is_not_a_match(self):
         release = {
             "name": "X - piko-newx",
