@@ -74,13 +74,13 @@ class ReleaseIdentityTests(unittest.TestCase):
             ),
             "published_at": "2026-10-21T19:24:45Z",
             "body": (
-                "- **Application:** gboard\\n"
-                "- **Application version:** 18.4.1.985164140-release-arm64-v8a\\n"
-                "- **Patch source:** gboard-pixelboard-thinking\\n"
-                "- **Patch version:** 1.2.0\\n"
-                "- **Architecture:** arm64-v8a\\n"
+                "- **Application:** gboard\n"
+                "- **Application version:** 18.4.1.985164140-release-arm64-v8a\n"
+                "- **Patch source:** gboard-pixelboard-thinking\n"
+                "- **Patch version:** 1.2.0\n"
+                "- **Architecture:** arm64-v8a\n"
                 "- **APK:** gboard-arm64-v8a-Gboard-PixelBoard @Thinking-"
-                "patch-v1.2.0-app-v18.4.1.985164140-release-arm64-v8a.apk\\n"
+                "patch-v1.2.0-app-v18.4.1.985164140-release-arm64-v8a.apk\n"
             ),
             "assets": [{
                 "name": (
