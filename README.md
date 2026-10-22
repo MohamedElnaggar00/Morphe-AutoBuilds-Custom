@@ -4,12 +4,12 @@
 - Patch Source Watcher checks every 3 hours and triggers Auto Build when a new patch-source release is detected
 - Manual updates available via workflow dispatch
 
-## YouTube — App v21.20.405 — Patch v1.47.0
-Patch source: morphe — v1.47.0 ([v1.47.0](https://github.com/MorpheApp/morphe-patches))
+## YouTube — App v21.20.405 — Patch v1.48.0
+Patch source: morphe — v1.48.0 ([v1.48.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 96/102 applied</summary>
+<summary>🩹 Patches — 104/110 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
@@ -17,6 +17,7 @@ Architecture: arm64-v8a
 - ❌ Spoof signature
 - ✅ Disable Play Store updates
 - ✅ Hide ads
+- ✅ Ask flyout menu
 - ✅ Channel search
 - ✅ Disable continue watching prompt
 - ✅ Copy text
@@ -25,6 +26,7 @@ Architecture: arm64-v8a
 - ✅ Disable double tap actions
 - ✅ Double tap to seek
 - ✅ Downloads
+- ✅ Feed video actions
 - ✅ Disable haptic feedback
 - ✅ Loop video
 - ✅ Picture-in-picture button
@@ -32,7 +34,9 @@ Architecture: arm64-v8a
 - ✅ Reload video
 - ✅ Save to Watch later
 - ✅ Seekbar
+- ✅ Skip live Shorts
 - ✅ Swipe controls
+- ✅ Force animations
 - ❌ Custom branding
 - ✅ Change header
 - ✅ Hide video action buttons
@@ -41,9 +45,11 @@ Architecture: arm64-v8a
 - ✅ Captions
 - ✅ DeArrow
 - ✅ Disable layout updates
+- ✅ Feed card layout
 - ✅ Disable auto feed refresh
+- ✅ Feed view count
 - ✅ Add to queue
-- ✅ Force system font
+- ✅ Custom font
 - ✅ Change form factor
 - ✅ Ambient mode
 - ✅ Hide autoplay preview
@@ -109,19 +115,21 @@ Architecture: arm64-v8a
 - ✅ Skip silence
 - ✅ Playback buffer
 - ✅ Disable video codecs
+- ✅ Video delay
 - ✅ Remember live stream playback position
 - ✅ Video quality
+- ✅ Series tracking
 - ✅ Playback speed
 - ✅ Voice over translation
 
 </details>
 
-## Reddit — App v2026.24.0 — Patch v1.47.0
-Patch source: morphe — v1.47.0 ([v1.47.0](https://github.com/MorpheApp/morphe-patches))
+## Reddit — App v2026.24.0 — Patch v1.48.0
+Patch source: morphe — v1.48.0 ([v1.48.0](https://github.com/MorpheApp/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 18/24 applied</summary>
+<summary>🩹 Patches — 29/35 applied</summary>
 
 - ❌ Clone app
 - ❌ Change installer source
@@ -134,19 +142,30 @@ Architecture: arm64-v8a
 - ✅ Hide Ask button
 - ❌ Custom branding name for Reddit
 - ✅ Hide communities shelf
+- ✅ Copy text
+- ✅ Keep feed position
+- ✅ Show flairs in home feed
+- ✅ Full width feed media
+- ✅ Feed media max height
+- ✅ Hide media viewer components
+- ✅ Media viewer black background
+- ✅ Media viewer fade
 - ✅ Disable modern home
 - ✅ Hide navigation buttons
+- ✅ Customize post layout
 - ✅ Disable screenshot popup
 - ❌ Hide Reddit search
 - ✅ Hide sidebar components
 - ✅ Remove subreddit dialog
 - ✅ Hide Trending shelves
-- ✅ Show view count
 - ✅ App icon
+- ✅ Remember collapsed comments
+- ✅ Download location
 - ✅ Start as guest
 - ✅ Open links directly
 - ✅ Open links externally
 - ✅ Sanitize sharing links
+- ✅ Redgifs audio
 
 </details>
 
@@ -222,9 +241,10 @@ Architecture: arm64-v8a
 <details>
 <summary>🩹 Patches — 45/49 applied</summary>
 
+- ✅ Zhuyin Slide Input
 - ✅ English QWERTY Up-Flick Uppercase
-- ✅ Long-Press Editing Shortcuts
 - ✅ G Logo on Spacebar
+- ✅ Long-Press Editing Shortcuts
 - ✅ Incognito Mode Toggle
 - ✅ Toolbar Editing Buttons
 - ✅ Floating Web Search
@@ -265,7 +285,6 @@ Architecture: arm64-v8a
 - ✅ Zhuyin Bottom Row Key Sizes
 - ✅ Package Rename
 - ✅ Add Gboard Signature Bypass
-- ✅ Zhuyin Slide Input
 - ❌ Clone app
 - ❌ Change installer source
 - ❌ Override certificate pinning
@@ -367,8 +386,8 @@ Architecture: arm64-v8a
 - ✅ Use non-personalized search
 - ✅ Show LIVE search
 - ✅ Hide search suggestions
-- ✅ Show the progress bar
 - ✅ Show the progress bar thumbnail
+- ✅ Show the progress bar
 - ✅ Hide already seen videos
 - ✅ Skip content warnings
 - ✅ Share sheet tools
