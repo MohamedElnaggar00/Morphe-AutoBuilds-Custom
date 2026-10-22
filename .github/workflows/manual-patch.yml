@@ -147,14 +147,6 @@ jobs:
 
       - name: Build APK
         env:
-          APP_NAME: ${{ matrix.app_name }}
-          SOURCE: ${{ matrix.source }}
-          ARCH: ${{ matrix.arch }}
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
-
-      - name: Build APK
-        env:
           APP_NAME: ${{ inputs.app_name }}
           SOURCE: ${{ inputs.source }}
           ARCH: ${{ inputs.architecture }}
