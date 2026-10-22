@@ -27,6 +27,84 @@ def _should_retry_with_older_version(output: str | None) -> bool:
         or "patching aborted" in t
     )
 
+MAX_AUTO_DISABLED_PATCHES = 25
+_FAILED_PATCH_RE = re.compile(r"Patching aborted: FAILED: (.+?)\s*$", re.MULTILINE)
+_FAILED_PATCH_FALLBACK_RE = re.compile(r"^(?:SEVERE: )?.*?\bFAILED: (.+?)\s*$", re.MULTILINE)
+
+
+def _failed_patch_name(output) -> str | None:
+    """Return the patch name Morphe/ReVanced reports as the failing patch."""
+    if isinstance(output, bytes):
+        output = output.decode("utf-8", errors="replace")
+    if not output:
+        return None
+    matches = _FAILED_PATCH_RE.findall(output) or _FAILED_PATCH_FALLBACK_RE.findall(output)
+    return matches[-1].strip() if matches else None
+
+
+def _disable_patch_in_cmd(cmd: list[str], patch: str) -> list[str] | None:
+    """Return cmd with `patch` disabled for this run only (None if impossible)."""
+    new = list(cmd)
+    i = 0
+    while i < len(new) - 1:
+        if new[i] == "-e" and new[i + 1] == patch:
+            del new[i:i + 2]
+        else:
+            i += 1
+    for i in range(len(new) - 1):
+        if new[i] == "-d" and new[i + 1] == patch:
+            return None  # already disabled; retrying cannot help
+    try:
+        out_index = new.index("--out")
+    except ValueError:
+        return None
+    new[out_index:out_index] = ["-d", patch]
+    return new
+
+
+def _report_disabled_patches(app_name: str, arch: str, disabled: list[str]) -> None:
+    if not disabled:
+        return
+    logging.warning("Patches temporarily disabled in this run only: %s", ", ".join(disabled))
+    print(f"::warning title=Patches auto-disabled ({app_name}/{arch})::{'; '.join(disabled)}", flush=True)
+    summary = getenv("GITHUB_STEP_SUMMARY")
+    if summary:
+        with open(summary, "a", encoding="utf-8") as fh:
+            fh.write(f"### Auto-disabled patches: {app_name} / {arch}\n")
+            fh.write("Disabled temporarily for this run only; patch files in the repo are unchanged.\n\n")
+            for name in disabled:
+                fh.write(f"- {name}\n")
+            fh.write("\n")
+
+
+def _run_patcher_with_auto_disable(cmd: list[str], app_name: str, arch: str) -> list[str]:
+    """Run the patcher; when a patch fails, retry with that patch disabled
+    (this run only, repo files untouched), looping until it succeeds.
+    Failures that do not name a patch are re-raised. Returns disabled patches."""
+    disabled: list[str] = []
+    current = list(cmd)
+    while True:
+        try:
+            utils.run_process(current, capture=True, stream=True)
+            _report_disabled_patches(app_name, arch, disabled)
+            return disabled
+        except subprocess.CalledProcessError as err:
+            patch = _failed_patch_name(getattr(err, "output", None))
+            if not patch or len(disabled) >= MAX_AUTO_DISABLED_PATCHES:
+                _report_disabled_patches(app_name, arch, disabled)
+                raise
+            retry_cmd = _disable_patch_in_cmd(current, patch)
+            if retry_cmd is None:
+                _report_disabled_patches(app_name, arch, disabled)
+                raise
+            logging.warning(
+                "Patch '%s' failed for %s/%s. Retrying with it disabled for this run only (%d disabled so far).",
+                patch, app_name, arch, len(disabled) + 1,
+            )
+            disabled.append(patch)
+            current = retry_cmd
+
+
 def _configured_package(app_name: str) -> str | None:
     """Resolve the Android package from the existing app configuration."""
     for platform in ("aptoide", "apkmirror", "uptodown", "apkpure", "apkcombo"):
@@ -731,7 +809,7 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                       if universal_patches else []),
                     "--out", str(output_apk), str(input_apk)
                 ]
-                utils.run_process(morphe_cmd, capture=True, stream=True)
+                _run_patcher_with_auto_disable(morphe_cmd, app_name, arch)
             else:
                 logging.info("🔧 Using ReVanced patching system...")
                 cli_name = Path(cli).name.lower()
@@ -740,19 +818,19 @@ def run_build(app_name: str, source: str, arch: str = "universal") -> str:
                 )
 
                 if is_revanced_v6_or_newer:
-                    utils.run_process([
+                    _run_patcher_with_auto_disable([
                         "java", "-jar", str(cli),
                         "patch", "-p", str(patches), "-b",
                         *exclude_patches, *include_patches, *patch_options,
                         "--out", str(output_apk), str(input_apk)
-                    ], capture=True, stream=True)
+                    ], app_name, arch)
                 else:
-                    utils.run_process([
+                    _run_patcher_with_auto_disable([
                         "java", "-jar", str(cli),
                         "patch", "--patches", str(patches),
                         *exclude_patches, *include_patches, *patch_options,
                         "--out", str(output_apk), str(input_apk)
-                    ], capture=True, stream=True)
+                    ], app_name, arch)
 
         except subprocess.CalledProcessError as e:
             # Remove temp input apk; we'll re-download if retrying.
