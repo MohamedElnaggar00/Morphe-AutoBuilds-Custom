@@ -92,6 +92,67 @@ jobs:
           distribution: 'temurin'
           java-version: '21'
       
+      - name: Prepare Signing Keystore
+        env:
+          MORPHE_KEYSTORE_BASE64: ${{ secrets.MORPHE_KEYSTORE_BASE64 }}
+          MORPHE_KEY_PASSWORD: Morphe
+        run: |
+          set -euo pipefail
+
+          if [ -z "${MORPHE_KEYSTORE_BASE64:-}" ]; then
+            echo "::error::Missing GitHub Actions secret MORPHE_KEYSTORE_BASE64"
+            echo "Add the base64-encoded BKS keystore in Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+          # The supplied signing key is BKS. The original Morphe-AutoBuilds
+          # workflow signs with a JKS file, so convert the same key material
+          # to JKS at runtime instead of committing the private key.
+          sudo apt-get update
+          sudo apt-get install -y libbcprov-java
+
+          SOURCE_KEYSTORE="${RUNNER_TEMP}/morphe-signing.bks"
+          SIGNING_KEYSTORE_PATH="${RUNNER_TEMP}/morphe-signing.jks"
+
+          printf "%s" "${MORPHE_KEYSTORE_BASE64}" | base64 --decode > "${SOURCE_KEYSTORE}"
+          chmod 600 "${SOURCE_KEYSTORE}"
+
+          if [ ! -s "${SOURCE_KEYSTORE}" ]; then
+            echo "::error::Decoded signing keystore is empty."
+            exit 1
+          fi
+
+          keytool -importkeystore \
+            -providerclass org.bouncycastle.jce.provider.BouncyCastleProvider \
+            -providerpath /usr/share/java/bcprov.jar \
+            -srckeystore "${SOURCE_KEYSTORE}" \
+            -srcstoretype BKS \
+            -srcstorepass "" \
+            -srckeypass "${MORPHE_KEY_PASSWORD}" \
+            -srcalias Morphe \
+            -destkeystore "${SIGNING_KEYSTORE_PATH}" \
+            -deststoretype JKS \
+            -deststorepass public \
+            -destkeypass public \
+            -destalias public \
+            -noprompt
+
+          chmod 600 "${SIGNING_KEYSTORE_PATH}"
+          rm -f "${SOURCE_KEYSTORE}"
+
+          if [ ! -s "${SIGNING_KEYSTORE_PATH}" ]; then
+            echo "::error::JKS signing keystore conversion failed."
+            exit 1
+          fi
+
+      - name: Build APK
+        env:
+          APP_NAME: ${{ matrix.app_name }}
+          SOURCE: ${{ matrix.source }}
+          ARCH: ${{ matrix.arch }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JINA_API_KEY: ${{ secrets.JINA_API_KEY }}
+
       - name: Build APK
         env:
           APP_NAME: ${{ inputs.app_name }}
@@ -99,10 +160,20 @@ jobs:
           ARCH: ${{ inputs.architecture }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TRAWL_URL: http://localhost:8191
+          SIGNING_KEYSTORE_PATH: ${{ runner.temp }}/morphe-signing.jks
+          SIGNING_KEYSTORE_TYPE: JKS
+          SIGNING_KEY_ALIAS: public
+          SIGNING_KEYSTORE_PASSWORD: public
+          SIGNING_KEY_PASSWORD: public
         run: |
           echo "🔧 Building ${{ inputs.app_name }} with ${{ inputs.source }} for ${{ inputs.architecture }} architecture..."
           python -m src
       
+      - name: Cleanup Signing Keystore
+        if: always()
+        run: |
+          rm -f "${RUNNER_TEMP}/morphe-signing.bks" "${RUNNER_TEMP}/morphe-signing.jks"
+
       - name: Find Built APK
         id: find-apk
         run: |
