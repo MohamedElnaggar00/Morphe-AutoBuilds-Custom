@@ -428,28 +428,6 @@ def download_platform(
                     else download_resource(download_link)
                 )
 
-                # APKMirror can expose a native .apkm bundle through a
-                # fallback path even when the app config requests a standalone
-                # APK. Reject that mismatch here so the outer provider fallback
-                # can try another source instead of feeding the bundle to a
-                # build configured for APK artifacts.
-                requested_type = str(config.get("type") or "APK").strip().lower()
-                if (
-                    platform == "apkmirror"
-                    and requested_type == "apk"
-                    and filepath.suffix.lower() in {".apkm", ".apks", ".xapk"}
-                ):
-                    logging.warning(
-                        "Rejected APKMirror artifact %s: app config requires a standalone APK; "
-                        "trying the next provider.",
-                        filepath.name,
-                    )
-                    filepath.unlink(missing_ok=True)
-                    last_error = ValueError(
-                        f"APKMirror returned bundle artifact {filepath.name} for APK-only config"
-                    )
-                    continue
-
                 min_size_mb = config.get("min_size_mb")
                 if min_size_mb is not None:
                     actual_size_mb = filepath.stat().st_size / (1024 * 1024)

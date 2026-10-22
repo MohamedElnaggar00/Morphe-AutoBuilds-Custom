@@ -178,13 +178,10 @@ def latest_build_for(app: str, source: str, arch: str,
 
             for asset in assets:
                 name = (asset.get("name") or "").strip()
-                # The release body already establishes the exact source identity.
-                # Do not require the source display name to match the asset prefix:
-                # GitHub normalizes special characters in uploaded asset filenames
-                # (e.g. "Gboard-PixelBoard @Thinking" -> "Gboard-PixelBoard.@Thinking"),
-                # which otherwise makes a valid release look absent and triggers
-                # a full rebuild on every watcher run.
-                if not name.startswith(f"{app}-{arch}-"):
+                if not any(
+                    name.startswith(f"{app}-{arch}-{source_name}-")
+                    for source_name in source_names
+                ):
                     continue
                 versions = _apk_versions(name)
                 if not versions:

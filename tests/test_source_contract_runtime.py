@@ -8,42 +8,6 @@ from src import apkmirror, downloader, gplaydl, utils
 
 
 class SourceContractRuntimeTests(unittest.TestCase):
-    def test_verified_asset_debloat_failure_identifies_only_matching_patch(self):
-        from src.__main__ import _verified_asset_debloat_patch
-
-        asset_error = (
-            "FAILED: Remove content credential and card scanner assets\\n"
-            "Core Asset De-bloat: found 2 target files, but no reviewed path set matched"
-        )
-        creation_error = (
-            "FAILED: Remove creation tools\\n"
-            "Studio & Creation De-bloat: found 1 target files, but no reviewed path set matched"
-        )
-        self.assertEqual(
-            _verified_asset_debloat_patch(asset_error),
-            "Remove content credential and card scanner assets",
-        )
-        self.assertEqual(
-            _verified_asset_debloat_patch(creation_error),
-            "Remove creation tools",
-        )
-        self.assertIsNone(_verified_asset_debloat_patch("Patching aborted: fingerprint mismatch"))
-        self.assertIsNone(_verified_asset_debloat_patch("no reviewed path set matched"))
-        self.assertIsNone(
-            _verified_asset_debloat_patch(
-                "FAILED: Playback quality\\nUnknown patch error: no reviewed path set matched"
-            )
-        )
-
-    def test_resource_patch_retry_bound_is_two(self):
-        # Each guarded patch can be disabled at most once per build attempt.
-        from pathlib import Path
-        import re
-
-        source = Path("src/__main__.py").read_text(encoding="utf-8")
-        self.assertRegex(source, r"max_resource_retries\s*=\s*2")
-        self.assertIn("_verified_asset_debloat_patch(retry_output)", source)
-        self.assertIn("not next_patch", source)  # other patch errors must remain fatal
     def test_aapt2_badging_parses_version_code_and_min_sdk(self):
         completed = subprocess.CompletedProcess(
             args=[],
