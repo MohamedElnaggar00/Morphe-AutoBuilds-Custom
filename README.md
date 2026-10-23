@@ -976,3 +976,36 @@ Architecture: arm64-v8a
 - ✅ Disable Play Store updates
 
 </details>
+
+## Truecaller — App v26.40.5 — Patch v1.18.0
+Patch source: heval — v1.18.0 ([v1.18.0](https://github.com/heval99/Heval-Morphe-Patches))
+Architecture: arm64-v8a
+
+<details>
+<summary>🩹 Patches — 9/23 applied</summary>
+
+- ❌ Remove screenshot restriction
+- ✅ Disable ads
+- ❌ Hide Assistant tab
+- ❌ Hide Blocking tab
+- ❌ Hide business media
+- ❌ Hide family button
+- ❌ Hide Messages tab
+- ❌ Hide Premium tab
+- ❌ Hide Scam feed
+- ✅ Hide Wear OS settings
+- ❌ Restore classic call log
+- ✅ Disable contact upload
+- ✅ GmsCore support
+- ✅ Spoof signature
+- ❌ Fix T9 contact search
+- ✅ Disable telemetry
+- ✅ Disable update prompts
+- ❌ Use SMS for verification codes
+- ✅ Enable Premium
+- ❌ Clone app
+- ❌ Change installer source
+- ❌ Override certificate pinning
+- ✅ Disable Play Store updates
+
+</details>
