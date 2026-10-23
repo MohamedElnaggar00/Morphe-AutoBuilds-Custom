@@ -169,8 +169,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.35.0-prod.01 — Patch v3.59.0
-Patch source: piko-patches — v3.59.0 ([v3.59.0](https://github.com/crimera/piko-newx))
+## X — App v12.36.1-prod.01 — Patch v3.61.0
+Patch source: piko-patches — v3.61.0 ([v3.61.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
@@ -246,10 +246,10 @@ Architecture: arm64-v8a
 - ✅ Long-Press Editing Shortcuts
 - ✅ G Logo on Spacebar
 - ✅ Incognito Mode Toggle
-- ✅ Swipe Down to Dismiss Keyboard
 - ✅ Toolbar Editing Buttons
 - ✅ Floating Web Search
 - ✅ Simple Calculator
+- ✅ Swipe Down to Dismiss Keyboard
 - ✅ Advanced Voice Typing
 - ✅ Use Bluetooth Microphone
 - ✅ Change emoji size
@@ -312,8 +312,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.58.0
-Patch source: hxreborn — v1.58.0 ([v1.58.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.59.0
+Patch source: hxreborn — v1.59.0 ([v1.59.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
