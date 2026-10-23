@@ -243,8 +243,8 @@ Architecture: arm64-v8a
 
 - ✅ Zhuyin Slide Input
 - ✅ English QWERTY Up-Flick Uppercase
-- ✅ G Logo on Spacebar
 - ✅ Long-Press Editing Shortcuts
+- ✅ G Logo on Spacebar
 - ✅ Incognito Mode Toggle
 - ✅ Toolbar Editing Buttons
 - ✅ Floating Web Search
@@ -329,12 +329,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## TikTok — App v47.4.3 — Patch v0.77.0
-Patch source: hushfeed — v0.77.0 ([v0.77.0](https://github.com/SysAdminDoc/hushfeed))
+## TikTok — App v47.5.3 — Patch v0.78.0
+Patch source: hushfeed — v0.78.0 ([v0.78.0](https://github.com/SysAdminDoc/hushfeed))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 130/141 applied</summary>
+<summary>🩹 Patches — 132/143 applied</summary>
 
 - ✅ Hide the risk control CAPTCHA
 - ✅ Hide CAPTCHA popups
@@ -386,8 +386,8 @@ Architecture: arm64-v8a
 - ✅ Use non-personalized search
 - ✅ Show LIVE search
 - ✅ Hide search suggestions
-- ✅ Show the progress bar thumbnail
 - ✅ Show the progress bar
+- ✅ Show the progress bar thumbnail
 - ✅ Hide already seen videos
 - ✅ Skip content warnings
 - ✅ Share sheet tools
@@ -402,6 +402,8 @@ Architecture: arm64-v8a
 - ✅ Change app name
 - ❌ Custom launcher icon
 - ❌ Run beside the store app
+- ✅ Keep the screen's brightness in the camera
+- ✅ Open the comments at full height
 - ✅ Show commenter handle and region
 - ✅ Copy comments without username
 - ✅ Lift text length limits
@@ -559,18 +561,17 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — App v583.0.0.29.95 — Patch v0.25.0
-Patch source: hushmessenger — v0.25.0 ([v0.25.0](https://github.com/SysAdminDoc/HushMessenger))
+## Messenger — App v583.0.0.29.95 — Patch v0.26.0
+Patch source: hushmessenger — v0.26.0 ([v0.26.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 57/66 applied</summary>
+<summary>🩹 Patches — 59/68 applied</summary>
 
 - ❌ Clone install under another package name
 - ✅ Install beside Meta apps
 - ✅ Restore screens on re-signed builds
 - ❌ Material You theme
-- ✅ Hide inbox ads
 - ✅ Hide People You May Know
 - ✅ Hide friend request cards
 - ✅ Hide joined community chats
@@ -586,6 +587,7 @@ Architecture: arm64-v8a
 - ✅ Hide Reels badge
 - ✅ Hide People tab
 - ✅ Hide Notifications tab
+- ✅ Hide tab badges
 - ✅ Hold stories at the end
 - ✅ Hide AI sticker tools
 - ✅ Hide avatar stickers
@@ -603,15 +605,17 @@ Architecture: arm64-v8a
 - ✅ Send photos at original quality
 - ✅ Send videos without re-encoding
 - ✅ Fix videos that won't send
-- ✅ Turn off the swipe up for disappearing messages
+- ✅ Ignore the swipe up for disappearing messages
+- ✅ Hide the recent photo card
 - ✅ Keep a message log
 - ✅ Auto reply
+- ✅ Quiet incoming calls
 - ✅ Use the phone's camera app
 - ✅ Open your gallery app
 - ✅ Stop analytics uploads
 - ✅ Stop ad attribution uploads
 - ✅ Stop inbox and ad link logging
-- ✅ Stop MQTT logging
+- ✅ Stop live connection logging
 - ✅ Stop nearby scans
 - ✅ Stop app list and device ID sharing
 - ✅ Allow screenshots
@@ -635,12 +639,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## Facebook — App v583.0.0.39.55 — Patch v0.16.1
-Patch source: hushfacebook — v0.16.1 ([v0.16.1](https://github.com/SysAdminDoc/Hushfacebook))
+## Facebook — App v584.0.0.51.56 — Patch v0.17.0
+Patch source: hushfacebook — v0.17.0 ([v0.17.0](https://github.com/SysAdminDoc/Hushfacebook))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 92/98 applied</summary>
+<summary>🩹 Patches — 93/99 applied</summary>
 
 - ✅ Hide affiliate product links
 - ✅ Disable Audience Network
@@ -688,6 +692,7 @@ Architecture: arm64-v8a
 - ❌ AMOLED black theme
 - ✅ Force dark mode
 - ❌ Material You theme
+- ✅ Keep feed videos muted
 - ✅ Frame step
 - ✅ Turn off HDR brightness
 - ✅ Picture-in-picture
@@ -843,8 +848,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Instagram — App v452.0.0.48.64 — Patch v0.0.14
-Patch source: hushgram — v0.0.14 ([v0.0.14](https://github.com/SysAdminDoc/HushGram))
+## Instagram — App v452.1.0.53.64 — Patch v0.0.15
+Patch source: hushgram — v0.0.15 ([v0.0.15](https://github.com/SysAdminDoc/HushGram))
 Architecture: arm64-v8a
 
 <details>
