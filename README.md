@@ -246,10 +246,10 @@ Architecture: arm64-v8a
 - ✅ Long-Press Editing Shortcuts
 - ✅ G Logo on Spacebar
 - ✅ Incognito Mode Toggle
+- ✅ Swipe Down to Dismiss Keyboard
 - ✅ Toolbar Editing Buttons
 - ✅ Floating Web Search
 - ✅ Simple Calculator
-- ✅ Swipe Down to Dismiss Keyboard
 - ✅ Advanced Voice Typing
 - ✅ Use Bluetooth Microphone
 - ✅ Change emoji size
