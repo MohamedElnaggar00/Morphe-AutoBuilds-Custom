@@ -561,7 +561,7 @@ Architecture: arm64-v8a
 
 </details>
 
-## Messenger — App v583.0.0.29.95 — Patch v0.26.0
+## Messenger — App v584.0.0.49.98 — Patch v0.26.0
 Patch source: hushmessenger — v0.26.0 ([v0.26.0](https://github.com/SysAdminDoc/HushMessenger))
 Architecture: arm64-v8a
 
