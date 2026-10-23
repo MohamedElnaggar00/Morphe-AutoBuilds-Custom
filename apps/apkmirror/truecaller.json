@@ -1,0 +1,10 @@
+{
+  "org": "true-software-scandinavia-ab",
+  "name": "truecaller-caller-id-block",
+  "release_prefix": "truecaller",
+  "type": "BUNDLE",
+  "arch": "",
+  "dpi": "120-480dpi",
+  "package": "com.truecaller",
+  "version": ""
+}

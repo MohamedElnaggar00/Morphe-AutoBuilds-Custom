@@ -544,6 +544,7 @@ jobs:
               excel) app_display="Excel" ;;
               usbhotspot) app_display="USB Hotspot" ;;
               instagram) app_display="Instagram" ;;
+              truecaller) app_display="Truecaller" ;;
               *) app_display="$app_name" ;;
             esac
 
@@ -552,6 +553,7 @@ jobs:
             case "$source_name" in
               piko-instagram) source_display="piko" ;;
               gboard-pixelboard-thinking) source_display="Gboard-PixelBoard @Thinking" ;;
+              heval) source_display="Heval" ;;
               *) source_display="$source_name" ;;
             esac
 

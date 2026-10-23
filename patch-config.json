@@ -56,6 +56,10 @@
     {
       "app_name": "instagram",
       "source": "hushgram"
+    },
+    {
+      "app_name": "truecaller",
+      "source": "heval"
     }
   ]
 }

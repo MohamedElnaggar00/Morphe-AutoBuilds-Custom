@@ -52,6 +52,7 @@ jobs:
             "SysAdminDoc/Hushfacebook"
             "SysAdminDoc/HushGram"
             "rushiranpise/morphe-patches"
+            "heval99/Heval-Morphe-Patches"
           )
 
           changed=0

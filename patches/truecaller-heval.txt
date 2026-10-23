@@ -1,0 +1,18 @@
++Disable ads
++Disable contact upload
++Disable telemetry
++Disable update prompts
++Enable Premium
++GmsCore support
++Hide Wear OS settings
++Spoof signature
+-Fix T9 contact search
+-Hide Assistant tab
+-Hide Blocking tab
+-Hide Messages tab
+-Hide Premium tab
+-Hide Scam feed
+-Hide business media
+-Hide family button
+-Restore classic call log
+-Use SMS for verification codes
