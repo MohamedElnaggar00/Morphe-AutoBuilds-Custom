@@ -134,5 +134,8 @@ def _get_q_param(arch: str) -> str:
     cpu = cpu_map.get(arch, '')
     if cpu:
         q_str = f"myCPU={cpu}&leanback=0"
-        return f"&q={base64.b64encode(q_str.encode('utf-8')).decode('utf-8')}"
+        # Aptoide's API now rejects padded base64 ("=") for q (SBASE64), so
+        # the padding must be stripped or every filtered request returns 400.
+        encoded = base64.b64encode(q_str.encode('utf-8')).decode('utf-8').rstrip('=')
+        return f"&q={encoded}"
     return ''
