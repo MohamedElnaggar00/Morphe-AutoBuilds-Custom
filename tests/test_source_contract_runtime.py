@@ -396,5 +396,48 @@ class SourceContractRuntimeTests(unittest.TestCase):
                 {"12.35.0-prod.01": [123456789]},
             )
 
+    def test_source_targets_parse_simple_compatible_packages_map(self):
+        # jasonwu1994/Gboard-patches schema: compatiblePackages is a
+        # package -> [versions] map (no signatures/codes declared).
+        package = "com.google.android.inputmethod.latin"
+        source = "jasonwu1994"
+        manifest = {
+            "version": "3.13.0",
+            "patches": [
+                {
+                    "name": "AI Writing Tools",
+                    "compatiblePackages": {
+                        package: ["18.0.3.954559732-release-arm64-v8a"],
+                        "com.unrelated.app": None,
+                    },
+                },
+                {
+                    "name": "Clipboard Enhancements",
+                    "compatiblePackages": {
+                        package: ["18.0.3.954559732-release-arm64-v8a"],
+                    },
+                },
+            ],
+        }
+        release = {"tag_name": "v3.13.0", "assets": []}
+
+        def fake_fetch_json(url):
+            if "raw.githubusercontent.com" in url:
+                return manifest
+            raise AssertionError(f"unexpected fetch: {url}")
+
+        with patch.dict(utils._source_supported_targets_cache, {}, clear=True), \
+             patch.object(utils, "detect_release", return_value=release), \
+             patch.object(utils, "fetch_json", side_effect=fake_fetch_json):
+            targets = utils.get_source_supported_targets(package, source)
+
+        self.assertEqual(len(targets), 1)
+        self.assertEqual(targets[0]["version"], "18.0.3.954559732-release-arm64-v8a")
+        # The simplified schema declares no codes, signatures or file types, so
+        # the artifact contract must not invent any.
+        self.assertEqual(targets[0]["version_codes"], [])
+        self.assertNotIn("signatures", targets[0])
+        self.assertNotIn("apk_file_types", targets[0])
+
 if __name__ == "__main__":
     unittest.main()

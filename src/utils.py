@@ -637,6 +637,25 @@ def get_source_supported_targets(package_name: str, source: str) -> list[dict]:
 
                         declarations.setdefault(version, []).append(item)
 
+                # Simplified Morphe catalog schema: some patch sources publish
+                # "compatiblePackages" as a package -> [versions] map instead of
+                # rich packageName/targets objects. Both are declarations by the
+                # same patch source, so parse the map too; otherwise these
+                # sources silently lose strict targeting and artifact contract
+                # validation. A null version list means "compatible with any
+                # version" and declares no target, matching the existing
+                # no-metadata behavior.
+                compatible_map = node.get("compatiblePackages")
+                if isinstance(compatible_map, dict):
+                    declared_versions = compatible_map.get(package_name)
+                    if isinstance(declared_versions, list):
+                        for raw_version in declared_versions:
+                            simple_version = str(raw_version or "").strip()
+                            if simple_version:
+                                declarations.setdefault(simple_version, []).append(
+                                    {"version": simple_version}
+                                )
+
                 for value in node.values():
                     walk(value)
             elif isinstance(node, list):
