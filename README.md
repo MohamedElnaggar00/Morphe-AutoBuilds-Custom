@@ -169,12 +169,12 @@ Architecture: arm64-v8a
 
 </details>
 
-## X — App v12.36.1-prod.01 — Patch v3.61.0
-Patch source: piko-patches — v3.61.0 ([v3.61.0](https://github.com/crimera/piko-newx))
+## X — App v12.37.2-prod.01 — Patch v3.64.0
+Patch source: piko-patches — v3.64.0 ([v3.64.0](https://github.com/crimera/piko-newx))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 44/55 applied</summary>
+<summary>🩹 Patches — 43/53 applied</summary>
 
 - ✅ NewX: Remove ads
 - ✅ NewX: Disable blur effects
@@ -188,7 +188,6 @@ Architecture: arm64-v8a
 - ✅ NewX: Customize drawer items
 - ✅ NewX: Theme
 - ✅ NewX: Feature switch overrides
-- ✅ NewX: Classic inline action spacing
 - ✅ NewX: Customize inline actions
 - ✅ NewX: Inline download button
 - ✅ NewX: Redirect downloads to chosen folder
@@ -204,7 +203,6 @@ Architecture: arm64-v8a
 - ✅ NewX: Customize profile tabs
 - ✅ NewX: Set default reply sorting
 - ❌ NewX: Server error logging
-- ❌ NewX: Share post as image
 - ✅ NewX: Disable video player scrolling
 - ✅ NewX: Hide premium upsell
 - ✅ NewX: Unlock color customization
@@ -293,8 +291,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## Gboard — App v18.4.1.985164140-release-arm64-v8a — Patch v1.2.0
-Patch source: Gboard-PixelBoard @Thinking — v1.2.0 ([v1.2.0](https://github.com/Akshayykadam/PixelBoard))
+## Gboard — App v18.4.1.985164140-release-arm64-v8a — Patch v1.3.0
+Patch source: Gboard-PixelBoard @Thinking — v1.3.0 ([v1.3.0](https://github.com/Akshayykadam/PixelBoard))
 Architecture: arm64-v8a
 
 <details>
@@ -312,8 +310,8 @@ Architecture: arm64-v8a
 
 </details>
 
-## vpnify — App v2.3.0 — Patch v1.59.0
-Patch source: hxreborn — v1.59.0 ([v1.59.0](https://github.com/hxreborn/morphe-patches))
+## vpnify — App v2.3.0 — Patch v1.60.0
+Patch source: hxreborn — v1.60.0 ([v1.60.0](https://github.com/hxreborn/morphe-patches))
 Architecture: arm64-v8a
 
 <details>
@@ -977,26 +975,31 @@ Architecture: arm64-v8a
 
 </details>
 
-## Truecaller — App v26.40.5 — Patch v1.18.0
-Patch source: heval — v1.18.0 ([v1.18.0](https://github.com/heval99/Heval-Morphe-Patches))
+## Truecaller — App v26.41.5 — Patch v1.19.0
+Patch source: heval — v1.19.0 ([v1.19.0](https://github.com/heval99/Heval-Morphe-Patches))
 Architecture: arm64-v8a
 
 <details>
-<summary>🩹 Patches — 9/23 applied</summary>
+<summary>🩹 Patches — 12/28 applied</summary>
 
 - ❌ Remove screenshot restriction
 - ✅ Disable ads
+- ❌ Hide after-call screen for contacts
 - ❌ Hide Assistant tab
 - ❌ Hide Blocking tab
 - ❌ Hide business media
 - ❌ Hide family button
 - ❌ Hide Messages tab
 - ❌ Hide Premium tab
+- ✅ Hide promotions
 - ❌ Hide Scam feed
 - ✅ Hide Wear OS settings
 - ❌ Restore classic call log
+- ❌ Show caller number in call log
+- ✅ Disable auto-launch
 - ✅ Disable contact upload
 - ✅ GmsCore support
+- ✅ Disable nags
 - ✅ Spoof signature
 - ❌ Fix T9 contact search
 - ✅ Disable telemetry
